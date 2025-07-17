@@ -1,7 +1,7 @@
 package com.yggra.parser;
 
 
-import java.util.ArrayList;
+
 
 
 
@@ -24,6 +24,10 @@ public class Token {
 
     public String getValue() {
         return value;
+    }
+    @Override
+    public String toString() {
+        return type + ": " + value;
     }
 
 }
