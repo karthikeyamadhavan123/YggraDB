@@ -18,13 +18,6 @@ public class Token {
         this.value = value;
     }
 
-    public TokenType getType() {
-        return type;
-    }
-
-    public String getValue() {
-        return value;
-    }
     @Override
     public String toString() {
         return type + ": " + value;

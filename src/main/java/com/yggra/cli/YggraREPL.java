@@ -34,8 +34,7 @@ public void start(){
             else{
                 ArrayList<Token> tokens = lexer.tokenize(input);
                 for (Token token : tokens) {
-                    System.out.println("The type is " +":" + token.getType() + "The value is " + ":" +token.getValue());
-
+                    System.out.println(token);
                 }
             }
         }
