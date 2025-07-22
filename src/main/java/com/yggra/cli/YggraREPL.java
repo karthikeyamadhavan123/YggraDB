@@ -1,5 +1,7 @@
 package com.yggra.cli;
 
+import com.yggra.commands.SQLCommand;
+import com.yggra.parser.Parser;
 import com.yggra.parser.Token;
 
 import java.util.ArrayList;
@@ -33,8 +35,11 @@ public void start(){
             // Placeholder: Eventually pass to Lexer → Parser → SQLCommand
             else{
                 ArrayList<Token> tokens = lexer.tokenize(input);
-                for (Token token : tokens) {
-                    System.out.println(token);
+                Parser parser = new Parser(tokens);
+                SQLCommand command = parser.parse();
+                if (command != null) {
+                    System.out.println("\n🌿 [PARSER'S BOUNTY] Final command object:");
+                    System.out.println(command);
                 }
             }
         }

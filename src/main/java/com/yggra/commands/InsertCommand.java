@@ -1,5 +1,5 @@
 package com.yggra.commands;
 
-public class InsertCommand {
+public class InsertCommand extends SQLCommand {
 //     Command for INSERT INTO
 }

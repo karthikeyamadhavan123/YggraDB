@@ -160,10 +160,9 @@ public class Lexer {
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }
                 }
-
                 // Unrecognized symbol — cast it into the underworld
                 else {
-                    throw new RuntimeException("⚔️ [WRATH] Forbidden symbol '" + ch + "' was struck down — it does not belong to the realm of SQL!");
+                    throw new RuntimeException("⚔️ [WRATH] Forbidden symbol '" + ch + "' was struck down — it does not belong to the realm of SQL present in realm world!");
                 }
                 break;
         }
