@@ -1,8 +1,6 @@
 package com.yggra.parser;
 
-import com.yggra.commands.ColumnDefinition;
-import com.yggra.commands.CreateTableCommand;
-import com.yggra.commands.SQLCommand;
+import com.yggra.commands.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,8 +131,7 @@ public class Parser {
             }
             consume(TokenType.RIGHT_PAREN);
             return new ColumnDefinition(colName, TokenType.VARCHAR, size);
-        }
-        else {
+        } else {
             throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Expected a valid column type (INT or VARCHAR), but found: " + typeToken.value);
         }
     }
@@ -147,11 +144,10 @@ public class Parser {
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
 
-    private void parseColumnInsertStatements() {
+    private List<InsertColumnDefinition> parseColumnInsertStatements() {
         // Parse the first column name or value (at least one is required)
-
-        parseColumnInsertStatement();
-
+        List<InsertColumnDefinition> columns = new ArrayList<>();
+        columns.add(parseColumnInsertStatement());
         // Handle comma-separated additional items
         while (position < tokens.size() && peek().type == TokenType.COMMA) {
             consume(TokenType.COMMA);
@@ -167,8 +163,9 @@ public class Parser {
                 throw new RuntimeException("🛡️ [SHIELD WITHOUT WARRIOR] Comma demands a value to follow — yet only closure awaits!");
             }
             // Parse the next column name or value
-            parseColumnInsertStatement();
+            columns.add(parseColumnInsertStatement());
         }
+        return columns;
     }
 
     /**
@@ -178,27 +175,69 @@ public class Parser {
      *
      * @throws RuntimeException if no valid token is found at current position
      */
-    private void parseColumnInsertStatement() {
+    private InsertColumnDefinition parseColumnInsertStatement() {
+        String columnName;
         // Ensure we have a token to examine
         if (position >= tokens.size()) {
             throw new RuntimeException("📦 [EMPTY OFFERING] Expected value for insertion but found void — the gods demand tribute!");
         }
         // Accept various token types for INSERT operations:
         if (peek().type == TokenType.IDENTIFIER) {
-            // Column names or identifier values
+            // Column names are just consumed here
+            columnName = peek().value;
             consume(TokenType.IDENTIFIER);
-        } else if (peek().type == TokenType.NUMBER_LITERAL) {
-            // Numeric values (integers, decimals)
-            consume(TokenType.NUMBER_LITERAL);
-        } else if (peek().type == TokenType.STRING_LITERAL) {
-            // String values (quoted text)
-            consume(TokenType.STRING_LITERAL);
         } else {
             // For extensibility - other data types may be supported in future
             // Currently just logs the occurrence without throwing an error
-            System.out.println("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
+            throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
         }
+        return new InsertColumnDefinition(columnName);
+    }
 
+    private InsertValueDefinition parseValuesInsertStatement() {
+        // Ensure we have a token to examine
+        if (position >= tokens.size()) {
+            throw new RuntimeException("📦 [EMPTY OFFERING] Expected value for insertion but found void — the gods demand tribute!");
+        }
+        // Accept various token types for INSERT operations:
+        if (peek().type == TokenType.NUMBER_LITERAL) {
+            // Column names are just consumed here
+            String value = peek().value;
+            consume(TokenType.NUMBER_LITERAL);
+            return new InsertValueDefinition(TokenType.NUMBER_LITERAL, value);
+        } else if (peek().type == TokenType.STRING_LITERAL) {
+            String value = peek().value;
+            consume(TokenType.STRING_LITERAL);
+            return new InsertValueDefinition(TokenType.STRING_LITERAL, value);
+        } else {
+            // For extensibility - other data types may be supported in future
+            // Currently just logs the occurrence without throwing an error
+            throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
+        }
+    }
+
+    private List<InsertValueDefinition> parseValuesInsertStatements() {
+        // Parse the first column name or value (at least one is required)
+        List<InsertValueDefinition> columns = new ArrayList<>();
+        columns.add(parseValuesInsertStatement());
+        // Handle comma-separated additional items
+        while (position < tokens.size() && peek().type == TokenType.COMMA) {
+            consume(TokenType.COMMA);
+            // Check for unexpected end of input after comma
+            if (position >= tokens.size()) {
+                throw new RuntimeException("🗡️ [ARES' BROKEN SPEAR] Comma found but no following value — the army of data stands incomplete!");
+            }
+            // Check for double comma error (comma immediately followed by another comma)
+            if (peek().type == TokenType.COMMA) {
+                throw new RuntimeException("⚡ [DOUBLE LIGHTNING] Two commas in succession — even Zeus strikes but once at a time!");
+            }
+            if (peek().type == TokenType.RIGHT_PAREN) {
+                throw new RuntimeException("🛡️ [SHIELD WITHOUT WARRIOR] Comma demands a value to follow — yet only closure awaits!");
+            }
+            // Parse the next column name or value
+            columns.add(parseValuesInsertStatement());
+        }
+        return columns;
     }
 
     /**
@@ -269,7 +308,7 @@ public class Parser {
             throw new RuntimeException("🔥 [VOID OF CREATION] The table was summoned, yet no columns were inscribed upon its stone — a hollow shell unworthy of existence.");
         }
 
-      List<ColumnDefinition> columns= parseColumnDefinitions();
+        List<ColumnDefinition> columns = parseColumnDefinitions();
 
         // Check for closing parenthesis
         if (position >= tokens.size()) {
@@ -304,9 +343,10 @@ public class Parser {
      * @throws RuntimeException for various INSERT INTO syntax errors
      */
 
-    public void parseInsertStatement() {
+    public InsertCommand parseInsertStatement() {
         // Consume the mandatory INTO keyword
         consume(TokenType.INTO);
+        String tableName = peek().value;
         if (position >= tokens.size()) {
             throw new RuntimeException("🏺 [DIONYSUS' EMPTY CHALICE] 'INSERT INTO' declared but no table name follows — where shall the wine of data flow?");
         }
@@ -338,7 +378,7 @@ public class Parser {
             throw new RuntimeException("🏹 [EMPTY QUIVER] The insertion was summoned, yet no columns were named — a hunter cannot shoot without arrows!");
         }
         // Parse the comma-separated list of column names
-        parseColumnInsertStatements();
+        List<InsertColumnDefinition> columns = parseColumnInsertStatements();
 
         // Check for closing parenthesis after column list
         if (position >= tokens.size()) {
@@ -378,7 +418,7 @@ public class Parser {
         }
 
         // Parse the comma-separated list of values
-        parseColumnInsertStatements();
+        List<InsertValueDefinition> values = parseValuesInsertStatements();
         // Check for closing parenthesis after values list
 
         if (position >= tokens.size()) {
@@ -394,14 +434,14 @@ public class Parser {
             throw new RuntimeException("📜 [UNFINISHED SCROLL] Insert statement complete but missing final ';' — even divine commands need their sacred seal!");
         }
         consume(TokenType.SEMICOLON);
-        System.out.println("successfully completed insert parsing");
+
         // Ensure no extraneous tokens remain after the complete statement
         if (position < tokens.size()) {
             throw new RuntimeException(
                     "🌪️ [LINGERING SPIRITS] Additional tokens haunt the completed statement — banish these phantoms to complete the ritual!"
             );
         }
-
+        return new InsertCommand(tableName, columns, values);
     }
 
     /**
@@ -470,8 +510,7 @@ public class Parser {
                     throw new RuntimeException("🌊 [POSEIDON'S MISDIRECTION] 'INSERT' found but '" + second.value + "' follows — the data must flow INTO a table!");
                 }
                 // PARSE INSERT COMMAND;
-                return null;
-//                parseInsertStatement();
+                return parseInsertStatement();
             } else {
                 throw new RuntimeException(
                         "⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " +
