@@ -259,6 +259,9 @@ public class Parser {
             if (position >= tokens.size()) {
                 throw new RuntimeException("🌊 [TIDE'S END] Comma found but no following column — the sea of definitions ends abruptly!");
             }
+            if (peek().type == TokenType.COMMA) {
+                throw new RuntimeException("⚡ [DOUBLE LIGHTNING] Two commas in succession — even Zeus strikes but once at a time!");
+            }
 
             if (peek().type == TokenType.RIGHT_PAREN) {
                 throw new RuntimeException("🪓 [BROKEN CHAIN] A comma was found where no column follows — the list of columns is shattered and incomplete.");
@@ -441,6 +444,10 @@ public class Parser {
                     "🌪️ [LINGERING SPIRITS] Additional tokens haunt the completed statement — banish these phantoms to complete the ritual!"
             );
         }
+
+        if(columns.size()!=values.size()){
+            throw new RuntimeException("⚔️ The AllFather demands equal measures! Columns (" + columns.size() + ") and values (" + values.size() + ") must stand in perfect balance!");
+        }
         return new InsertCommand(tableName, columns, values);
     }
 
@@ -482,7 +489,6 @@ public class Parser {
             if (tokens.isEmpty()) {
                 throw new RuntimeException("🏺 [EMPTY VESSEL] No tokens to parse — the vessel of commands stands empty!");
             }
-
             Token first = peek();
 
             if (first.type == TokenType.CREATE) {
