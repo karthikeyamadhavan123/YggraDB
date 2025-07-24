@@ -140,7 +140,6 @@ public class Parser {
      * Parse Column Insert Statements - Handles parsing of comma-separated column names or values
      * Used for both column lists and value lists in INSERT statements
      * Format: item1, item2, ..., itemN (where items can be column names or values)
-     *
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
 
@@ -171,8 +170,7 @@ public class Parser {
     /**
      * Parse Column Insert Statement - Handles parsing of individual column names or values
      * Accepts identifiers (column names), number literals, or string literals
-     * Used for both INSERT column specifications and INSERT value specifications
-     *
+     * Used for both INSERT column specifications.
      * @throws RuntimeException if no valid token is found at current position
      */
     private InsertColumnDefinition parseColumnInsertStatement() {
@@ -193,6 +191,14 @@ public class Parser {
         }
         return new InsertColumnDefinition(columnName);
     }
+
+    /**
+     * Parse VALUES Insert Statement - Handles parsing of individual values .
+     * Accepts values, numbers, or strings
+     * Used for INSERT value specifications
+     *
+     * @throws RuntimeException if no valid token is found at current position
+     */
 
     private InsertValueDefinition parseValuesInsertStatement() {
         // Ensure we have a token to examine
@@ -215,7 +221,12 @@ public class Parser {
             throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
         }
     }
-
+    /**
+     * Parse Values Insert Statements - Handles parsing of comma-separated values
+     * Used for value lists in INSERT statements
+     * Format: item1, item2, ..., itemN (where items will be values)
+     * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
+     */
     private List<InsertValueDefinition> parseValuesInsertStatements() {
         // Parse the first column name or value (at least one is required)
         List<InsertValueDefinition> columns = new ArrayList<>();
