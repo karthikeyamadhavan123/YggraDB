@@ -156,6 +156,24 @@ public class Lexer {
                         case "VARCHAR":
                             tokens.add(new Token(TokenType.VARCHAR, rawKeyword));
                             break;
+                        case "DATABASE":
+                            tokens.add(new Token(TokenType.DATABASE,rawKeyword));
+                            break;
+                        case "USE":
+                            tokens.add(new Token(TokenType.USE,rawKeyword));
+                            break;
+                        case "DROP":
+                            tokens.add(new Token(TokenType.DROP,rawKeyword));
+                            break;
+                        case "SHOW":
+                            tokens.add(new Token(TokenType.SHOW,rawKeyword));
+                            break;
+                        case "DATABASES":
+                            tokens.add(new Token(TokenType.DATABASES,rawKeyword));
+                            break;
+                        case "CURRENT":
+                            tokens.add(new Token(TokenType.CURRENT,rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }

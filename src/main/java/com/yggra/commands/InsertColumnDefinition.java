@@ -10,4 +10,5 @@ public class InsertColumnDefinition {
     public String toString(){
         return columnName;
     }
+
 }

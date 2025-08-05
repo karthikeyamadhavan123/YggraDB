@@ -7,6 +7,13 @@ public enum TokenType {
     INTO,
     VALUES,
     TABLE,
+    DATABASE,
+    USE,
+    DROP,
+    SHOW,
+    DATABASES,
+    CURRENT,
+
 
     // Data Types
     INT,

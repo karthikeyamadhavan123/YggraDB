@@ -13,6 +13,7 @@ public class CreateTableCommand extends SQLCommand {
         this.columns = columns;
         this.tableName = tableName;
     }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

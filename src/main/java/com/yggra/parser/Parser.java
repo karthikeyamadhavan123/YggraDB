@@ -140,6 +140,7 @@ public class Parser {
      * Parse Column Insert Statements - Handles parsing of comma-separated column names or values
      * Used for both column lists and value lists in INSERT statements
      * Format: item1, item2, ..., itemN (where items can be column names or values)
+     *
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
 
@@ -171,6 +172,7 @@ public class Parser {
      * Parse Column Insert Statement - Handles parsing of individual column names or values
      * Accepts identifiers (column names), number literals, or string literals
      * Used for both INSERT column specifications.
+     *
      * @throws RuntimeException if no valid token is found at current position
      */
     private InsertColumnDefinition parseColumnInsertStatement() {
@@ -221,10 +223,12 @@ public class Parser {
             throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
         }
     }
+
     /**
      * Parse Values Insert Statements - Handles parsing of comma-separated values
      * Used for value lists in INSERT statements
      * Format: item1, item2, ..., itemN (where items will be values)
+     *
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
     private List<InsertValueDefinition> parseValuesInsertStatements() {
@@ -342,11 +346,158 @@ public class Parser {
         consume(TokenType.SEMICOLON);
         // Ensure no trailing tokens exist
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "⚡ [ZEUS' WRATH] Additional tokens linger after the statement — finish what you began!"
-            );
+            throw new RuntimeException("⚡ [ZEUS' WRATH] Additional tokens linger after the statement — finish what you began!");
         }
         return new CreateTableCommand(columns, tableName);
+    }
+
+
+    /**
+     * Parses a CREATE DATABASE command.
+     * Expected syntax: CREATE DATABASE <realm_name>;
+     *
+     * @return CreateDatabaseCommand with the new realm's name
+     * @throws RuntimeException When:
+     *                          - No name is given ("🏛️ [CREATE DATABASE UNNAMED] You invoke creation yet grant no name...")
+     *                          - Missing semicolon ("⚔️ [SAGA UNFINISHED] The command lingers in limbo...")
+     *                          - Extra tokens after ("🏗️ [YGGDRASIL'S WRATH] 'CREATE DATABASE' was forged truly, yet corrupt runes remain...")
+     */
+
+    private CreateDatabaseCommand parseCreateDatabase() {
+        consume(TokenType.DATABASE);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🏛️ [CREATE DATABASE UNNAMED] You invoke creation yet grant no name — a realm cannot rise from the void without identity!");
+        }
+        String dbName = peek().value;
+        consume(TokenType.IDENTIFIER);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚔️ [SAGA UNFINISHED] The command lingers in limbo — seal its fate with ';'!");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 2. Check for extra tokens (e.g., 'EXTRA_JUNK')
+        if (position < tokens.size()) {
+            throw new RuntimeException("🏗️ [YGGDRASIL'S WRATH] 'CREATE DATABASE' was forged truly, yet corrupt runes remain — purge the unworthy symbols!");
+        }
+        return new CreateDatabaseCommand(dbName);
+    }
+
+
+    /**
+     * Parses a DROP DATABASE command - the Ragnarök of realms.
+     * Expected syntax: DROP DATABASE <realm_name>;
+     *
+     * @return DropDatabaseCommand with the doomed realm's name
+     * @throws RuntimeException When:
+     *                          - No name given ("🏛️ [DROP UNGUIDED] You call upon destruction, yet name no realm...")
+     *                          - Missing semicolon ("🗡️ [ARES' BROKEN OATH] The deletion rite is incomplete...")
+     *                          - Extra tokens ("🔥 [SURTR'S ANNIHILATION] 'DROP DATABASE' was invoked, yet chaos runes persist...")
+     */
+
+    private DropDatabaseCommand parseDropDatabase() {
+        consume(TokenType.DATABASE);
+        String dbName = peek().value;
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🏛️ [DROP DATABASE UNNAMED] You invoke deletion yet grant no name — a realm cannot rise from the void without identity!");
+        }
+        consume(TokenType.IDENTIFIER);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚔️ [SAGA UNFINISHED] The command lingers in limbo — seal its fate with ';'!");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 2. Check for extra tokens (e.g., 'EXTRA_JUNK')
+
+        if (position < tokens.size()) {
+            throw new RuntimeException("🔥 [SURTR'S ANNIHILATION] 'DROP DATABASE' was invoked, yet chaos runes persist — only absolute destruction is permitted!");
+        }
+        return new DropDatabaseCommand(dbName);
+    }
+
+    /**
+     * Parses SHOW DATABASES - the Allfather's vision of all realms.
+     * Expected syntax: SHOW DATABASES;
+     *
+     * @return ShowDatabaseCommand to list all realms
+     * @throws RuntimeException When:
+     *                          - Missing semicolon ("🌑 [VISION INTERRUPTED] 'SHOW DATABASES' spoken, yet the command ends in chaos...")
+     *                          - Extra tokens ("⚔️ [FENRIR'S CHAOS] 'SHOW DATABASES' was spoken truly, yet dark runes linger...")
+     */
+
+    private ShowDatabaseCommand parseShowDatabase() {
+        consume(TokenType.DATABASES);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌑 [VISION INTERRUPTED] 'SHOW DATABASES' spoken, yet the command ends in chaos — the saga demands a closing ';'!");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 2. Check for extra tokens (e.g., 'EXTRA_JUNK')
+        //Like this SHOW DATABASES;Extra junk
+
+        if (position < tokens.size()) {
+            throw new RuntimeException("⚔️ [FENRIR'S CHAOS] 'SHOW DATABASES' was spoken truly,yet dark runes linger — cleanse the command with purity!");
+        }
+        return new ShowDatabaseCommand();
+    }
+
+    /**
+     * Parses GET CURRENT DATABASE - Mimir's knowledge of your current realm.
+     * Expected syntax: GET CURRENT DATABASE;
+     *
+     * @return GetCurrentDatabaseCommand revealing your standing location in Yggdrasil
+     * @throws RuntimeException When:
+     *                          - Extra tokens ("🧠 [MIMIR'S CONFUSION] The knowledge request is polluted with unnecessary runes!")
+     */
+
+    private GetCurrentDatabaseCommand parseGetCurrentDatabase() {
+        consume(TokenType.CURRENT);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚡ [BLADE OF CHAOS] The path is broken! You must name what you seek after 'CURRENT'.");
+        }
+        if (peek().type != TokenType.DATABASE) {
+            throw new RuntimeException(
+                    "⚔️ [BLADE OF THE GODS] " +
+                            "You dare speak half-formed incantations?! The sacred word 'DATABASE' must be carved into your command!"
+            );
+        }
+        consume(TokenType.DATABASE);
+
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🏺 [GREEK FIRE] The Oracle demands closure! A semicolon (;) must seal your command.");
+        }
+
+        consume(TokenType.SEMICOLON);
+
+        if (position < tokens.size()) {
+            throw new RuntimeException("🌪️ [CHAOS STORM] Kratos frowns upon your carelessness! Junk lingers after the command.");
+        }
+
+        return new GetCurrentDatabaseCommand();
+    }
+
+    /**
+     * Parses a USE DATABASE command.
+     * Expected format: USE database_name;
+     *
+     * @throws RuntimeException if:
+     *                          - No database name is given ("⚔️ **ENOUGH!** The Bifrost obeys only those who name their destination!")
+     *                          - Missing semicolon ("🌉 [BIFROST UNBOUND] The command lingers in limbo — seal its fate with ';'!")
+     */
+
+    private UseDatabaseCommand parseUseDatabase() {
+        String dbName = peek().value;
+        consume(TokenType.IDENTIFIER);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚔️ **ENOUGH!** The Bifrost obeys only those who *name their destination*. (Missing database after `USE`, boy.)");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 2. Check for extra tokens (e.g., 'EXTRA_JUNK')
+        if (position < tokens.size()) {
+            throw new RuntimeException("🌉 [HEIMDALL'S JUDGMENT] 'USE DATABASE' was declared, yet false markings defile the path — only the pure command may pass!");
+        }
+
+        return new UseDatabaseCommand(dbName);
     }
 
     /**
@@ -451,12 +602,10 @@ public class Parser {
 
         // Ensure no extraneous tokens remain after the complete statement
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [LINGERING SPIRITS] Additional tokens haunt the completed statement — banish these phantoms to complete the ritual!"
-            );
+            throw new RuntimeException("🌪️ [LINGERING SPIRITS] Additional tokens haunt the completed statement — banish these phantoms to complete the ritual!");
         }
 
-        if(columns.size()!=values.size()){
+        if (columns.size() != values.size()) {
             throw new RuntimeException("⚔️ The AllFather demands equal measures! Columns (" + columns.size() + ") and values (" + values.size() + ") must stand in perfect balance!");
         }
         return new InsertCommand(tableName, columns, values);
@@ -472,20 +621,14 @@ public class Parser {
     public void consume(TokenType expectedType) {
         // Consume the current token if it matches the expected type, else throw error
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "🌌 [COSMOS' END] Expected " + expectedType +
-                            " but reached the void beyond all tokens — the universe of syntax has ended!"
-            );
+            throw new RuntimeException("🌌 [COSMOS' END] Expected " + expectedType + " but reached the void beyond all tokens — the universe of syntax has ended!");
         }
 
         Token token = peek();
         if (token.type == expectedType) {
             advance();
         } else {
-            throw new RuntimeException(
-                    "⛓️ [CHAINS OF FATE] Expected " + expectedType +
-                            " but found " + token.type + " ('" + token.value + "')"
-            );
+            throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected " + expectedType + " but found " + token.type + " ('" + token.value + "')");
         }
     }
 
@@ -506,16 +649,18 @@ public class Parser {
                 advance();
                 // Validate that CREATE is followed by TABLE
                 if (position >= tokens.size()) {
-                    throw new RuntimeException("🔨 [HEPHAESTUS' HAMMER SILENT] 'CREATE' declared but what shall be forged? TABLE expected but found void!");
+                    throw new RuntimeException("🔨 [FORGE OF THE GODS SILENT] 'CREATE' declared, yet the forge stands idle — TABLE or DATABASE expected, but void answered!");
                 }
-
                 Token second = peek();
-                if (second.type != TokenType.TABLE) {
-                    throw new RuntimeException("🏛️ [ARCHITECT'S CONFUSION] 'CREATE' found but '" + second.value + "' follows — only TABLE creation is currently blessed by the gods!");
+                if (second.type == TokenType.TABLE) {
+                    return parseCreateTable();
+                } else if (second.type == TokenType.DATABASE) {
+                    return parseCreateDatabase();
+                } else {
+                    throw new RuntimeException("🏛️ [ARCHITECT'S CONFUSION] 'CREATE' invoked, yet '" + second.value + "' follows — only TABLE or DATABASE may rise from the forge of Yggra!");
                 }
 
-                // PARSE CREATE TABLE COMMAND
-                return parseCreateTable();
+                // PARSE INSERT INTO COMMAND
             } else if (first.type == TokenType.INSERT) {
                 advance();
                 // Validate that INSERT is followed by INTO
@@ -526,18 +671,51 @@ public class Parser {
                 if (second.type != TokenType.INTO) {
                     throw new RuntimeException("🌊 [POSEIDON'S MISDIRECTION] 'INSERT' found but '" + second.value + "' follows — the data must flow INTO a table!");
                 }
-                // PARSE INSERT COMMAND;
                 return parseInsertStatement();
+            } else if (first.type == TokenType.DROP) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("🏛️ [DROP UNGUIDED] You call upon destruction, yet name no realm — the void demands a target!");
+                }
+                Token second = peek();
+                if (second.type != TokenType.DATABASE) {
+                    throw new RuntimeException("🌀 [REALM MISALIGNED] 'DROP' spoken, but '" + second.value + "' stands in defiance — only DATABASE may be struck down!");
+                }
+                // PARSE DROP COMMAND;
+                return parseDropDatabase();
+
+            } else if (first.type == TokenType.SHOW) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("🌌 [BLIND BIFROST] You invoke 'SHOW', yet the bridge to knowledge lies broken — name what must be unveiled!");
+                }
+                Token second = peek();
+                if (second.type == TokenType.DATABASES) {
+                    return parseShowDatabase();
+                } else if (second.type == TokenType.CURRENT) {
+                    return parseGetCurrentDatabase();
+                } else {
+                    throw new RuntimeException("🌀 [VISION DISTORTED] 'SHOW' spoken, yet '" + second.value + "' clouds the truth — only DATABASES OR CURRENT can be unveiled!");
+                }
+                // PARSE SHOW COMMAND;
+
+            } else if (first.type == TokenType.USE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("🌉 [BIFROST UNBOUND] You seek passage, yet name no realm — which world shall your will command?");
+                }
+                Token second = peek();
+                if (second.type != TokenType.IDENTIFIER) {
+                    throw new RuntimeException("🌀 [REALM MISCAST] 'USE' spoken, yet '" + second.value + "' defies the gods — only a valid realm name may follow!");
+                }
+                // PARSE SHOW COMMAND;
+                return parseUseDatabase();
             } else {
-                throw new RuntimeException(
-                        "⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " +
-                                first.type + " ('" + first.value + "') — only these commands are known to the oracle!"
-                );
+                throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }
         } catch (Exception e) {
             // Enhanced error reporting with parser state information
-            System.err.println("💀 [PARSING CATASTROPHE] Error at position " + position +
-                    (position < tokens.size() ? " near token: '" + tokens.get(position).value + "'" : " (end of input)"));
+            System.err.println("💀 [PARSING CATASTROPHE] Error at position " + position + (position < tokens.size() ? " near token: '" + tokens.get(position).value + "'" : " (end of input)"));
             System.err.println("🔥 [FLAMES OF ERROR] " + e.getMessage());
             return null;
         }
