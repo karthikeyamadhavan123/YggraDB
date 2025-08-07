@@ -1,7 +1,14 @@
 package com.yggra.parser;
 
+/**
+ * 🪶 [RUNIC INSCRIPTION] 🪶
+ * `TokenType` enumerates all recognized symbols, keywords, and data types
+ * in YggraDB's sacred SQL dialect. Each rune holds meaning in the parser’s mind,
+ * transforming mortal input into structured intent.
+ */
+
 public enum TokenType {
-    // Keywords
+    // 📜 [COMMAND RUNES] – Keywords that begin divine operations
     CREATE,
     INSERT,
     INTO,
@@ -13,20 +20,21 @@ public enum TokenType {
     SHOW,
     DATABASES,
     CURRENT,
+    TABLES,
 
 
-    // Data Types
+    // 📐 [DATA TYPE RUNES] – Define the essence of columns
     INT,
     VARCHAR,
 
-    // Identifiers (table names, column names)
+    // 🏷️ [IDENTIFIER RUNES] – Names of tables, columns, and other mortal constructs
     IDENTIFIER,
 
-    // Literals Like 50,'John'
+    // 🔢 [LITERAL RUNES] – Mortal values like numbers or strings
     NUMBER_LITERAL,
     STRING_LITERAL,
 
-    // Symbols
+    // ⚙️ [SYMBOLIC RUNES] – Structural symbols used in SQL scrolls
     LEFT_PAREN,
     RIGHT_PAREN,
     COMMA,

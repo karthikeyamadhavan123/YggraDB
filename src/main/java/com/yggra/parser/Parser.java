@@ -71,6 +71,28 @@ public class Parser {
     }
 
     /**
+     * Consume - Validates and consumes a token of expected type
+     * This is the core validation method ensuring token sequence correctness
+     *
+     * @param expectedType The token type that should be at current position
+     * @throws RuntimeException if current token doesn't match expected type
+     */
+
+    public void consume(TokenType expectedType) {
+        // Consume the current token if it matches the expected type, else throw error
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌌 [COSMOS' END] Expected " + expectedType + " but reached the void beyond all tokens — the universe of syntax has ended!");
+        }
+
+        Token token = peek();
+        if (token.type == expectedType) {
+            advance();
+        } else {
+            throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected " + expectedType + " but found " + token.type + " ('" + token.value + "')");
+        }
+    }
+
+    /**
      * Parse Column Definition - Handles parsing of individual column specifications
      * Expected format: column_name column_type [constraints]
      * Supports INT and VARCHAR(n) data types
@@ -144,9 +166,9 @@ public class Parser {
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
 
-    private List<InsertColumnDefinition> parseColumnInsertStatements() {
+    private List<ColumnDefinition> parseColumnInsertStatements() {
         // Parse the first column name or value (at least one is required)
-        List<InsertColumnDefinition> columns = new ArrayList<>();
+        List<ColumnDefinition> columns = new ArrayList<>();
         columns.add(parseColumnInsertStatement());
         // Handle comma-separated additional items
         while (position < tokens.size() && peek().type == TokenType.COMMA) {
@@ -175,7 +197,7 @@ public class Parser {
      *
      * @throws RuntimeException if no valid token is found at current position
      */
-    private InsertColumnDefinition parseColumnInsertStatement() {
+    private ColumnDefinition parseColumnInsertStatement() {
         String columnName;
         // Ensure we have a token to examine
         if (position >= tokens.size()) {
@@ -191,7 +213,7 @@ public class Parser {
             // Currently just logs the occurrence without throwing an error
             throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
         }
-        return new InsertColumnDefinition(columnName);
+        return new ColumnDefinition(columnName);
     }
 
     /**
@@ -202,7 +224,7 @@ public class Parser {
      * @throws RuntimeException if no valid token is found at current position
      */
 
-    private InsertValueDefinition parseValuesInsertStatement() {
+    private ValueDefinition parseValuesInsertStatement() {
         // Ensure we have a token to examine
         if (position >= tokens.size()) {
             throw new RuntimeException("📦 [EMPTY OFFERING] Expected value for insertion but found void — the gods demand tribute!");
@@ -212,11 +234,11 @@ public class Parser {
             // Column names are just consumed here
             String value = peek().value;
             consume(TokenType.NUMBER_LITERAL);
-            return new InsertValueDefinition(TokenType.NUMBER_LITERAL, value);
+            return new ValueDefinition(TokenType.NUMBER_LITERAL, value);
         } else if (peek().type == TokenType.STRING_LITERAL) {
             String value = peek().value;
             consume(TokenType.STRING_LITERAL);
-            return new InsertValueDefinition(TokenType.STRING_LITERAL, value);
+            return new ValueDefinition(TokenType.STRING_LITERAL, value);
         } else {
             // For extensibility - other data types may be supported in future
             // Currently just logs the occurrence without throwing an error
@@ -231,9 +253,9 @@ public class Parser {
      *
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
-    private List<InsertValueDefinition> parseValuesInsertStatements() {
+    private List<ValueDefinition> parseValuesInsertStatements() {
         // Parse the first column name or value (at least one is required)
-        List<InsertValueDefinition> columns = new ArrayList<>();
+        List<ValueDefinition> columns = new ArrayList<>();
         columns.add(parseValuesInsertStatement());
         // Handle comma-separated additional items
         while (position < tokens.size() && peek().type == TokenType.COMMA) {
@@ -348,7 +370,7 @@ public class Parser {
         if (position < tokens.size()) {
             throw new RuntimeException("⚡ [ZEUS' WRATH] Additional tokens linger after the statement — finish what you began!");
         }
-        return new CreateTableCommand(columns, tableName);
+        return new CreateTableCommand(tableName, columns);
     }
 
 
@@ -501,6 +523,76 @@ public class Parser {
     }
 
     /**
+     * Parses a DROP TABLE statement and constructs a DropTableCommand.
+     * Expected syntax: DROP TABLE <table_name>;
+     *
+     * @return DropTableCommand containing the name of the table to be dropped.
+     */
+
+    private DropTableCommand parseDropTable() {
+        // Consume the 'TABLE' keyword after 'DROP'
+        consume(TokenType.TABLE);
+
+        // Extract the table name (identifier)
+        String tableName = peek().value;
+
+        // Ensure the table name is actually present
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🏛️ [DROP TABLE UNNAMED] You invoke deletion yet grant no name — a realm cannot rise from the void without identity!");
+        }
+
+        // Consume the identifier token representing the table name
+        consume(TokenType.IDENTIFIER);
+
+        // Expect a semicolon to properly terminate the statement
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚔️ [SAGA UNFINISHED] The command lingers in limbo — seal its fate with ';'!");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // Ensure there are no extra unexpected tokens after the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException("🔥 [SURTR'S ANNIHILATION] 'DROP TABLE' was invoked, yet chaos runes persist — only absolute destruction is permitted!");
+        }
+
+        // Return the parsed DropTableCommand with the table name
+        return new DropTableCommand(tableName);
+    }
+
+    /**
+     * 🧠 [PROPHECY DECODED] Parses the sacred incantation 'SHOW TABLES;'
+     * and returns a command that reveals all forged realms (tables).
+     * 🔍 The parser ensures that:
+     * - 'TABLES' follows the sacred keyword 'SHOW'
+     * - A mighty semicolon seals the saga
+     * - No chaos runes (extra tokens) remain to disrupt the flow
+     * 🛑 If the ritual is incomplete or corrupted, the parser shall unleash divine exceptions.
+     *
+     * @return ShowTablesCommand — a scroll commanding the executor to unveil all tables.
+     * @throws RuntimeException if tokens are missing, malformed, or overabundant.
+     */
+
+    private ShowTablesCommand parseShowTables() {
+        consume(TokenType.TABLES); // 🪓 [COMMAND CONTINUES] Expecting 'TABLES' to follow 'SHOW'
+
+        // 📜 [SAGA SEALED] A semicolon marks the end of the sacred chant.
+
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌑 [VISION INTERRUPTED] 'SHOW TABLES' spoken, yet the command ends in chaos — the saga demands a closing ';'!");
+        }
+        consume(TokenType.SEMICOLON);// 📜 [SAGA SEALED] A semicolon marks the end of the sacred chant.
+
+
+        // 2. Check for extra tokens (e.g., 'EXTRA_JUNK')
+        // 🕳️ [CHAOS LURKS] If dark runes remain, reject the spell.
+
+        if (position < tokens.size()) {
+            throw new RuntimeException("⚔️ [FENRIR'S CHAOS] 'SHOW TABLES' was spoken truly,yet dark runes linger — cleanse the command with purity!");
+        }
+        return new ShowTablesCommand();
+    }
+
+    /**
      * Parse INSERT INTO Statement - Handles the complete INSERT INTO statement parsing
      * Expected format: INSERT INTO table_name (column1, column2, ...) VALUES (value1, value2, ...);
      * Validates table name, column list, VALUES keyword, value list, and semicolon termination
@@ -543,7 +635,7 @@ public class Parser {
             throw new RuntimeException("🏹 [EMPTY QUIVER] The insertion was summoned, yet no columns were named — a hunter cannot shoot without arrows!");
         }
         // Parse the comma-separated list of column names
-        List<InsertColumnDefinition> columns = parseColumnInsertStatements();
+        List<ColumnDefinition> columns = parseColumnInsertStatements();
 
         // Check for closing parenthesis after column list
         if (position >= tokens.size()) {
@@ -583,7 +675,7 @@ public class Parser {
         }
 
         // Parse the comma-separated list of values
-        List<InsertValueDefinition> values = parseValuesInsertStatements();
+        List<ValueDefinition> values = parseValuesInsertStatements();
         // Check for closing parenthesis after values list
 
         if (position >= tokens.size()) {
@@ -611,26 +703,6 @@ public class Parser {
         return new InsertCommand(tableName, columns, values);
     }
 
-    /**
-     * Consume - Validates and consumes a token of expected type
-     * This is the core validation method ensuring token sequence correctness
-     *
-     * @param expectedType The token type that should be at current position
-     * @throws RuntimeException if current token doesn't match expected type
-     */
-    public void consume(TokenType expectedType) {
-        // Consume the current token if it matches the expected type, else throw error
-        if (position >= tokens.size()) {
-            throw new RuntimeException("🌌 [COSMOS' END] Expected " + expectedType + " but reached the void beyond all tokens — the universe of syntax has ended!");
-        }
-
-        Token token = peek();
-        if (token.type == expectedType) {
-            advance();
-        } else {
-            throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected " + expectedType + " but found " + token.type + " ('" + token.value + "')");
-        }
-    }
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -647,6 +719,7 @@ public class Parser {
 
             if (first.type == TokenType.CREATE) {
                 advance();
+
                 // Validate that CREATE is followed by TABLE
                 if (position >= tokens.size()) {
                     throw new RuntimeException("🔨 [FORGE OF THE GODS SILENT] 'CREATE' declared, yet the forge stands idle — TABLE or DATABASE expected, but void answered!");
@@ -678,11 +751,14 @@ public class Parser {
                     throw new RuntimeException("🏛️ [DROP UNGUIDED] You call upon destruction, yet name no realm — the void demands a target!");
                 }
                 Token second = peek();
-                if (second.type != TokenType.DATABASE) {
-                    throw new RuntimeException("🌀 [REALM MISALIGNED] 'DROP' spoken, but '" + second.value + "' stands in defiance — only DATABASE may be struck down!");
+                // PARSE DROP DATABASE COMMAND;
+                if (second.type == TokenType.DATABASE) {
+                    return parseDropDatabase();
+                } else if (second.type == TokenType.TABLE) {
+                    return parseDropTable();
+                } else {
+                    throw new RuntimeException("🌀 [REALM MISALIGNED] 'DROP' spoken, but '" + second.value + "' stands in defiance — only DATABASE AND TABLE may be struck down!");
                 }
-                // PARSE DROP COMMAND;
-                return parseDropDatabase();
 
             } else if (first.type == TokenType.SHOW) {
                 advance();
@@ -694,8 +770,10 @@ public class Parser {
                     return parseShowDatabase();
                 } else if (second.type == TokenType.CURRENT) {
                     return parseGetCurrentDatabase();
+                } else if (second.type == TokenType.TABLES) {
+                    return parseShowTables();
                 } else {
-                    throw new RuntimeException("🌀 [VISION DISTORTED] 'SHOW' spoken, yet '" + second.value + "' clouds the truth — only DATABASES OR CURRENT can be unveiled!");
+                    throw new RuntimeException("🌀 [VISION DISTORTED] 'SHOW' spoken, yet '" + second.value + "' clouds the truth — only DATABASES OR CURRENT OR TABLES can be unveiled!");
                 }
                 // PARSE SHOW COMMAND;
 

@@ -174,6 +174,9 @@ public class Lexer {
                         case "CURRENT":
                             tokens.add(new Token(TokenType.CURRENT,rawKeyword));
                             break;
+                        case "TABLES":
+                            tokens.add(new Token(TokenType.TABLES,rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }

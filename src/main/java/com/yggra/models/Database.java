@@ -1,6 +1,8 @@
 package com.yggra.models;
 
+import java.util.ArrayList;
 import java.util.List;
+
 /**
  *DATABASE CLASS - Handles the complete creation of databases statement parsing
  * Expected format: CREATE DATABASE database_name;
@@ -12,10 +14,9 @@ public class Database {
     public String databaseName;
     public List<Table> tables;
 
-
-    public Database(String databaseName, List<Table> tables) {
+    public Database(String databaseName) {
         this.databaseName = databaseName;
-        this.tables =tables;
+        this.tables =new ArrayList<>();
     }
     public String getName(){
         return databaseName;
