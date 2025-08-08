@@ -540,9 +540,10 @@ public class Parser {
      * ⚔️ [WRATH OF ODIN] Parses the ALTER DATABASE RENAME command.
      * This method calls upon the wisdom of the Allfather to take an ancient realm’s name
      * and bestow upon it a new one. It ensures the ritual follows the sacred syntax:
-     *    ALTER DATABASE <old_name> RENAME TO <new_name>;
+     * ALTER DATABASE <old_name> RENAME TO <new_name>;
      * Each step of the saga is guarded by divine checks—if an intruder dares break the
      * rules, the parser strikes them down with the fury of the Nine Realms.
+     *
      * @return AlterDatabaseNameCommand imbued with the will of Asgard.
      * @throws RuntimeException if the syntax defies the sacred laws of Yggdrasil.
      */
@@ -622,15 +623,15 @@ public class Parser {
      * back to the realm of no database (NONE). It ensures the ritual ends
      * with the sacred mark `;` and punishes any unworthy symbols that follow.
      * Syntax demanded by the gods:
-     *    EXIT DATABASE;
+     * EXIT DATABASE;
      *
      * @return ExitDatabaseCommand blessed by Heimdall to guide the warrior out.
      * @throws RuntimeException if chaos runes remain after the command.
      */
 
-    private ExitDatabaseCommand parseExitDatabase(){
+    private ExitDatabaseCommand parseExitDatabase() {
         consume(TokenType.NONE);
-        if(position>=tokens.size()){
+        if (position >= tokens.size()) {
             System.out.println("expected a semi colon");
         }
         consume(TokenType.SEMICOLON);
@@ -826,6 +827,73 @@ public class Parser {
 
 
     /**
+     * ⚔️ [RITUAL OF ALTER TABLE] Interprets the sacred words of the ALTER TABLE RENAME command
+     * and forges an AlterTableNameCommand worthy of execution.
+     * Functional Saga:
+     * 1. 📜 Expect and consume the TABLE rune following the ALTER invocation.
+     *    - Without it, the ritual loses its purpose.
+     * 2. 🏛️ Read the old table name (IDENTIFIER) — the name to be struck from the annals.
+     *    - If absent or invalid, the ritual fails before it begins.
+     * 3. 🗡️ Expect the RENAME rune — the moment of transformation.
+     *    - Any other rune here is heresy.
+     * 4. 🌟 Read the new table name (IDENTIFIER) — the name to be etched into eternity.
+     * 5. 🔒 Expect the SEMICOLON rune to seal the ritual.
+     *    - Without this seal, the realms remain unstable.
+     * 6. 🌪️ If any lingering spirits (extra tokens) remain after the seal,
+     *    banish them with a stern warning.
+     *
+     * @return AlterTableNameCommand carrying the old and new names for execution.
+     * @throws RuntimeException if syntax is broken or runes are missing.
+     */
+    private AlterTableNameCommand parseAlterTable() {
+        // 1. 📜 Consume the TABLE rune
+        consume(TokenType.TABLE);
+
+        // 2. 🏛️ Read the old table name
+        if (position >= tokens.size()) {
+            throw new RuntimeException("❌ [NAMELESS TABLE] No old name was provided for the ritual.");
+        }
+        String oldTableName = peek().value;
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("❌ [INVALID RUNE] Expected a table name but received: " + peek().value);
+        }
+        consume(TokenType.IDENTIFIER);
+
+        // 3. 🗡️ Expect the RENAME rune
+        if (position >= tokens.size()) {
+            throw new RuntimeException("❌ [BROKEN INCANTATION] Nothing follows the old name — RENAME rune is missing.");
+        }
+        if (peek().type != TokenType.RENAME) {
+            throw new RuntimeException("❌ [HERESY] Expected the sacred RENAME rune but received: " + peek().value);
+        }
+        consume(TokenType.RENAME);
+
+        // 4. 🌟 Read the new table name
+        if (position >= tokens.size()) {
+            throw new RuntimeException("❌ [NAMELESS FUTURE] No new name was provided to replace the old.");
+        }
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("❌ [INVALID RUNE] Expected a new table name but received: " + peek().value);
+        }
+        String newTableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 5. 🔒 Expect the SEMICOLON rune
+        if (position >= tokens.size()) {
+            throw new RuntimeException("❌ [UNSEALED RITUAL] No semicolon was provided to seal the statement.");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 6. 🌪️ Banish lingering spirits (extra tokens)
+        if (position < tokens.size()) {
+            throw new RuntimeException("🌪️ [LINGERING SPIRITS] Additional tokens haunt the completed statement — banish these phantoms to complete the ritual!");
+        }
+
+        // Return the forged command
+        return new AlterTableNameCommand(oldTableName, newTableName);
+    }
+
+    /**
      * Parse - Main entry point for parsing SQL commands
      * Determines command type (CREATE or INSERT) and delegates to appropriate parser
      * Handles top-level parsing errors with comprehensive error reporting
@@ -907,10 +975,9 @@ public class Parser {
                     return parseUseDatabase();
                 }
                 // PARSE SHOW COMMAND;
-                else if (second.type==TokenType.NONE) {
+                else if (second.type == TokenType.NONE) {
                     return parseExitDatabase();
-                }
-                else {
+                } else {
                     throw new RuntimeException("🌀 [REALM MISCAST] 'USE' spoken, yet '" + second.value + "' defies the gods — only a valid realm name may follow!");
                 }
             } else if (peek().type == TokenType.ALTER) {
@@ -925,17 +992,25 @@ public class Parser {
                 }
 
                 Token second = peek();
-                if (second.type != TokenType.DATABASE) {
-                    advance();
+                if (second.type == TokenType.DATABASE) {
                     if (position >= tokens.size()) {
                         throw new RuntimeException("""
                                 🌪️ [CHAOS WHISPER] No target specified for ALTER!
                                 ⚔️ Valid forms:
-                                   ALTER DATABASE <name> RENAME TO <new_name>
-                                   ALTER TABLE <name> RENAME TO <new_name>""");
+                                   ALTER DATABASE <name> RENAME  <new_name>.""");
                     }
+                    return parseAlterDatabase();
+                } else if (second.type == TokenType.TABLE) {
+                    if (position >= tokens.size()) {
+                        throw new RuntimeException("""
+                                🌪️ [CHAOS WHISPER] No target specified for ALTER!
+                                ⚔️ Valid forms:
+                                   ALTER TABLE <name> RENAME  <new_name>.""");
+                    }
+                    return parseAlterTable();
+                } else {
+                    throw new RuntimeException("except database and table alter doesn't work");
                 }
-                return parseAlterDatabase();
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }

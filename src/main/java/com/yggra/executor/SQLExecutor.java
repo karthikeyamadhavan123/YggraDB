@@ -73,6 +73,13 @@ public class SQLExecutor {
           // returning to the cosmic gateway, unbound to any land.
             case ExitDatabaseCommand exitDatabaseCommand -> DatabaseManager.getInstance().exitDatabase();
 
+            // ⚔️ [EXECUTION OF THE RITUAL]
+            // The command scroll has been forged by the parser and now lies in the hands of the Executor.
+            // Step 1: Summon the DatabaseManager — the All-Father of realms — through the sacred singleton.
+            // Step 2: Pass unto it the old and new table names carried in the scroll.
+            // Step 3: The DatabaseManager will wield the Blade of Rename, altering the realm’s annals forever.
+
+            case AlterTableNameCommand alterTableNameCommand -> DatabaseManager.getInstance().alterTableName(alterTableNameCommand.oldTableName,alterTableNameCommand.newTableName);
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

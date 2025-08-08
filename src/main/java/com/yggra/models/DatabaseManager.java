@@ -193,9 +193,9 @@ public class DatabaseManager {
      * 🌉 [BIFROST RENAME RITUAL] 🌉
      * Reshapes a realm’s destiny by changing its name within the World Tree’s registry.
      * This will:
-     *  1️⃣ Ensure you are not standing inside any realm before the renaming begins.
-     *  2️⃣ Verify both old and new names are worthy and valid.
-     *  3️⃣ Update the cosmic ledger (HashMap key) and the realm’s own soul (Database.name).
+     * 1️⃣ Ensure you are not standing inside any realm before the renaming begins.
+     * 2️⃣ Verify both old and new names are worthy and valid.
+     * 3️⃣ Update the cosmic ledger (HashMap key) and the realm’s own soul (Database.name).
      *
      * @param oldName The name of the realm before transformation
      * @param newName The name it shall bear after the Bifrost’s blessing
@@ -254,14 +254,14 @@ public class DatabaseManager {
      * 🚪 [REALM EXIT] 🚪
      * Closes the Bifrost and returns the warrior to the void between realms.
      * Purpose:
-     *    - Allows the adventurer to step outside the currently bound database realm.
-     *    - Sets the `currentDatabase` to null, leaving the warrior unbound.
+     * - Allows the adventurer to step outside the currently bound database realm.
+     * - Sets the `currentDatabase` to null, leaving the warrior unbound.
      * Behavior:
-     *    - If no realm is currently entered, warns the adventurer that there is no door to walk through.
-     *    - If a realm is bound, the bond is severed, and the warrior returns to the cosmic gateway (YggraDB prompt).
+     * - If no realm is currently entered, warns the adventurer that there is no door to walk through.
+     * - If a realm is bound, the bond is severed, and the warrior returns to the cosmic gateway (YggraDB prompt).
      * Example:
-     *    USE NONE;
-     *    -- You are now outside all realms.
+     * USE NONE;
+     * -- You are now outside all realms.
      */
 
 
@@ -461,4 +461,46 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * ⚔️ [BLADE OF RENAME] Alters the name of a sacred table within the current realm.
+     * Functional Saga:
+     * 1. 🔮 Verify that you stand within a bound realm (a database in use).
+     * - Without this, the Bifrost cannot bridge your will to the table.
+     * 2. 🕵️ Seek the ancient table by its old name among the stones of the realm.
+     * - If it is but a phantom, cry out in warning and end the ritual.
+     * 3. 🛡️ Traverse the hall of tables:
+     * - When the old name is found, shatter it from the annals and forge the new name in its place.
+     * - End your march the moment the deed is done — no need to disturb the others.
+     * 4. 📜 Declare to the Nine Realms that the renaming has been sealed.
+     *
+     * @param oldTableName The forsaken name of the table to be replaced.
+     * @param newTableName The new name, worthy of the gods.
+     * @throws RuntimeException if no realm is bound or the table lies not within this realm.
+     */
+
+    public void alterTableName(String oldTableName, String newTableName) {
+        // 1. 🔮 Ensure the Bifrost is aligned with a realm
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    "🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>"
+            );
+        }
+        // 2. 🕵️ Search for the ancient table by its old name
+        boolean tableExists = currentDatabase.tables.stream().anyMatch(table -> table.tableName.equals(oldTableName));
+        if (!tableExists) {
+            throw new RuntimeException(
+                    "❌ [PHANTOM TABLE] Table '" + oldTableName + "' does not exist in this realm!\n" +
+                            "🧭 Seek it in other lands or summon it anew with CREATE TABLE."
+            );
+        }
+        for (Table table : currentDatabase.tables) {
+            if (table.getTableName().equals(oldTableName)) {
+                table.setTableName(newTableName); // The ritual is complete; leave the hall in silence
+                break;
+            }
+        }
+        // 4. 📜 Announce the completion of the renaming ritual
+        System.out.println("🏛️ [REALM SHIFT] Table '" + oldTableName + "' has been reborn as '" + newTableName + "'.");
+    }
 }
+
