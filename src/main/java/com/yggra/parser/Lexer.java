@@ -9,18 +9,23 @@ import java.util.ArrayList;
  */
 public class Lexer {
 
-    /** Checks if the character is an alphabetic letter (A-Z, a-z) */
+    /**
+     * Checks if the character is an alphabetic letter (A-Z, a-z)
+     */
     public boolean isAlpha(char ch) {
         return Character.isAlphabetic(ch);
     }
 
-    /** Checks if the character is a digit (0-9) */
+    /**
+     * Checks if the character is a digit (0-9)
+     */
     public boolean isDigit(char ch) {
         return Character.isDigit(ch);
     }
 
     /**
      * Tokenizes the input SQL string into a list of Token objects.
+     *
      * @param input Raw SQL query as string.
      * @return List of Tokens.
      */
@@ -50,10 +55,11 @@ public class Lexer {
 
     /**
      * Processes a single character from the input string and adds the corresponding token(s) to the list.
-     * @param input The raw SQL query string.
+     *
+     * @param input   The raw SQL query string.
      * @param current The current index in the input string.
-     * @param tokens The list of tokens being built.
-     * @param ch The character to process.
+     * @param tokens  The list of tokens being built.
+     * @param ch      The character to process.
      * @return The updated current index after processing the character.
      * @throws RuntimeException if an unclosed string literal or forbidden symbol is encountered.
      */
@@ -82,16 +88,14 @@ public class Lexer {
                 current++; // Skip opening quote
                 StringBuilder stringLiteral = new StringBuilder();
                 while (current < input.length()) {
-                    if(input.charAt(current)=='\''){
-                        if(input.charAt(current+1)=='\''){
-                            stringLiteral.append(input.charAt(current+1));
-                            current+=2;
-                        }
-                        else{
+                    if (input.charAt(current) == '\'') {
+                        if (input.charAt(current + 1) == '\'') {
+                            stringLiteral.append(input.charAt(current + 1));
+                            current += 2;
+                        } else {
                             break; //End of string
                         }
-                    }
-                    else{
+                    } else {
                         stringLiteral.append(input.charAt(current));
                         current++;
                     }
@@ -157,25 +161,34 @@ public class Lexer {
                             tokens.add(new Token(TokenType.VARCHAR, rawKeyword));
                             break;
                         case "DATABASE":
-                            tokens.add(new Token(TokenType.DATABASE,rawKeyword));
+                            tokens.add(new Token(TokenType.DATABASE, rawKeyword));
                             break;
                         case "USE":
-                            tokens.add(new Token(TokenType.USE,rawKeyword));
+                            tokens.add(new Token(TokenType.USE, rawKeyword));
                             break;
                         case "DROP":
-                            tokens.add(new Token(TokenType.DROP,rawKeyword));
+                            tokens.add(new Token(TokenType.DROP, rawKeyword));
                             break;
                         case "SHOW":
-                            tokens.add(new Token(TokenType.SHOW,rawKeyword));
+                            tokens.add(new Token(TokenType.SHOW, rawKeyword));
                             break;
                         case "DATABASES":
-                            tokens.add(new Token(TokenType.DATABASES,rawKeyword));
+                            tokens.add(new Token(TokenType.DATABASES, rawKeyword));
                             break;
                         case "CURRENT":
-                            tokens.add(new Token(TokenType.CURRENT,rawKeyword));
+                            tokens.add(new Token(TokenType.CURRENT, rawKeyword));
                             break;
                         case "TABLES":
-                            tokens.add(new Token(TokenType.TABLES,rawKeyword));
+                            tokens.add(new Token(TokenType.TABLES, rawKeyword));
+                            break;
+                        case "ALTER":
+                            tokens.add(new Token(TokenType.ALTER, rawKeyword));
+                            break;
+                        case "RENAME":
+                            tokens.add(new Token(TokenType.RENAME, rawKeyword));
+                            break;
+                        case "NONE":
+                            tokens.add(new Token(TokenType.NONE, rawKeyword));
                             break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));

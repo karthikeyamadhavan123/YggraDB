@@ -230,7 +230,7 @@ public class Parser {
             throw new RuntimeException("📦 [EMPTY OFFERING] Expected value for insertion but found void — the gods demand tribute!");
         }
 
-        if(peek().value.contains("--") || peek().value.contains(";") || peek().value.matches(".*\\W&&[^_].*")){
+        if (peek().value.contains("--") || peek().value.contains(";") || peek().value.matches(".*\\W&&[^_].*")) {
             throw new RuntimeException(
                     "🌪️ [CHAOS STORM] " +
                             "Data values cannot contain ';' or '--'!"
@@ -537,6 +537,113 @@ public class Parser {
     }
 
     /**
+     * ⚔️ [WRATH OF ODIN] Parses the ALTER DATABASE RENAME command.
+     * This method calls upon the wisdom of the Allfather to take an ancient realm’s name
+     * and bestow upon it a new one. It ensures the ritual follows the sacred syntax:
+     *    ALTER DATABASE <old_name> RENAME TO <new_name>;
+     * Each step of the saga is guarded by divine checks—if an intruder dares break the
+     * rules, the parser strikes them down with the fury of the Nine Realms.
+     * @return AlterDatabaseNameCommand imbued with the will of Asgard.
+     * @throws RuntimeException if the syntax defies the sacred laws of Yggdrasil.
+     */
+
+    private AlterDatabaseNameCommand parseAlterDatabase() {
+        // 1. Consume DATABASE token (already verified by caller)
+        consume(TokenType.DATABASE);
+
+        // 2. Verify old database name exists in command
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    "🌌 [VOID WHISPER] The old realm name is missing!\n" +
+                            "⚔️ Usage: ALTER DATABASE <old_name> RENAME TO <new_name>;"
+            );
+        }
+
+        // 3. Validate old name is a proper identifier
+        String oldName = peek().value;
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "🔥 [FLAMES OF KRATOS] '" + oldName + "' is not a valid realm name!\n" +
+                            "🛡️ Names must be unquoted and free of dark runes (; -- ' etc.)"
+            );
+        }
+        consume(TokenType.IDENTIFIER);
+
+        // 4. Ensure RENAME keyword follows
+        if (peek().type != TokenType.RENAME) {
+            throw new RuntimeException(
+                    "⚡ [THOR'S JUDGMENT] Expected 'RENAME' but found '" + peek().value + "'!\n" +
+                            "🌠 The Allfather demands: ALTER DATABASE <name> RENAME TO <new_name>;"
+            );
+        }
+        consume(TokenType.RENAME);
+
+        // 5. Validate new name is a proper identifier
+        String newName = peek().value;
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "🗡️ [MIST OF NIFLHEIM] '" + newName + "' is an unworthy new name!\n" +
+                            "⚒️ Example: ALTER DATABASE Valhalla RENAME TO Asgard;"
+            );
+        }
+        consume(TokenType.IDENTIFIER);
+
+        // 6. Verify command termination
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    "🌉 [BIFROST UNSEALED] Your command lacks the sacred semicolon (;)!\n" +
+                            "📜 Complete your saga properly: ...TO <name>;"
+            );
+        }
+
+        // 7. Consume semicolon
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "💀 [HELHEIM'S GAZE] Expected ';' but found '" + peek().value + "'!\n" +
+                            "🛡️ All commands must end with the mark of closure!"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 8. Reject any trailing junk tokens
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "🌪️ [CHAOS STORM] Junk symbols after command!\n" +
+                            "⚔️ Only one sacred incantation per line is permitted."
+            );
+        }
+        // 9. Return the executable command
+        return new AlterDatabaseNameCommand(oldName, newName);
+    }
+
+    /**
+     * 🛡️ [VALHALLA’S DOOR] Parses the EXIT DATABASE command.
+     * This method seals the gates to the current realm, returning the warrior
+     * back to the realm of no database (NONE). It ensures the ritual ends
+     * with the sacred mark `;` and punishes any unworthy symbols that follow.
+     * Syntax demanded by the gods:
+     *    EXIT DATABASE;
+     *
+     * @return ExitDatabaseCommand blessed by Heimdall to guide the warrior out.
+     * @throws RuntimeException if chaos runes remain after the command.
+     */
+
+    private ExitDatabaseCommand parseExitDatabase(){
+        consume(TokenType.NONE);
+        if(position>=tokens.size()){
+            System.out.println("expected a semi colon");
+        }
+        consume(TokenType.SEMICOLON);
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "🌪️ [CHAOS STORM] Junk symbols after command!\n" +
+                            "⚔️ Only one sacred incantation per line is permitted."
+            );
+        }
+        return new ExitDatabaseCommand();
+    }
+
+    /**
      * Parses a DROP TABLE statement and constructs a DropTableCommand.
      * Expected syntax: DROP TABLE <table_name>;
      *
@@ -733,7 +840,6 @@ public class Parser {
 
             if (first.type == TokenType.CREATE) {
                 advance();
-
                 // Validate that CREATE is followed by TABLE
                 if (position >= tokens.size()) {
                     throw new RuntimeException("🔨 [FORGE OF THE GODS SILENT] 'CREATE' declared, yet the forge stands idle — TABLE or DATABASE expected, but void answered!");
@@ -797,11 +903,39 @@ public class Parser {
                     throw new RuntimeException("🌉 [BIFROST UNBOUND] You seek passage, yet name no realm — which world shall your will command?");
                 }
                 Token second = peek();
-                if (second.type != TokenType.IDENTIFIER) {
-                    throw new RuntimeException("🌀 [REALM MISCAST] 'USE' spoken, yet '" + second.value + "' defies the gods — only a valid realm name may follow!");
+                if (second.type == TokenType.IDENTIFIER) {
+                    return parseUseDatabase();
                 }
                 // PARSE SHOW COMMAND;
-                return parseUseDatabase();
+                else if (second.type==TokenType.NONE) {
+                    return parseExitDatabase();
+                }
+                else {
+                    throw new RuntimeException("🌀 [REALM MISCAST] 'USE' spoken, yet '" + second.value + "' defies the gods — only a valid realm name may follow!");
+                }
+            } else if (peek().type == TokenType.ALTER) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] ALTER command incomplete!
+                                    🛡️ You must specify: ALTER DATABASE <name> RENAME TO <new_name>
+                                    🌌 Example: ALTER DATABASE Valhalla RENAME TO Asgard"""
+                    );
+                }
+
+                Token second = peek();
+                if (second.type != TokenType.DATABASE) {
+                    advance();
+                    if (position >= tokens.size()) {
+                        throw new RuntimeException("""
+                                🌪️ [CHAOS WHISPER] No target specified for ALTER!
+                                ⚔️ Valid forms:
+                                   ALTER DATABASE <name> RENAME TO <new_name>
+                                   ALTER TABLE <name> RENAME TO <new_name>""");
+                    }
+                }
+                return parseAlterDatabase();
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }

@@ -21,6 +21,9 @@ public enum TokenType {
     DATABASES,
     CURRENT,
     TABLES,
+    ALTER,
+    RENAME,
+    NONE,
 
 
     // 📐 [DATA TYPE RUNES] – Define the essence of columns

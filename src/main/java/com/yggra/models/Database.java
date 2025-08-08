@@ -18,8 +18,14 @@ public class Database {
         this.databaseName = databaseName;
         this.tables =new ArrayList<>();
     }
+
     public String getName(){
         return databaseName;
+    }
+
+    //setting newName while rename
+    public void setName(String newName){
+        this.databaseName=newName;
     }
 
     @Override

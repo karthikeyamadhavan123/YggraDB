@@ -57,11 +57,22 @@ public class SQLExecutor {
             // ⚔️ [DECREE OF DELETION] Executes the DROP TABLE command to remove a table from the current database realm.
 
             case DropTableCommand dropTableCommand ->
-                DatabaseManager.getInstance().dropTable(dropTableCommand.tableName);
+                    DatabaseManager.getInstance().dropTable(dropTableCommand.tableName);
 
             // 📜 [REVELATION OF TABLES] Executes the SHOW TABLES command to unveil all tables within the current database realm.
-            case ShowTablesCommand showTablesCommand ->
-                    DatabaseManager.getInstance().showAllTables();
+            case ShowTablesCommand showTablesCommand -> DatabaseManager.getInstance().showAllTables();
+
+            // ⚔️ [REALM SHAPING] The gods command a realm to change its name,
+            //    forging a new identity within the roots of Yggdrasil.
+            case AlterDatabaseNameCommand alterDatabaseNameCommand -> DatabaseManager.getInstance().renameDatabase(
+                    alterDatabaseNameCommand.oldDatabaseName,
+                    alterDatabaseNameCommand.newDatabaseName
+            );
+
+          // 🚪 [BIFROST CLOSED] The warrior steps out from the current realm,
+          // returning to the cosmic gateway, unbound to any land.
+            case ExitDatabaseCommand exitDatabaseCommand -> DatabaseManager.getInstance().exitDatabase();
+
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

@@ -2,6 +2,7 @@ package com.yggra.cli;
 
 import com.yggra.commands.SQLCommand;
 import com.yggra.executor.SQLExecutor;
+import com.yggra.models.Database;
 import com.yggra.models.DatabaseManager;
 import com.yggra.parser.Parser;
 import com.yggra.parser.Token;
@@ -26,7 +27,6 @@ public class YggraREPL {
     private final Lexer lexer;
     // ⚔️ Executor – the sword that enacts divine will
     private final SQLExecutor executor;
-
 
     public YggraREPL() {
         /*

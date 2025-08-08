@@ -190,6 +190,92 @@ public class DatabaseManager {
 
 
     /**
+     * 🌉 [BIFROST RENAME RITUAL] 🌉
+     * Reshapes a realm’s destiny by changing its name within the World Tree’s registry.
+     * This will:
+     *  1️⃣ Ensure you are not standing inside any realm before the renaming begins.
+     *  2️⃣ Verify both old and new names are worthy and valid.
+     *  3️⃣ Update the cosmic ledger (HashMap key) and the realm’s own soul (Database.name).
+     *
+     * @param oldName The name of the realm before transformation
+     * @param newName The name it shall bear after the Bifrost’s blessing
+     */
+
+
+    public void renameDatabase(String oldName, String newName) {
+        // 1. Check if inside a database
+        if (hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    "⚡ [BIFROST LOCKED] You cannot rename realms while inside one!\n" +
+                            "🛡️ First exit with: USE NONE;"
+            );
+        }
+
+        // 2. Validate names
+        if (oldName == null || oldName.trim().isEmpty()) {
+            throw new RuntimeException(
+                    "🌌 [VOID WHISPER] The old realm name is empty!\n" +
+                            "⚔️ Speak the name of the realm to be reshaped!"
+            );
+        }
+
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new RuntimeException(
+                    "🌀 [FATE UNWRITTEN] The new realm name is empty!\n" +
+                            "⚒️ Whisper a name worthy of Yggdrasil's branches!"
+            );
+        }
+
+        // 3. Thread-safe rename operation
+        synchronized (this) {
+            if (!databases.containsKey(oldName)) {
+                throw new RuntimeException(
+                        "❌ [REALM UNKNOWN] No realm named '" + oldName + "' exists!\n" +
+                                "🌍 Available realms: " + String.join(", ", databases.keySet())
+                );
+            }
+            // Fetch and remove the old realm from the cosmic ledger
+            Database dbToRename = databases.remove(oldName);
+            // Update the realm’s own name so it knows its new identity
+            dbToRename.setName(newName);
+            databases.put(newName, dbToRename);
+
+            // 🎉 Announce the transformation
+            System.out.println(
+                    "🌠 [YGGDRASIL'S WILL] Realm '" + oldName +
+                            "' is now known as '" + newName + "'!"
+            );
+        }
+
+    }
+
+
+    /**
+     * 🚪 [REALM EXIT] 🚪
+     * Closes the Bifrost and returns the warrior to the void between realms.
+     * Purpose:
+     *    - Allows the adventurer to step outside the currently bound database realm.
+     *    - Sets the `currentDatabase` to null, leaving the warrior unbound.
+     * Behavior:
+     *    - If no realm is currently entered, warns the adventurer that there is no door to walk through.
+     *    - If a realm is bound, the bond is severed, and the warrior returns to the cosmic gateway (YggraDB prompt).
+     * Example:
+     *    USE NONE;
+     *    -- You are now outside all realms.
+     */
+
+
+    public void exitDatabase() {
+        // 🛡️ Check if warrior is even inside a realm before attempting to leave
+        if (!hasCurrentDatabase()) {
+            System.out.println("You have to be inside a db to perform this operation");
+        }
+        // ⚔️ Sever the bond with the current realm
+        currentDatabase = null;
+    }
+
+
+    /**
      * 🏗️ [TABLE FORGING] 🏗️
      * Crafts a new table in the current realm.
      *
