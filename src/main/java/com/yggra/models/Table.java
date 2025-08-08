@@ -77,7 +77,7 @@ public class Table {
         // Footer
         builder.append("🌊").append("+-----------------".repeat(columnList.size()));
         builder.append("+\n");
-        builder.append("Rows: ").append(rowList.size()).append(" | Forged in the fires of ");
+        builder.append("Rows: ").append(rowList.size()).append(" | Forged in the fires of Yggdrasil ");
 
         return builder.toString();
     }

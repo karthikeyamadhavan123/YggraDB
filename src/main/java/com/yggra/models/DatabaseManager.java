@@ -81,13 +81,21 @@ public class DatabaseManager {
      * Forges a new database realm in the cosmos of Yggdrasil.
      *
      * @param dbName Name of the new realm to create
-     * @throws RuntimeException if name is empty or realm exists
+     * @throws RuntimeException if name is empty or realm exists You cant create a database inside a database
      */
 
     public void createDatabase(String dbName) {
         if (dbName == null || dbName.trim().isEmpty()) {
             throw new RuntimeException("🌀 [VOID WHISPER] The realm name cannot be empty — even chaos needs form!");
         }
+        // Prevent nested names (e.g., "Valhalla.Asgard")
+        if (dbName.contains(".")) {
+            throw new RuntimeException(
+                    "⚡ [BIFROST SHATTERED] Realm names cannot contain '.' — " +
+                            "you cannot forge nested realms!"
+            );
+        }
+
         synchronized (this) {
             if (databases.containsKey(dbName)) {
                 throw new RuntimeException("🔥 [FLAMES OF KRATOS] The realm '" + dbName + "' already exists — the gods do not permit duplicate worlds!");
@@ -138,7 +146,6 @@ public class DatabaseManager {
                 throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Cannot strike down '" + dbName + "' — this realm was never born!");
             }
             if (currentDatabase != null && currentDatabase.getName().equals(dbName)) {
-                System.out.println("🌪️ [REALM SEVERED] 'Asgard' was your bound realm — you now drift between worlds!");
                 currentDatabase = null;
             }
             databases.remove(dbName);
@@ -150,6 +157,7 @@ public class DatabaseManager {
     /**
      * 🔮 [CURRENT REALM DIVINATION] 🔮
      * Reveals the name of the currently bound realm.
+     *
      * @return Name of the current database
      * @throws RuntimeException if no realm is bound
      */

@@ -229,6 +229,13 @@ public class Parser {
         if (position >= tokens.size()) {
             throw new RuntimeException("📦 [EMPTY OFFERING] Expected value for insertion but found void — the gods demand tribute!");
         }
+
+        if(peek().value.contains("--") || peek().value.contains(";") || peek().value.matches(".*\\W&&[^_].*")){
+            throw new RuntimeException(
+                    "🌪️ [CHAOS STORM] " +
+                            "Data values cannot contain ';' or '--'!"
+            );
+        }
         // Accept various token types for INSERT operations:
         if (peek().type == TokenType.NUMBER_LITERAL) {
             // Column names are just consumed here
@@ -327,6 +334,7 @@ public class Parser {
         if (peek().type != TokenType.IDENTIFIER) {
             throw new RuntimeException("⚔️ [NAMELESS ALTAR] After 'CREATE TABLE', a table name was demanded — yet none was offered to the gods.");
         }
+
         consume(TokenType.IDENTIFIER);
 
         // Check for opening parenthesis
@@ -391,10 +399,16 @@ public class Parser {
             throw new RuntimeException("🏛️ [CREATE DATABASE UNNAMED] You invoke creation yet grant no name — a realm cannot rise from the void without identity!");
         }
         String dbName = peek().value;
+
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("💀 [PARSING CATASTROPHE] Realm names must be unquoted!⚔️ Example: CREATE DATABASE Valhalla");
+        }
+
         consume(TokenType.IDENTIFIER);
         if (position >= tokens.size()) {
             throw new RuntimeException("⚔️ [SAGA UNFINISHED] The command lingers in limbo — seal its fate with ';'!");
         }
+
         consume(TokenType.SEMICOLON);
 
         // 2. Check for extra tokens (e.g., 'EXTRA_JUNK')
