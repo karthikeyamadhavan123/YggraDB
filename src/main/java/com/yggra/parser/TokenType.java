@@ -24,6 +24,10 @@ public enum TokenType {
     ALTER,
     RENAME,
     NONE,
+    ADD,
+    COLUMN,
+    TO,
+    DEFAULT,
 
 
     // 📐 [DATA TYPE RUNES] – Define the essence of columns

@@ -81,6 +81,19 @@ public class SQLExecutor {
 
             case AlterTableNameCommand alterTableNameCommand -> DatabaseManager.getInstance().alterTableName(alterTableNameCommand.oldTableName,alterTableNameCommand.newTableName);
 
+            // ⚡ When the realms call for the forging of new columns into an ancient table
+            case AlterAddColumnCommand alterAddColumnCommand ->
+                // Summon the DatabaseManager singleton and channel the power to alter the table:
+                //  - toAddColumns  → The blueprints of the new columns to forge
+                //  - tableName     → The sacred name of the table to be reforged
+                //  - defaultValue  → The divine essence to be placed in every existing row for these new columns
+                    DatabaseManager.getInstance().alterColumnsofTable(
+                            alterAddColumnCommand.toAddColumns,
+                            alterAddColumnCommand.tableName,
+                            alterAddColumnCommand.defaultValue
+                    );
+
+
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->
                     throw new RuntimeException("⚡ [CHAOS UNLEASHED] The command you utter holds no power in these realms — speak a known incantation!");

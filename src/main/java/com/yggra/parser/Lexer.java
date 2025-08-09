@@ -190,6 +190,18 @@ public class Lexer {
                         case "NONE":
                             tokens.add(new Token(TokenType.NONE, rawKeyword));
                             break;
+                        case "ADD":
+                            tokens.add(new Token(TokenType.ADD, rawKeyword));
+                            break;
+                        case "COLUMN":
+                            tokens.add(new Token(TokenType.COLUMN, rawKeyword));
+                            break;
+                        case "TO":
+                            tokens.add(new Token(TokenType.TO, rawKeyword));
+                            break;
+                        case "DEFAULT":
+                            tokens.add(new Token(TokenType.DEFAULT, rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }

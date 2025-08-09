@@ -486,21 +486,53 @@ public class DatabaseManager {
             );
         }
         // 2. 🕵️ Search for the ancient table by its old name
-        boolean tableExists = currentDatabase.tables.stream().anyMatch(table -> table.tableName.equals(oldTableName));
-        if (!tableExists) {
-            throw new RuntimeException(
-                    "❌ [PHANTOM TABLE] Table '" + oldTableName + "' does not exist in this realm!\n" +
-                            "🧭 Seek it in other lands or summon it anew with CREATE TABLE."
-            );
-        }
-        for (Table table : currentDatabase.tables) {
-            if (table.getTableName().equals(oldTableName)) {
-                table.setTableName(newTableName); // The ritual is complete; leave the hall in silence
-                break;
-            }
-        }
+        Table table = getTable(oldTableName);
+
+        // The ritual is complete; leave the hall in silence
+        table.setTableName(newTableName);
         // 4. 📜 Announce the completion of the renaming ritual
         System.out.println("🏛️ [REALM SHIFT] Table '" + oldTableName + "' has been reborn as '" + newTableName + "'.");
+    }
+
+    /**
+     * Alters the structure of an existing table by adding new columns to it.
+     *
+     * @param toAddColumns The list of new columns to forge into the table.
+     * @param tableName    The name of the table whose fate is about to change.
+     * @param defaultValues default value is null.
+     */
+
+    public void alterColumnsofTable(List<ColumnDefinition> toAddColumns, String tableName, List<Object> defaultValues) {
+        // 1. 🔮 Ensure the Bifrost is aligned with a realm (database is selected)
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    "🌌 [VOID OF REALMS] No database bound to your will! ⚡ " +
+                            "First, summon a realm with: USE <database_name>"
+            );
+        }
+
+        // 2. 🕵️ Seek out the ancient table by name
+        Table table = getTable(tableName);
+        if (table == null) {
+            throw new RuntimeException(
+                    "🪨 [TABLE LOST IN THE MISTS] The table '" + tableName + "' could not be found in this realm! " +
+                            "Ensure it exists before attempting to alter it."
+            );
+        }
+
+        // 3. 📜 Ensure columns to add are not empty
+        if (toAddColumns == null || toAddColumns.isEmpty()) {
+            throw new RuntimeException(
+                    "⚠️ [EMPTY OFFERING] No columns were provided for addition. " +
+                            "The gods demand at least one new column!"
+            );
+        }
+        // 4. 🏗️ Add each new column to the table
+        for (int i = 0; i < toAddColumns.size(); i++) {
+            table.addColumnsToExistingTable(toAddColumns.get(i),defaultValues!=null? defaultValues.get(i):null);
+            System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() +
+                    "' has been bestowed upon table '" + tableName + "'!");
+        }
     }
 }
 

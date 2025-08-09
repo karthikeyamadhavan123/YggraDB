@@ -83,4 +83,10 @@ public class ColumnDefinition {
         }
         return columnName + " UNKNOWN_TYPE";
     }
+
+    //returns a current columnName
+    public String getColumnName(){
+        return columnName;
+    }
+
 }

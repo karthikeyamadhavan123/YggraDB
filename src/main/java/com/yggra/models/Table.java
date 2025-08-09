@@ -36,15 +36,48 @@ public class Table {
         this.rowList = new ArrayList<>();
     }
 
+    //gets the table name of the current table
+    public String getTableName() {
+        return tableName;
+    }
+
     //sets the table name on trigger of alter table command
     public void setTableName(String newName) {
         this.tableName = newName;
     }
 
-    //gets the table name of the current table
-    public String getTableName(){
-        return tableName;
+    /**
+     * Adds a single new column to an existing table's schema.
+     *
+     * @param column The new column to be embedded into the table.
+     */
+
+    public void addColumnsToExistingTable(ColumnDefinition column, Object defaultValue) {
+        if (column == null) {
+            throw new RuntimeException(
+                    "❌ [NULL FORGE] Cannot add a column forged from nothingness. " +
+                            "Provide a valid column definition!"
+            );
+        }
+
+        for (ColumnDefinition existingColumn : columnList) {
+            if (existingColumn.getColumnName().equalsIgnoreCase(column.getColumnName())) {
+                throw new RuntimeException(
+                        "⚔️ [DUPLICATE NAME] The column '" + column.getColumnName() + "' already stands within the table. " +
+                                "Choose a new name or alter the existing one."
+                );
+            }
+        }
+
+        //add columns to the existing columnList.
+        columnList.add(column);
+
+        // add the default value is it is null else add defaultValue.
+        for (Row row : rowList) {
+            row.addDefaultValues(defaultValue);
+        }
     }
+
     /**
      * 🔮 [TABLE VISUALIZATION] 🔮
      * Returns a beautifully formatted string representation of the table,
@@ -79,7 +112,7 @@ public class Table {
             for (Row row : rowList) {
                 builder.append("| ");
                 for (Object value : row.values) {
-                    String displayValue = (value == null) ? "NULL" : value.toString();
+                    String displayValue = (value == null || (value instanceof String && ((String) value).isEmpty())) ? "NULL" : value.toString();
                     builder.append(String.format("%-15s | ", displayValue));
                 }
                 builder.append("\n");

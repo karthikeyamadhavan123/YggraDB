@@ -285,6 +285,183 @@ public class Parser {
     }
 
     /**
+     * ⚔️ [FORGE COLUMN RUNE]
+     * Deciphers the name and @type of a column to be added to a table’s saga.
+     * This function reads the next sequence of tokens, expecting:
+     * - A column name
+     * - A valid data type (INT or VARCHAR with length)
+     * - Proper rune seals such as parentheses for VARCHAR lengths
+     * Throws lore-inspired errors when the ritual is broken.
+     */
+
+    private ColumnDefinition parseAlterColumn() {
+        // 🛡️ Step 1: Ensure there are still runes (tokens) left to read
+        if (position >= tokens.size()) {
+            throw new RuntimeException("❌ [EMPTY FORGE] No column rune has been inscribed — the forge stands cold.");
+        }
+
+        // 🛡️ Step 2: Expect the column name rune
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("❌ [NAMELESS RUNE] A column name must be spoken before it can be forged.");
+        }
+        String columnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🛡️ Step 3: Expect the datatype rune
+        if (position >= tokens.size()) {
+            throw new RuntimeException("❌ [HALF-FORGED] A datatype rune was expected, yet none was offered to the forge.");
+        }
+
+        // 🛡️ Step 4: INT column
+        if (peek().type == TokenType.INT) {
+            consume(TokenType.INT);
+            return new ColumnDefinition(columnName, TokenType.INT, -1);
+        }
+        // 🛡️ Step 5: VARCHAR column with specified length
+        else if (peek().type == TokenType.VARCHAR) {
+            consume(TokenType.VARCHAR);
+            if (position >= tokens.size()) {
+                throw new RuntimeException("❌ [BROKEN INCANTATION] Expected ‘(’ to bind the rune’s length, yet the air is silent.");
+            }
+            if (peek().type != TokenType.LEFT_PAREN) {
+                throw new RuntimeException("❌ [MISSING SEAL] The left paren rune is absent — the magic leaks away.");
+            }
+            consume(TokenType.LEFT_PAREN);
+
+            if (position >= tokens.size()) {
+                throw new RuntimeException("❌ [EMPTY VESSEL] No length rune was provided to give this column form.");
+            }
+            if (peek().type != TokenType.NUMBER_LITERAL) {
+                throw new RuntimeException("❌ [MISCAST] Expected a length number rune, yet something else dares to take its place.");
+            }
+            int length = parseInt(peek().value);
+            consume(TokenType.NUMBER_LITERAL);
+
+            if (position >= tokens.size()) {
+                throw new RuntimeException("❌ [OPEN GATE] The right paren rune is missing — the ritual remains incomplete.");
+            }
+            if (peek().type != TokenType.RIGHT_PAREN) {
+                throw new RuntimeException("❌ [SEAL BROKEN] The closing right paren rune was expected, yet chaos has entered.");
+            }
+            consume(TokenType.RIGHT_PAREN);
+
+            return new ColumnDefinition(columnName, TokenType.VARCHAR, length);
+        }
+        // 🛡️ Step 6: Unknown datatype rune
+        else {
+            throw new RuntimeException("❌ [UNKNOWN RUNE] The datatype rune is not recognized in the Nine Realms.");
+        }
+    }
+
+    /**
+     * Parses a single default value for a column.
+     * Accepts either NUMBER_LITERAL or STRING_LITERAL tokens.
+     * If the token type is invalid, logs a warning message.
+     * ⚒️ This method is invoked when defining a single default value
+     * during column creation or modification.
+     */
+
+    private Object parseDefaultValue() {
+        Object defaultValue = null;
+
+        // ⚔️ If the token is a numeric literal, take it as the default value
+        if (peek().type == TokenType.NUMBER_LITERAL) {
+            defaultValue = peek().value;
+            consume(TokenType.NUMBER_LITERAL);
+
+            // 🪶 If the token is a string literal, accept it as the default value
+        } else if (peek().type == TokenType.STRING_LITERAL) {
+            defaultValue = peek().value;
+            consume(TokenType.STRING_LITERAL);
+
+            // 🪓 If the token type is neither number nor string, warn the scribe
+        } else {
+            System.out.println("🌀 [LOST IN THE REALM] Expected a number or string but found: " + peek().value);
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Parses multiple default values, separated by commas.
+     * Invokes parseDefaultValue() for each entry.
+     * 🏛️ This is typically used when adding multiple columns or entries
+     * that each require an initial default value.
+     */
+
+    private List<Object> parseDefaultValues() {
+        List<Object> defaultValues = new ArrayList<>();
+
+        // 🎯 Always parse at least one default value
+        defaultValues.add(parseDefaultValue());
+
+        // 🛡️ Continue parsing if more comma-separated values exist
+        while (position < tokens.size() && peek().type == TokenType.COMMA) {
+            consume(TokenType.COMMA);
+
+            // 🩸 If comma is the last token, the statement is incomplete
+            if (position >= tokens.size()) {
+                throw new RuntimeException("🗡️ [ARES' BROKEN SPEAR] Comma found but no following value — the army of data stands incomplete!");
+            }
+
+            // ⚡ Detect two commas in a row without a value in between
+            if (peek().type == TokenType.COMMA) {
+                throw new RuntimeException("⚡ [DOUBLE LIGHTNING] Two commas in succession — even Zeus strikes but once at a time!");
+            }
+
+            // 🛑 Prevent closing parenthesis from appearing right after a comma
+            if (peek().type == TokenType.RIGHT_PAREN) {
+                throw new RuntimeException("🪓 [AXE WITH NO TARGET] Comma demands a value — yet the gates close too soon!");
+            }
+
+            // 🏹 Parse the next default value
+            defaultValues.add(parseDefaultValue());
+        }
+
+        return defaultValues;
+    }
+
+
+    /**
+     * 🪓 Parses the mystical ADD TABLE incantation to add multiple columns.
+     * 🔍 Begins by summoning the first column rune via `parseAlterColumn()`.
+     * ➰ Then, as long as the sacred COMMA rune is spotted, continues gathering more column runes.
+     * 🚫 Throws [UNFINISHED RITUAL] if a comma is followed by nothing.
+     * 🛑 Throws [PREMATURE SEAL] if a right parenthesis is found when columns are still awaited.
+     * 📜 Returns the scroll of all columns to be forged into the table.
+     */
+
+    private List<ColumnDefinition> parseAlterColumns() {
+        List<ColumnDefinition> columnsTobeAdded = new ArrayList<>();
+
+        // 🪄 Invoke the forge to craft the first column
+        columnsTobeAdded.add(parseAlterColumn());
+
+        // 🔄 Continue summoning columns if a comma rune is present
+        while (peek().type == TokenType.COMMA && position < tokens.size()) {
+            consume(TokenType.COMMA);
+
+            // 🚫 Check if the ritual ends abruptly after a comma
+            if (position >= tokens.size()) {
+                throw new RuntimeException("❌ [UNFINISHED RITUAL] After the comma rune, no column incantation follows.");
+            }
+
+            // 🛑 Ensure we don't prematurely seal the ritual with a closing parenthesis
+            if (peek().type == TokenType.RIGHT_PAREN) {
+                throw new RuntimeException("⛔ [PREMATURE SEAL] Encountered a right paren rune when columns were still to be forged.");
+            }
+
+            // ⚔️ Add the next forged column to the list
+            columnsTobeAdded.add(parseAlterColumn());
+        }
+
+        // 📜 Return the sacred scroll of column runes
+        return columnsTobeAdded;
+    }
+
+
+
+    /**
      * Parse Column Definitions - Handles parsing of comma-separated column list
      * Ensures proper comma placement and validates column definition syntax
      * Format: column_def1, column_def2, ..., column_defN
@@ -831,16 +1008,16 @@ public class Parser {
      * and forges an AlterTableNameCommand worthy of execution.
      * Functional Saga:
      * 1. 📜 Expect and consume the TABLE rune following the ALTER invocation.
-     *    - Without it, the ritual loses its purpose.
+     * - Without it, the ritual loses its purpose.
      * 2. 🏛️ Read the old table name (IDENTIFIER) — the name to be struck from the annals.
-     *    - If absent or invalid, the ritual fails before it begins.
+     * - If absent or invalid, the ritual fails before it begins.
      * 3. 🗡️ Expect the RENAME rune — the moment of transformation.
-     *    - Any other rune here is heresy.
+     * - Any other rune here is heresy.
      * 4. 🌟 Read the new table name (IDENTIFIER) — the name to be etched into eternity.
      * 5. 🔒 Expect the SEMICOLON rune to seal the ritual.
-     *    - Without this seal, the realms remain unstable.
+     * - Without this seal, the realms remain unstable.
      * 6. 🌪️ If any lingering spirits (extra tokens) remain after the seal,
-     *    banish them with a stern warning.
+     * banish them with a stern warning.
      *
      * @return AlterTableNameCommand carrying the old and new names for execution.
      * @throws RuntimeException if syntax is broken or runes are missing.
@@ -892,6 +1069,103 @@ public class Parser {
         // Return the forged command
         return new AlterTableNameCommand(oldTableName, newTableName);
     }
+
+
+    /**
+     * ⚔️ [SUMMON ALTER COMMAND]
+     * Interprets the full ALTER TABLE ritual to add new columns.
+     * Expects a sequence of runes:
+     * COLUMN ( <column definitions> ) TO TABLE <tableName> ;
+     * Verifies each rune in the order of the ritual.
+     * Returns a command object ready for execution in the Great Hall.
+     * ⚔️ Parses an ALTER TABLE ADD COLUMN command in the grand tongue of YggraDB.
+     * Expected syntax:
+     * ADD COLUMN ( <column_definitions> ) TO TABLE <table_name> DEFAULT (<default_values>);
+     * Returns: A mighty AlterAddColumnCommand ready for execution by the DatabaseManager.
+     */
+
+    private AlterAddColumnCommand parseAlterColumnsofTable() {
+        // Step 1: Begin the COLUMN rune sequence — without it, the forge lies dormant.
+        consume(TokenType.COLUMN);
+
+        // Step 2: Expect the left paren rune to open the chamber of column definitions.
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🕳️ [NAMELESS FORGE] You spoke of columns, yet named none. Begin with COLUMN ( ... )");
+        }
+        if (peek().type != TokenType.LEFT_PAREN) {
+            throw new RuntimeException("🚪 [SEALED GATE] Expected ‘(’ to open the forge, but found: " + peek().value);
+        }
+        consume(TokenType.LEFT_PAREN);
+
+        // Step 3: Summon the column definitions from the runes.
+        List<ColumnDefinition> tobeAddedColumns = parseAlterColumns();
+
+        // Step 4: Expect the right paren rune to close the chamber.
+        if (peek().type != TokenType.RIGHT_PAREN) {
+            throw new RuntimeException("🔓 [OPEN PORTAL] Missing ‘)’ to seal the forge — chaos may spill forth!");
+        }
+        consume(TokenType.RIGHT_PAREN);
+
+        // Step 5: Expect the TO rune to direct the magic toward its destination.
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌌 [LOST SPELL] The ‘TO’ rune is absent — the magic drifts without aim.");
+        }
+        if (peek().type != TokenType.TO) {
+            throw new RuntimeException("🎯 [MISGUIDED MAGIC] Expected the ‘TO’ rune, but found: " + peek().value);
+        }
+        consume(TokenType.TO);
+
+        // Step 6: Expect the TABLE rune to anchor the ritual to a vessel.
+        if (peek().type != TokenType.TABLE) {
+            throw new RuntimeException("⚓ [ANCHOR LOST] Without the TABLE rune, the ritual has no vessel to bind.");
+        }
+        consume(TokenType.TABLE);
+
+        // Step 7: Expect the table name rune to identify the vessel of change.
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🏚️ [ORPHANED SPELL] No table name given — the power fades into the void.");
+        }
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("🛑 [UNWORTHY NAME] Expected a table name, but received: " + peek().value);
+        }
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // Step 8: If the DEFAULT rune is present, gather the divine essences to gift existing rows.
+        List<Object> defaultValue = null;
+        if (peek().type == TokenType.DEFAULT) {
+            consume(TokenType.DEFAULT);
+
+            if (peek().type != TokenType.LEFT_PAREN) {
+                throw new RuntimeException("🚪 [SEALED CHEST] DEFAULT values must begin with ‘(’. Found: " + peek().value);
+            }
+            consume(TokenType.LEFT_PAREN);
+
+            // Summon the default values list from the scroll.
+            defaultValue = parseDefaultValues();
+
+            if (peek().type != TokenType.RIGHT_PAREN) {
+                throw new RuntimeException("🔓 [UNCLOSED CHEST] DEFAULT values must end with ‘)’. Found: " + peek().value);
+            }
+            consume(TokenType.RIGHT_PAREN);
+        }
+
+        // Step 9: Expect the semicolon rune to seal the scroll.
+        if (position >= tokens.size()) {
+            throw new RuntimeException("📜 [UNCLOSED SCROLL] Missing the ‘;’ to seal this sacred command.");
+        }
+        consume(TokenType.SEMICOLON);
+
+        // Step 10: Ensure no lingering spirits (tokens) remain after the command.
+        if (position < tokens.size()) {
+            throw new RuntimeException("👻 [LINGERING SPIRITS] Extra runes remain after the command — banish them!");
+        }
+
+        // Step 11: Return the forged command for execution.
+        return new AlterAddColumnCommand(tableName, tobeAddedColumns, defaultValue);
+    }
+
+
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -986,7 +1260,7 @@ public class Parser {
                     throw new RuntimeException(
                             """
                                     ⚡ [BROKEN RUNE] ALTER command incomplete!
-                                    🛡️ You must specify: ALTER DATABASE <name> RENAME TO <new_name>
+                                    🛡️ You must specify: ALTER DATABASE <name> RENAME  <new_name>
                                     🌌 Example: ALTER DATABASE Valhalla RENAME TO Asgard"""
                     );
                 }
@@ -1011,6 +1285,21 @@ public class Parser {
                 } else {
                     throw new RuntimeException("except database and table alter doesn't work");
                 }
+            } else if (peek().type == TokenType.ADD) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] ALTER command incomplete!
+                                    🛡️ You must specify: ADD COLUMN <column_name> RENAME TO <new_name>
+                                    🌌 Example: ALTER DATABASE Valhalla RENAME TO Asgard"""
+                    );
+                }
+                Token second = peek();
+                if (second.type != TokenType.COLUMN) {
+                    throw new RuntimeException("column keyword was expected but provided with " + second.value);
+                }
+                return parseAlterColumnsofTable();
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }
