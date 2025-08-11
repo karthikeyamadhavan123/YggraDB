@@ -202,6 +202,9 @@ public class Lexer {
                         case "DEFAULT":
                             tokens.add(new Token(TokenType.DEFAULT, rawKeyword));
                             break;
+                        case "TRUNCATE":
+                            tokens.add(new Token(TokenType.TRUNCATE, rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }

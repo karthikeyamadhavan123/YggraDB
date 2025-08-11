@@ -69,8 +69,8 @@ public class SQLExecutor {
                     alterDatabaseNameCommand.newDatabaseName
             );
 
-          // 🚪 [BIFROST CLOSED] The warrior steps out from the current realm,
-          // returning to the cosmic gateway, unbound to any land.
+            // 🚪 [BIFROST CLOSED] The warrior steps out from the current realm,
+            // returning to the cosmic gateway, unbound to any land.
             case ExitDatabaseCommand exitDatabaseCommand -> DatabaseManager.getInstance().exitDatabase();
 
             // ⚔️ [EXECUTION OF THE RITUAL]
@@ -79,7 +79,8 @@ public class SQLExecutor {
             // Step 2: Pass unto it the old and new table names carried in the scroll.
             // Step 3: The DatabaseManager will wield the Blade of Rename, altering the realm’s annals forever.
 
-            case AlterTableNameCommand alterTableNameCommand -> DatabaseManager.getInstance().alterTableName(alterTableNameCommand.oldTableName,alterTableNameCommand.newTableName);
+            case AlterTableNameCommand alterTableNameCommand ->
+                    DatabaseManager.getInstance().alterTableName(alterTableNameCommand.oldTableName, alterTableNameCommand.newTableName);
 
             // ⚡ When the realms call for the forging of new columns into an ancient table
             case AlterAddColumnCommand alterAddColumnCommand ->
@@ -92,6 +93,13 @@ public class SQLExecutor {
                             alterAddColumnCommand.tableName,
                             alterAddColumnCommand.defaultValue
                     );
+
+
+            // ⚔️ When the scroll bears the TRUNCATE TABLE rune...
+            case TruncateTableCommand truncateTableCommand ->
+                // 🛡️ Call upon the DatabaseManager to purge the realm,
+                // wiping every mortal record from its lands, yet leaving its pillars intact.
+                    DatabaseManager.getInstance().truncateTable(truncateTableCommand.tableName);
 
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten

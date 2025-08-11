@@ -534,5 +534,69 @@ public class DatabaseManager {
                     "' has been bestowed upon table '" + tableName + "'!");
         }
     }
+
+    /**
+     * ⚡ Kratos's WRATH: TABLE ANNIHILATION ⚡
+     * Like the Ghost of Sparta cleansing the halls of Olympus of all life,
+     * this method purges every soul (row) from the chosen table while leaving
+     * its structure intact - as Zeus left the empty throne of Olympus.
+     * 🔥 DIVINE FURY UNLEASHED:
+     * - Validates the realm (database) connection with the fury of a thousand suns
+     * - Seeks the target table like Kratos hunting the gods
+     * - Obliterates all records with the Blades of Chaos
+     * - Displays the empty table as a testament to divine wrath
+     *
+     * @param tableName The name of the table to be cleansed by divine fire
+     * @throws RuntimeException When the realms are not aligned or the table eludes our grasp
+
+     * 💀 "The cycle ends here. We must be better than this." - Kratos 💀
+     */
+
+
+    public void truncateTable(String tableName) {
+
+        // 🔮 STEP I: ENSURE THE BIFROST IS ALIGNED WITH A REALM
+        // Just as Kratos cannot channel his rage without a target realm,
+        // we cannot cleanse tables without a database connection
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    """
+                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                            KRATOS ROARS: 'You dare attempt to cleanse the tables without first \
+                            choosing your battlefield?!' 🗡️
+                            💀 The Ghost of Sparta demands: First bind yourself to a realm with: USE <database_name>
+                            🔥 'Face me when you are prepared for war!' - Kratos"""
+            );
+        }
+
+        // ⚔️ STEP II: HUNT THE TARGET TABLE LIKE A GOD-SLAYER
+        // Kratos seeks his prey with unwavering determination
+        // The table must exist before it can face annihilation
+        Table table = getTable(tableName);
+
+        // 🏛️ STEP III: VALIDATE THE TARGET EXISTS IN THIS REALM
+        // Even the God of War cannot destroy what does not exist
+        if (table == null) {
+            throw new RuntimeException(
+                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
+                            "KRATOS BELLOWS: 'The table '" + tableName + "' hides from my blades like a coward!' ⚔️\n" +
+                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
+                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
+                            "💡 Ensure the table exists before invoking the cleansing fire!"
+            );
+        }
+
+        // ⚡ STEP IV: UNLEASH THE BLADES OF CHAOS - TOTAL ANNIHILATION
+        // With the fury of a thousand storms, every row falls to Kratos's wrath
+        // Like the cleansing of Olympus, none shall survive this divine purge
+        table.rowList.clear();
+
+        // 🏆 STEP V: DISPLAY THE AFTERMATH OF DIVINE WRATH
+        // Behold the empty table - a monument to the power of the God Slayer
+        // The structure remains, but all life has been extinguished
+        System.out.println("💀 Kratos speaks: 'The table '" + tableName + "' has been purged of all records.' 💀");
+        System.out.println("🏛️ The structure remains, but the souls within have been claimed by Hades...\n");
+        System.out.println("\n⚔️ 'Another victory for the Ghost of Sparta.' - Kratos ⚔️");
+    }
 }
 

@@ -28,6 +28,7 @@ public enum TokenType {
     COLUMN,
     TO,
     DEFAULT,
+    TRUNCATE,
 
 
     // 📐 [DATA TYPE RUNES] – Define the essence of columns

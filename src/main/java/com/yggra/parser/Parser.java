@@ -460,7 +460,6 @@ public class Parser {
     }
 
 
-
     /**
      * Parse Column Definitions - Handles parsing of comma-separated column list
      * Ensures proper comma placement and validates column definition syntax
@@ -1022,6 +1021,7 @@ public class Parser {
      * @return AlterTableNameCommand carrying the old and new names for execution.
      * @throws RuntimeException if syntax is broken or runes are missing.
      */
+
     private AlterTableNameCommand parseAlterTable() {
         // 1. 📜 Consume the TABLE rune
         consume(TokenType.TABLE);
@@ -1165,7 +1165,65 @@ public class Parser {
         return new AlterAddColumnCommand(tableName, tobeAddedColumns, defaultValue);
     }
 
+    /**
+     * ⚔️ [RAGNARÖK'S CLEANSING] Parses a TRUNCATE TABLE command to purge all mortal data from a realm
+     * while preserving its sacred structure. Like Kratos wiping out an entire pantheon but leaving their temples standing.
+     * Valid Syntax: TRUNCATE TABLE <table_name>;
+     * Example: TRUNCATE TABLE Titans;  // Clears all Titans but keeps their hall intact
+     *
+     * @return TruncateTableCommand - A weaponized command ready for execution
+     * @throws RuntimeException - When syntax violates the Laws of the Nine Realms
+     */
 
+    private TruncateTableCommand parseTruncateCommand() {
+        // [STEP 1] CONSUME TABLE TOKEN - The first rune in the cleansing ritual
+        consume(TokenType.TABLE);
+
+        // [STEP 2] VERIFY TABLE NAME EXISTS - No empty purges allowed
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The TRUNCATE spell lacks a target!
+                            ⚔️ Syntax: TRUNCATE TABLE <realm_name>;
+                            🌌 Example: TRUNCATE TABLE Fallen_Gods;"""
+            );
+        }
+
+        // [STEP 3] VALIDATE TABLE NAME - Must be a pure identifier (no chaos runes)
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "⚡ [ODIN'S WRATH] '" + peek().value + "' is an unworthy name for purification!\n" +
+                            "🛡️ Names must be:\n" +
+                            "   - Unquoted\n" +
+                            "   - Free of ; -- ' \\\n" +
+                            "📜 Example: TRUNCATE TABLE Valkyries;"
+            );
+        }
+
+        // [STEP 4] CLAIM THE TABLE NAME - Worthy name confirmed
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // [STEP 5] ENFORCE COMMAND TERMINATION - All spells must end with ;
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    "💀 [HELL'S JUDGMENT] Your TRUNCATE spell lacks the closing ';'!\n" +
+                            "🌪️ Complete the ritual properly: TRUNCATE TABLE " + tableName + ";"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // [STEP 6] REJECT TRAILING CHAOS - No extra symbols after ;
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "🌪️ [CHAOS ECHOES] Junk symbols linger after the sacred ';'!\n" +
+                            "⚔️ The TRUNCATE spell must stand alone in its purity."
+            );
+        }
+
+        // [STEP 7] FORGE THE COMMAND - Ready to execute Kratos-style cleansing
+        return new TruncateTableCommand(tableName);
+    }
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -1291,15 +1349,38 @@ public class Parser {
                     throw new RuntimeException(
                             """
                                     ⚡ [BROKEN RUNE] ALTER command incomplete!
-                                    🛡️ You must specify: ADD COLUMN <column_name> RENAME TO <new_name>
-                                    🌌 Example: ALTER DATABASE Valhalla RENAME TO Asgard"""
+                                    🛡️ You must specify: ADD COLUMN (<column_name,datatype>)  TO TABLE <table_name>
+                                    🌌 Example: ADD COLUMN (Valhalla INT) TO TABLE Asgard."""
                     );
                 }
                 Token second = peek();
                 if (second.type != TokenType.COLUMN) {
-                    throw new RuntimeException("column keyword was expected but provided with " + second.value);
+                    throw new RuntimeException(
+                            "⚡ By Odin’s beard! The 'COLUMN' rune was foretold, yet you bring me '"
+                                    + second.value + "' instead!"
+                    );
                 }
+
                 return parseAlterColumnsofTable();
+            } else if (peek().type == TokenType.TRUNCATE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] TRUNCATE command incomplete!
+                                    🛡️ You must specify: TRUNCATE TABLE table_name
+                                    🌌 Example: TRUNCATE DATABASE Valhalla RENAME TO Asgard"""
+                    );
+                }
+                Token second = peek();
+                if (second.type != TokenType.TABLE) {
+                    throw new RuntimeException(
+                            "⚡ [BROKEN RUNE] The prophecy called for the TABLE rune, " +
+                                    "yet you dare present '" + second.value + "'! " +
+                                    "Summon the TABLE rune to proceed through the Bifrost."
+                    );
+                }
+                return parseTruncateCommand();
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }
