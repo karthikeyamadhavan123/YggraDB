@@ -91,9 +91,8 @@ public class SQLExecutor {
                     DatabaseManager.getInstance().alterColumnsofTable(
                             alterAddColumnCommand.toAddColumns,
                             alterAddColumnCommand.tableName,
-                            alterAddColumnCommand.defaultValue
+                            alterAddColumnCommand.defaultValues
                     );
-
 
             // ⚔️ When the scroll bears the TRUNCATE TABLE rune...
             case TruncateTableCommand truncateTableCommand ->

@@ -5,7 +5,6 @@ import com.yggra.cli.YggraREPL;
 /**
  * 🔥 [RUNIC INSCRIPTION] 🔥
  * The Genesis class — the divine spark that awakens YggraDB.
- *
  * This is the first breath of the system — the mortal entry point — where realms are loaded,
  * the Oracle (REPL) is summoned, and the voice of the user is finally heard across Yggdrasil.
  */

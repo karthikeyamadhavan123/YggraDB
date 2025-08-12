@@ -52,12 +52,19 @@ public class Table {
      * @param column The new column to be embedded into the table.
      */
 
-    public void addColumnsToExistingTable(ColumnDefinition column, Object defaultValue) {
+    public void addColumnsToExistingTable(ColumnDefinition column, ValueDefinition defaultValue) {
         if (column == null) {
             throw new RuntimeException(
                     "❌ [NULL FORGE] Cannot add a column forged from nothingness. " +
                             "Provide a valid column definition!"
             );
+        }
+        if (!validateDefaultValue(column, defaultValue)) {
+            throw new RuntimeException(
+                    "⚡ [WRONG POWER] The default value '" + defaultValue +
+                            "' defies the laws of Midgard! Match its might to the column's true type."
+            );
+
         }
 
         for (ColumnDefinition existingColumn : columnList) {
@@ -74,7 +81,8 @@ public class Table {
 
         // add the default value is it is null else add defaultValue.
         for (Row row : rowList) {
-            row.addDefaultValues(defaultValue);
+            //check the datatypes of default row values
+            row.addDefaultValues(defaultValue.value);
         }
     }
 
@@ -157,7 +165,6 @@ public class Table {
                                         "You chanted: " + valDef.type + " '" + valDef.value + "'"
                         );
                     }
-
                     yield valDef.value;
                 }
                 default -> throw new RuntimeException(
@@ -226,6 +233,38 @@ public class Table {
             }
         }
         return convertedValues;
+    }
+
+    /**
+     * ⚔️ Tests the might of a column's default value.
+     * This function ensures that the given default value is worthy of the column it seeks to inhabit.
+     * It calls upon the forge of `convertValue` to reshape the value into its true form,
+     * then measures its strength against the column's constraints.
+     * @param column The column whose law we must uphold.
+     * @param value  The default value offered for judgment.
+     * @return true if the value is strong and honorable enough to join the column's ranks.
+     * @throws RuntimeException if the value dares exceed the limits set by the column's type.
+     */
+
+    public boolean validateDefaultValue(ColumnDefinition column, ValueDefinition value) {
+        // 🔮 Transform the offered value into the shape demanded by the column's type
+        Object convertedValue = convertValue(value, column.type);
+
+        // 🛡️ If the column demands runes (VARCHAR), test the length of the given inscription
+        if (column.type == TokenType.VARCHAR && convertedValue instanceof String strValue) {
+            // 📏 If the runes overflow the column's sacred limit, cast the intruder into the void
+            if (strValue.length() > column.length) {
+                throw new RuntimeException(
+                        "🛡️ [STRING TOO MIGHTY] Column '" + column.columnName +
+                                "' can only hold " + column.length + " runes\n" +
+                                "You wield " + strValue.length() + ": " +
+                                (strValue.length() > 20 ? strValue.substring(0, 20) + "..." : strValue)
+                );
+            }
+        }
+
+        // ✅ The value is honorable — let it pass into the column's ranks
+        return true;
     }
 
     // Method: getColumnIndexByName(String name)

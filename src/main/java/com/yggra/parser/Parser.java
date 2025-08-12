@@ -361,24 +361,23 @@ public class Parser {
      * during column creation or modification.
      */
 
-    private Object parseDefaultValue() {
-        Object defaultValue = null;
+    private ValueDefinition parseDefaultValue() {
+        ValueDefinition defaultValue = null;
 
         // ⚔️ If the token is a numeric literal, take it as the default value
         if (peek().type == TokenType.NUMBER_LITERAL) {
-            defaultValue = peek().value;
+            String numericalValue = peek().value;
             consume(TokenType.NUMBER_LITERAL);
-
+            defaultValue = new ValueDefinition(TokenType.NUMBER_LITERAL,numericalValue);
             // 🪶 If the token is a string literal, accept it as the default value
         } else if (peek().type == TokenType.STRING_LITERAL) {
-            defaultValue = peek().value;
+            String stringValue = peek().value;
             consume(TokenType.STRING_LITERAL);
-
+            defaultValue = new ValueDefinition(TokenType.STRING_LITERAL, stringValue);
             // 🪓 If the token type is neither number nor string, warn the scribe
         } else {
             System.out.println("🌀 [LOST IN THE REALM] Expected a number or string but found: " + peek().value);
         }
-
         return defaultValue;
     }
 
@@ -389,8 +388,8 @@ public class Parser {
      * that each require an initial default value.
      */
 
-    private List<Object> parseDefaultValues() {
-        List<Object> defaultValues = new ArrayList<>();
+    private List<ValueDefinition> parseDefaultValues() {
+        List<ValueDefinition> defaultValues = new ArrayList<>();
 
         // 🎯 Always parse at least one default value
         defaultValues.add(parseDefaultValue());
@@ -1132,7 +1131,7 @@ public class Parser {
         consume(TokenType.IDENTIFIER);
 
         // Step 8: If the DEFAULT rune is present, gather the divine essences to gift existing rows.
-        List<Object> defaultValue = null;
+        List<ValueDefinition> defaultValue = null;
         if (peek().type == TokenType.DEFAULT) {
             consume(TokenType.DEFAULT);
 

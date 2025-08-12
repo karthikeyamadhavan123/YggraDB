@@ -502,7 +502,7 @@ public class DatabaseManager {
      * @param defaultValues default value is null.
      */
 
-    public void alterColumnsofTable(List<ColumnDefinition> toAddColumns, String tableName, List<Object> defaultValues) {
+    public void alterColumnsofTable(List<ColumnDefinition> toAddColumns, String tableName, List<ValueDefinition> defaultValues) {
         // 1. 🔮 Ensure the Bifrost is aligned with a realm (database is selected)
         if (!hasCurrentDatabase()) {
             throw new RuntimeException(
@@ -529,7 +529,7 @@ public class DatabaseManager {
         }
         // 4. 🏗️ Add each new column to the table
         for (int i = 0; i < toAddColumns.size(); i++) {
-            table.addColumnsToExistingTable(toAddColumns.get(i),defaultValues!=null? defaultValues.get(i):null);
+            table.addColumnsToExistingTable(toAddColumns.get(i),defaultValues.get(i)!= null ? defaultValues.get(i):null);
             System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() +
                     "' has been bestowed upon table '" + tableName + "'!");
         }
@@ -551,7 +551,6 @@ public class DatabaseManager {
 
      * 💀 "The cycle ends here. We must be better than this." - Kratos 💀
      */
-
 
     public void truncateTable(String tableName) {
 
