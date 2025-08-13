@@ -1,7 +1,6 @@
 package com.yggra.executor;
 
 import com.yggra.commands.*;
-import com.yggra.models.Database;
 import com.yggra.models.DatabaseManager;
 
 /**
@@ -27,11 +26,11 @@ public class SQLExecutor {
 
             case CreateDatabaseCommand createDatabaseCommand ->
                     DatabaseManager.getInstance().createDatabase(createDatabaseCommand.databaseName);
-            case UseDatabaseCommand useDatabaseCommand -> {
+            case UseDatabaseCommand useDatabaseCommand ->
                 // 🧭 [USE DATABASE] – Shifts the user’s focus to a new realm of operation
-                Database db = DatabaseManager.getInstance().useDatabase(useDatabaseCommand.databaseName);
-                // Future logics may bless this context
-            }
+                    DatabaseManager.getInstance().useDatabase(useDatabaseCommand.databaseName);
+            // Future logics may bless this context
+
             // ☠️ [DROP DATABASE] – Obliterates a realm from existence
 
             case DropDatabaseCommand dropDatabaseCommand ->
@@ -100,6 +99,15 @@ public class SQLExecutor {
                 // wiping every mortal record from its lands, yet leaving its pillars intact.
                     DatabaseManager.getInstance().truncateTable(truncateTableCommand.tableName);
 
+            // ⚒️ [COMMAND FORGE] Drop multiple columns from a table
+            // The parser has already validated the syntax and provided:
+            //   - dropColumnsCommand.tobeDeletedColumns → List<String> of column names to remove
+            //   - dropColumnsCommand.tableName → Name of the target table
+            // Now we channel Kratos's fury into the DatabaseManager to execute the cleansing.
+
+            case DropColumnsCommand dropColumnsCommand -> DatabaseManager.getInstance()
+                    .dropColumnsofTable(dropColumnsCommand.tobeDeletedColumns,
+                            dropColumnsCommand.tableName);
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

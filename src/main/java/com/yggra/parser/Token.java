@@ -6,6 +6,7 @@ package com.yggra.parser;
  * Tokens represent keywords, identifiers, symbols, or values, each carrying meaning from the mortal query
  * into the parser’s scroll for execution. They are the syllables of Yggra’s sacred language.
  */
+
 public class Token {
 
     // 🔤 The type of this token (e.g., IDENTIFIER, KEYWORD, SYMBOL, STRING, INT, etc.)
@@ -18,7 +19,7 @@ public class Token {
     /**
      * 🛠️ [RUNE FORGING] 🛠️
      * Constructs a token by binding a type rune to its string value — used during lexical analysis.
-     * @param type The token's type (e.g., VARCHAR, INT, SYMBOL, etc.)
+     * @param type  The token's type (e.g., VARCHAR, INT, SYMBOL, etc.)
      * @param value The string value associated with the token
      */
 

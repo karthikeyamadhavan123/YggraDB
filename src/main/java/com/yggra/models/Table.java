@@ -240,6 +240,7 @@ public class Table {
      * This function ensures that the given default value is worthy of the column it seeks to inhabit.
      * It calls upon the forge of `convertValue` to reshape the value into its true form,
      * then measures its strength against the column's constraints.
+     *
      * @param column The column whose law we must uphold.
      * @param value  The default value offered for judgment.
      * @return true if the value is strong and honorable enough to join the column's ranks.
@@ -265,6 +266,45 @@ public class Table {
 
         // ✅ The value is honorable — let it pass into the column's ranks
         return true;
+    }
+
+    /**
+     * Removes a column from the table schema and deletes all data associated with it in every row.
+     * This method behaves like a SQL "ALTER TABLE <tableName> DROP COLUMN <columnName>" operation.
+     * It:
+     *  1. Locates the column in the table's schema.
+     *  2. Removes the column definition from the schema.
+     *  3. Removes the corresponding value from every row in the table to maintain column alignment.
+     *
+     * @param columnName The name of the column to remove.
+     * @throws RuntimeException if the column does not exist in the schema.
+     */
+
+
+    public void removeColumnFromTable(String columnName) {
+        // Step 1: Find the index of the column in the schema
+        int colIndex = -1;
+        for (int i = 0; i < columnList.size(); i++) {
+            if (columnList.get(i).columnName.equals(columnName)) {
+                colIndex = i;
+                break; // Column found, exit loop
+            }
+        }
+
+        // If column not found, throw an error
+        if (colIndex == -1) {
+            throw new RuntimeException("Column not found: " + columnName);
+        }
+
+        // Step 2: Remove the column definition from the schema
+        columnList.remove(colIndex);
+
+        // Step 3: Remove the corresponding value from each row
+        for (Row row : rowList) {
+            // Each row stores values in positional order matching the schema,
+            // so we remove the value at the same index as the removed column.
+            row.values.remove(colIndex);
+        }
     }
 
     // Method: getColumnIndexByName(String name)

@@ -108,13 +108,11 @@ public class DatabaseManager {
     /**
      * 🌈 [REALM ENTRY] 🌈
      * Crosses the Bifrost to enter a specific database realm.
-     *
      * @param dbName Name of the realm to enter
-     * @return The Database object entered
      * @throws RuntimeException if realm doesn't exist
      */
 
-    public Database useDatabase(String dbName) {
+    public void useDatabase(String dbName) {
         if (dbName == null || dbName.trim().isEmpty()) {
             throw new RuntimeException("🌫️ [MIST OF NIFLHEIM] You must name a realm to enter!");
         }
@@ -124,7 +122,6 @@ public class DatabaseManager {
             }
             currentDatabase = databases.get(dbName);
             System.out.println("🛡️ [REALM ENTERED] You now tread upon the land of '" + dbName + "' — let the saga unfold!");
-            return currentDatabase;
         }
 
     }
@@ -597,5 +594,59 @@ public class DatabaseManager {
         System.out.println("🏛️ The structure remains, but the souls within have been claimed by Hades...\n");
         System.out.println("\n⚔️ 'Another victory for the Ghost of Sparta.' - Kratos ⚔️");
     }
+
+    /**
+     * Drops one or more columns from the specified table in the current database.
+     * This method:
+     *  1. Ensures a database ("realm") is currently selected.
+     *  2. Validates that the target table exists in the current database.
+     *  3. Iterates over each column name provided and removes it from the table schema
+     *     and all associated data rows.
+     *  4. Prints a confirmation message upon successful removal.
+     * The behavior is equivalent to multiple "ALTER TABLE <tableName> DROP COLUMN <columnName>" commands.
+     * @param deletedColumns List of column names to remove.
+     * @param tableName The name of the table from which to drop the columns.
+     * @throws RuntimeException if no database is selected or the table does not exist.
+     */
+
+    public void dropColumnsofTable(List<String> deletedColumns, String tableName) {
+        // STEP I: Ensure a database ("realm") is currently selected
+        // Without a target realm, operations cannot proceed.
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    """
+                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                            KRATOS ROARS: 'You dare attempt to purge the columns without first
+                            declaring your battlefield?!' 🗡️
+                            💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
+                            🔥 'Face me when you are prepared for war!' - Kratos
+                            """
+            );
+        }
+
+        // STEP II: Retrieve the target table from the current database
+        Table table = getTable(tableName);
+
+        // STEP III: Validate that the table exists in this database
+        if (table == null) {
+            throw new RuntimeException(
+                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
+                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" +
+                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
+                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
+                            "💡 Ensure the table exists before invoking the cleansing fire!"
+            );
+        }
+
+        // STEP IV: Remove each specified column from the table
+        for (String deleteColumnName : deletedColumns) {
+            table.removeColumnFromTable(deleteColumnName);
+        }
+
+        // STEP V: Confirm success to the player
+        System.out.println("🗡️ [COLUMNS VANQUISHED] The following columns have been erased from '"
+                + tableName + "': " + deletedColumns);
+    }
+
 }
 

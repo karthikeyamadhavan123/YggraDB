@@ -14,6 +14,7 @@ import static java.lang.Integer.parseInt;
  * The parser uses a recursive descent approach with dramatic error messaging
  * inspired by mythological themes.
  */
+
 public class Parser {
     // SQL command parser
     // 1. Check first token: CREATE or INSERT?
@@ -29,6 +30,7 @@ public class Parser {
      *
      * @param tokens List of tokens to parse (must not be null or empty)
      */
+
     public Parser(List<Token> tokens) {
         if (tokens == null) {
             throw new RuntimeException("🌊 [POSEIDON'S VOID] The token stream cannot be null — the seas of syntax demand substance!");
@@ -46,6 +48,7 @@ public class Parser {
      * @return The current token at the position
      * @throws RuntimeException if trying to peek beyond the token stream
      */
+
     public Token peek() {
         // Look at the current token without consuming it
         if (position < tokens.size()) {
@@ -61,6 +64,7 @@ public class Parser {
      *
      * @throws RuntimeException if trying to advance beyond the last token
      */
+
     public void advance() {
         // Move to the next token and return the current one
         if (position < tokens.size()) {
@@ -99,6 +103,7 @@ public class Parser {
      *
      * @throws RuntimeException for various syntax errors in column definitions
      */
+
     private ColumnDefinition parseColumnDefinition() {
         // Ensure column name is present
         if (position >= tokens.size()) {
@@ -197,6 +202,7 @@ public class Parser {
      *
      * @throws RuntimeException if no valid token is found at current position
      */
+
     private ColumnDefinition parseColumnInsertStatement() {
         String columnName;
         // Ensure we have a token to examine
@@ -260,6 +266,7 @@ public class Parser {
      *
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
+
     private List<ValueDefinition> parseValuesInsertStatements() {
         // Parse the first column name or value (at least one is required)
         List<ValueDefinition> columns = new ArrayList<>();
@@ -368,7 +375,7 @@ public class Parser {
         if (peek().type == TokenType.NUMBER_LITERAL) {
             String numericalValue = peek().value;
             consume(TokenType.NUMBER_LITERAL);
-            defaultValue = new ValueDefinition(TokenType.NUMBER_LITERAL,numericalValue);
+            defaultValue = new ValueDefinition(TokenType.NUMBER_LITERAL, numericalValue);
             // 🪶 If the token is a string literal, accept it as the default value
         } else if (peek().type == TokenType.STRING_LITERAL) {
             String stringValue = peek().value;
@@ -466,6 +473,7 @@ public class Parser {
      *
      * @throws RuntimeException for malformed column lists
      */
+
     private List<ColumnDefinition> parseColumnDefinitions() {
         List<ColumnDefinition> columns = new ArrayList<>();
         // At least one column definition is required
@@ -492,69 +500,85 @@ public class Parser {
     }
 
     /**
-     * Parse CREATE TABLE Command - Handles the complete CREATE TABLE statement parsing
-     * Expected format: CREATE TABLE table_name (column_definitions);
-     * Validates table name, parentheses matching, and semicolon termination
+     * Parses a single column name for the DROP/REMOVE COLUMN command.
+     * This method ensures the column name is valid and not missing.
      *
-     * @throws RuntimeException for various CREATE TABLE syntax errors
+     * @return The validated column name as a String.
+     * @throws RuntimeException if no column name is provided or token type is invalid.
      */
-    private CreateTableCommand parseCreateTable() {
-        consume(TokenType.TABLE);
-        String tableName = peek().value;
-        // Ensure table name is present
+
+    private String parseDropColumnDefinition() {
+        // [STEP 1] Ensure we haven't run out of tokens
         if (position >= tokens.size()) {
-            throw new RuntimeException("🏛️ [TEMPLE UNNAMED] 'CREATE TABLE' spoken but no table name follows — what shall be built without identity?");
+            throw new RuntimeException(
+                    "🌪️ [HERMES' VANISHING] Expected column name but reached the end of the scroll — " +
+                            "the messenger god has fled before delivering the name!"
+            );
         }
 
+        // [STEP 2] Ensure the next token is a valid identifier (column name)
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException("⚔️ [NAMELESS ALTAR] After 'CREATE TABLE', a table name was demanded — yet none was offered to the gods.");
+            throw new RuntimeException(
+                    "⚔️ [NAMELESS ALTAR] A column name was demanded — yet none was offered to the gods! " +
+                            "🛡️ Only pure identifiers (no quotes, no chaos) are accepted."
+            );
         }
 
+        // [STEP 3] Claim the column name for removal
+        String colName = peek().value;
         consume(TokenType.IDENTIFIER);
-
-        // Check for opening parenthesis
-        if (position >= tokens.size()) {
-            throw new RuntimeException("🚪 [GATEWAY SEALED] Table name declared but column definitions gateway '(' is missing — entry to structure is barred!");
-        }
-
-        if (peek().type != TokenType.LEFT_PAREN) {
-            throw new RuntimeException("⛓️ [UNBOUND PARENTHESIS] Expected '(' to begin column definitions, yet it was never cast.");
-        }
-        consume(TokenType.LEFT_PAREN);
-
-        // Check for empty column list
-        if (position >= tokens.size()) {
-            throw new RuntimeException("🌪️ [VANISHING COLUMNS] Opening '(' found but column definitions have vanished into the ether!");
-        }
-
-        if (peek().type == TokenType.RIGHT_PAREN) {
-            throw new RuntimeException("🔥 [VOID OF CREATION] The table was summoned, yet no columns were inscribed upon its stone — a hollow shell unworthy of existence.");
-        }
-
-        List<ColumnDefinition> columns = parseColumnDefinitions();
-
-        // Check for closing parenthesis
-        if (position >= tokens.size()) {
-            throw new RuntimeException("⚖️ [SCALES UNBALANCED] Column definitions complete but closing ')' has fled — balance demands closure!");
-        }
-
-        if (peek().type != TokenType.RIGHT_PAREN) {
-            throw new RuntimeException("⛓️ [UNBOUND PARENTHESIS] An opening '(' was cast, yet no ')' arose to close the ritual — balance has been forsaken.");
-        }
-        consume(TokenType.RIGHT_PAREN);
-
-        // Check for semicolon termination
-        if (position >= tokens.size()) {
-            throw new RuntimeException("⚡ [ZEUS' INCOMPLETE DECREE] Statement structure complete but missing final ';' — even gods must end their proclamations!");
-        }
-
-        consume(TokenType.SEMICOLON);
-        // Ensure no trailing tokens exist
-        if (position < tokens.size()) {
-            throw new RuntimeException("⚡ [ZEUS' WRATH] Additional tokens linger after the statement — finish what you began!");
-        }
-        return new CreateTableCommand(tableName, columns);
+        return colName;
     }
+
+    /**
+     * Parses a list of column names for the DROP/REMOVE COLUMN command.
+     * Supports comma-separated column names and enforces proper syntax.
+     *
+     * @return A list of column names to be removed.
+     * @throws RuntimeException if syntax rules are violated (extra commas, missing names, etc.).
+     */
+
+    private List<String> parseDropColumnDefinitions() {
+        List<String> columns = new ArrayList<>();
+
+        // [STEP 1] Require at least one column name
+        columns.add(parseDropColumnDefinition());
+
+        // [STEP 2] Parse any additional columns separated by commas
+        while (position < tokens.size() && peek().type == TokenType.COMMA) {
+            consume(TokenType.COMMA);
+
+            // ❌ Guard against trailing commas without a following name
+            if (position >= tokens.size()) {
+                throw new RuntimeException(
+                        "🌊 [TIDE'S END] Comma found but no following column — " +
+                                "the sea of definitions ends abruptly, leaving the gods displeased!"
+                );
+            }
+
+            // ❌ Guard against consecutive commas (,,)
+            if (peek().type == TokenType.COMMA) {
+                throw new RuntimeException(
+                        "⚡ [DOUBLE LIGHTNING] Two commas in succession — " +
+                                "even Zeus strikes only once before the thunder fades!"
+                );
+            }
+
+            // ❌ Guard against comma directly before closing parenthesis
+            if (peek().type == TokenType.RIGHT_PAREN) {
+                throw new RuntimeException(
+                        "🪓 [BROKEN CHAIN] A comma was found where no column follows — " +
+                                "the chain of names is shattered and incomplete!"
+                );
+            }
+
+            // ✅ Add the next valid column
+            columns.add(parseDropColumnDefinition());
+        }
+
+        return columns;
+    }
+
 
 
     /**
@@ -715,7 +739,7 @@ public class Parser {
      * ⚔️ [WRATH OF ODIN] Parses the ALTER DATABASE RENAME command.
      * This method calls upon the wisdom of the Allfather to take an ancient realm’s name
      * and bestow upon it a new one. It ensures the ritual follows the sacred syntax:
-     * ALTER DATABASE <old_name> RENAME TO <new_name>;
+     * ALTER DATABASE <old_name> RENAME  <new_name>;
      * Each step of the saga is guarded by divine checks—if an intruder dares break the
      * rules, the parser strikes them down with the fury of the Nine Realms.
      *
@@ -793,30 +817,110 @@ public class Parser {
     }
 
     /**
-     * 🛡️ [VALHALLA’S DOOR] Parses the EXIT DATABASE command.
+     * 🛡️ [VALHALLA’S DOOR] Parses the USE NONE command.
      * This method seals the gates to the current realm, returning the warrior
      * back to the realm of no database (NONE). It ensures the ritual ends
      * with the sacred mark `;` and punishes any unworthy symbols that follow.
      * Syntax demanded by the gods:
-     * EXIT DATABASE;
+     * USE NONE;;
      *
      * @return ExitDatabaseCommand blessed by Heimdall to guide the warrior out.
      * @throws RuntimeException if chaos runes remain after the command.
      */
 
     private ExitDatabaseCommand parseExitDatabase() {
+        // Expect a placeholder NONE token before the command
         consume(TokenType.NONE);
+
+        // 🛑 Missing semicolon at the end of the command
         if (position >= tokens.size()) {
-            System.out.println("expected a semi colon");
+            throw new RuntimeException(
+                    "🪓 [BLADE OF OLYMPUS MISPLACED] The exit ritual lacks its final mark — ';' — " +
+                            "without it, the Bifrost cannot close!"
+            );
         }
+
+        // Consume the mandatory semicolon
         consume(TokenType.SEMICOLON);
+
+        // 🛑 Extra symbols or tokens after the semicolon
         if (position < tokens.size()) {
             throw new RuntimeException(
-                    "🌪️ [CHAOS STORM] Junk symbols after command!\n" +
+                    "🌪️ [CHAOS STORM] Kratos roars: 'Your words spill beyond the sacred end!'\n" +
                             "⚔️ Only one sacred incantation per line is permitted."
             );
         }
+
+        // Return the parsed command
         return new ExitDatabaseCommand();
+    }
+
+    //Table related functions
+
+    /**
+     * Parse CREATE TABLE Command - Handles the complete CREATE TABLE statement parsing
+     * Expected format: CREATE TABLE table_name (column_definitions);
+     * Validates table name, parentheses matching, and semicolon termination
+     *
+     * @throws RuntimeException for various CREATE TABLE syntax errors
+     */
+
+    private CreateTableCommand parseCreateTable() {
+        consume(TokenType.TABLE);
+        String tableName = peek().value;
+        // Ensure table name is present
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🏛️ [TEMPLE UNNAMED] 'CREATE TABLE' spoken but no table name follows — what shall be built without identity?");
+        }
+
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("⚔️ [NAMELESS ALTAR] After 'CREATE TABLE', a table name was demanded — yet none was offered to the gods.");
+        }
+
+        consume(TokenType.IDENTIFIER);
+
+        // Check for opening parenthesis
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🚪 [GATEWAY SEALED] Table name declared but column definitions gateway '(' is missing — entry to structure is barred!");
+        }
+
+        if (peek().type != TokenType.LEFT_PAREN) {
+            throw new RuntimeException("⛓️ [UNBOUND PARENTHESIS] Expected '(' to begin column definitions, yet it was never cast.");
+        }
+        consume(TokenType.LEFT_PAREN);
+
+        // Check for empty column list
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌪️ [VANISHING COLUMNS] Opening '(' found but column definitions have vanished into the ether!");
+        }
+
+        if (peek().type == TokenType.RIGHT_PAREN) {
+            throw new RuntimeException("🔥 [VOID OF CREATION] The table was summoned, yet no columns were inscribed upon its stone — a hollow shell unworthy of existence.");
+        }
+
+        List<ColumnDefinition> columns = parseColumnDefinitions();
+
+        // Check for closing parenthesis
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚖️ [SCALES UNBALANCED] Column definitions complete but closing ')' has fled — balance demands closure!");
+        }
+
+        if (peek().type != TokenType.RIGHT_PAREN) {
+            throw new RuntimeException("⛓️ [UNBOUND PARENTHESIS] An opening '(' was cast, yet no ')' arose to close the ritual — balance has been forsaken.");
+        }
+        consume(TokenType.RIGHT_PAREN);
+
+        // Check for semicolon termination
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚡ [ZEUS' INCOMPLETE DECREE] Statement structure complete but missing final ';' — even gods must end their proclamations!");
+        }
+
+        consume(TokenType.SEMICOLON);
+        // Ensure no trailing tokens exist
+        if (position < tokens.size()) {
+            throw new RuntimeException("⚡ [ZEUS' WRATH] Additional tokens linger after the statement — finish what you began!");
+        }
+        return new CreateTableCommand(tableName, columns);
     }
 
     /**
@@ -1016,7 +1120,7 @@ public class Parser {
      * - Without this seal, the realms remain unstable.
      * 6. 🌪️ If any lingering spirits (extra tokens) remain after the seal,
      * banish them with a stern warning.
-     *
+     * command ALTER TABLE <TABLE_NAME> RENAME <NEW_TABLE_NAME>
      * @return AlterTableNameCommand carrying the old and new names for execution.
      * @throws RuntimeException if syntax is broken or runes are missing.
      */
@@ -1169,7 +1273,6 @@ public class Parser {
      * while preserving its sacred structure. Like Kratos wiping out an entire pantheon but leaving their temples standing.
      * Valid Syntax: TRUNCATE TABLE <table_name>;
      * Example: TRUNCATE TABLE Titans;  // Clears all Titans but keeps their hall intact
-     *
      * @return TruncateTableCommand - A weaponized command ready for execution
      * @throws RuntimeException - When syntax violates the Laws of the Nine Realms
      */
@@ -1225,10 +1328,87 @@ public class Parser {
     }
 
     /**
+     * Parses a custom "REMOVE FROM TABLE <tableName> (<columnNames>);" or
+     * equivalent drop-columns statement into a DropColumnsCommand object.
+     * This parser:
+     *  1. Validates the presence of the 'FROM' keyword.
+     *  2. Ensures a valid table name is provided.
+     *  3. Checks that the command syntax includes parentheses containing one or more column names.
+     *  4. Validates the required closing semicolon and rejects any trailing tokens after it.
+     *  5. Produces a DropColumnsCommand object with the target table and list of columns to remove.
+     * Error messages follow the themed style with descriptive hints for the user.
+     *
+     * @return DropColumnsCommand containing the table name and columns to drop.
+     * @throws RuntimeException if syntax rules are violated or required tokens are missing.
+     */
+
+    private DropColumnsCommand parseDropColumnsCommand() {
+        // Step 1: Expect and consume 'FROM'
+        consume(TokenType.FROM);
+
+        // Step 2: Ensure there is a table name after FROM (no empty target allowed)
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The DROP spell lacks a target!
+                            ⚔️ Syntax: REMOVE FROM TABLE <realm_name> (<columns...>);
+                            🌌 Example: REMOVE FROM TABLE Fallen_Gods (wings, armor);"""
+            );
+        }
+
+        // Step 3: Validate the TABLE keyword presence
+        if (peek().type != TokenType.TABLE) {
+            throw new RuntimeException(
+                    "⚡ [ODIN'S WRATH] '" + peek().value + "' is an unworthy table reference!\n" +
+                            "🛡️ Proper format:\n" +
+                            "   REMOVE FROM TABLE <name> (...);\n" +
+                            "📜 Example: REMOVE FROM TABLE Valkyries (sword, shield);"
+            );
+        }
+        consume(TokenType.TABLE);
+
+        // Step 4: Capture the table name (must be a valid identifier)
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // Step 5: Expect '(' before column list
+        if (peek().type != TokenType.LEFT_PAREN) {
+            throw new RuntimeException("⚠️ Left parenthesis '(' required before column list");
+        }
+        consume(TokenType.LEFT_PAREN);
+
+        // Step 6: Parse the list of column names to be dropped
+        List<String> toBeDeletedColumns = parseDropColumnDefinitions();
+
+        // Step 7: Expect closing ")"
+
+        if (peek().type != TokenType.RIGHT_PAREN) {
+            throw new RuntimeException("⚠️ Right parenthesis ')' required after column list");
+        }
+        consume(TokenType.RIGHT_PAREN);
+
+        // Step 8: Expect terminating semicolon ';'
+        consume(TokenType.SEMICOLON);
+
+        // Step 9: Reject any extra tokens after the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "🌪️ [CHAOS ECHOES] Extra symbols after the sacred ';'!\n" +
+                            "⚔️ The DROP command must end cleanly."
+            );
+        }
+
+        // Step 10: Return a forged DropColumnsCommand with parsed table name and columns
+        return new DropColumnsCommand(toBeDeletedColumns, tableName);
+    }
+
+
+    /**
      * Parse - Main entry point for parsing SQL commands
      * Determines command type (CREATE or INSERT) and delegates to appropriate parser
      * Handles top-level parsing errors with comprehensive error reporting
      */
+
     public SQLCommand parse() {
         try {
             // Ensure we have at least one token to examine
@@ -1318,7 +1498,7 @@ public class Parser {
                             """
                                     ⚡ [BROKEN RUNE] ALTER command incomplete!
                                     🛡️ You must specify: ALTER DATABASE <name> RENAME  <new_name>
-                                    🌌 Example: ALTER DATABASE Valhalla RENAME TO Asgard"""
+                                    🌌 Example: ALTER DATABASE Valhalla RENAME  Asgard or ALTER TABLE Valhalla RENAME  Asgard."""
                     );
                 }
 
@@ -1340,7 +1520,12 @@ public class Parser {
                     }
                     return parseAlterTable();
                 } else {
-                    throw new RuntimeException("except database and table alter doesn't work");
+                    throw new RuntimeException(
+                            "⚔️ [WRATH OF THE ALLFATHER] Kratos bellows: 'Only the realms themselves (databases) " +
+                                    "and their great halls (tables) may be reshaped by my hand!'\n" +
+                                    "🪓 All other alterations are but whispers to the wind — unworthy of the forge!"
+                    );
+
                 }
             } else if (peek().type == TokenType.ADD) {
                 advance();
@@ -1368,7 +1553,7 @@ public class Parser {
                             """
                                     ⚡ [BROKEN RUNE] TRUNCATE command incomplete!
                                     🛡️ You must specify: TRUNCATE TABLE table_name
-                                    🌌 Example: TRUNCATE DATABASE Valhalla RENAME TO Asgard"""
+                                    🌌 Example: TRUNCATE TABLE Valhalla"""
                     );
                 }
                 Token second = peek();
@@ -1380,6 +1565,26 @@ public class Parser {
                     );
                 }
                 return parseTruncateCommand();
+            } else if (peek().type == TokenType.REMOVE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] REMOVE command incomplete!
+                                    🛡️ You must specify: REMOVE FROM TABLE table_name (columns)
+                                    🌌 Example: REMOVE FROM TABLE Valhalla (id,name)."""
+                    );
+                }
+                Token second = peek();
+                if (second.type != TokenType.FROM) {
+                    throw new RuntimeException(
+                            "⚡ [BROKEN RUNE] The prophecy called for the FROM rune, " +
+                                    "yet you dare present '" + second.value + "'! " +
+                                    "Summon the FROM rune to proceed through the Bifrost."
+                    );
+                }
+                return parseDropColumnsCommand();
+
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }
