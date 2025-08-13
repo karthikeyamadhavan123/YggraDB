@@ -580,7 +580,6 @@ public class Parser {
     }
 
 
-
     /**
      * Parses a CREATE DATABASE command.
      * Expected syntax: CREATE DATABASE <realm_name>;
@@ -1121,6 +1120,7 @@ public class Parser {
      * 6. 🌪️ If any lingering spirits (extra tokens) remain after the seal,
      * banish them with a stern warning.
      * command ALTER TABLE <TABLE_NAME> RENAME <NEW_TABLE_NAME>
+     *
      * @return AlterTableNameCommand carrying the old and new names for execution.
      * @throws RuntimeException if syntax is broken or runes are missing.
      */
@@ -1273,6 +1273,7 @@ public class Parser {
      * while preserving its sacred structure. Like Kratos wiping out an entire pantheon but leaving their temples standing.
      * Valid Syntax: TRUNCATE TABLE <table_name>;
      * Example: TRUNCATE TABLE Titans;  // Clears all Titans but keeps their hall intact
+     *
      * @return TruncateTableCommand - A weaponized command ready for execution
      * @throws RuntimeException - When syntax violates the Laws of the Nine Realms
      */
@@ -1331,11 +1332,11 @@ public class Parser {
      * Parses a custom "REMOVE FROM TABLE <tableName> (<columnNames>);" or
      * equivalent drop-columns statement into a DropColumnsCommand object.
      * This parser:
-     *  1. Validates the presence of the 'FROM' keyword.
-     *  2. Ensures a valid table name is provided.
-     *  3. Checks that the command syntax includes parentheses containing one or more column names.
-     *  4. Validates the required closing semicolon and rejects any trailing tokens after it.
-     *  5. Produces a DropColumnsCommand object with the target table and list of columns to remove.
+     * 1. Validates the presence of the 'FROM' keyword.
+     * 2. Ensures a valid table name is provided.
+     * 3. Checks that the command syntax includes parentheses containing one or more column names.
+     * 4. Validates the required closing semicolon and rejects any trailing tokens after it.
+     * 5. Produces a DropColumnsCommand object with the target table and list of columns to remove.
      * Error messages follow the themed style with descriptive hints for the user.
      *
      * @return DropColumnsCommand containing the table name and columns to drop.
@@ -1402,6 +1403,184 @@ public class Parser {
         return new DropColumnsCommand(toBeDeletedColumns, tableName);
     }
 
+    /**
+     * 🏛️ [TEMPLE OF TRANSFORMATION] - RENAME COLUMN COMMAND PARSER
+     * ⚔️ [DIVINE PURPOSE]:
+     * Parses the sacred RENAME COLUMN command that transforms a column's identity
+     * within a table realm, following the ancient syntax blessed by the gods.
+     * 📜 [SACRED SYNTAX]:
+     * RENAME COLUMN <old_column_name> TO <new_column_name> IN TABLE <table_name>;
+     * 🌟 [GODLY EXAMPLE]:
+     * RENAME COLUMN cursed_blade TO blessed_sword IN TABLE Weapons;
+     * ⚡ [Kratos's METHODOLOGY]:
+     * 1. Consumes the COLUMN token (already handled by caller)
+     * 2. Captures the old column name destined for transformation
+     * 3. Validates and consumes the sacred TO keyword
+     * 4. Captures the new column name that shall rise
+     * 5. Validates and consumes the IN keyword for realm specification
+     * 6. Validates and consumes the TABLE keyword
+     * 7. Captures the table name where transformation occurs
+     * 8. Seals the command with the sacred semicolon
+     * 9. Rejects any chaotic tokens that dare follow
+     * 🔥 [RETURN OF THE GODS]:
+     * Returns a RenameColumnCommand forged with the old name, table realm, and new name
+     * ⚰️ [WRATH OF HADES]:
+     * Throws RuntimeException with epic God of War themed messages if syntax sins are detected
+     */
+
+    private RenameColumnCommand parseRenameColumnCommand() {
+        // ⚔️ [Kratos's FORGE] Begin the sacred ritual of column renaming
+        // The COLUMN token has already been consumed by the caller
+        consume(TokenType.COLUMN);
+
+        // 🔥 [BLADE OF OLYMPUS] Ensure we have tokens remaining for the old column name
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The RENAME spell lacks a target column!
+                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                            🌌 Example: RENAME COLUMN cursed_blade TO blessed_sword IN TABLE Weapons;"""
+            );
+        }
+
+        // ⚡ [SPARTAN RAGE] Capture the name of the column to be reforged
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "⚡ [ODIN'S WRATH] '" + peek().value + "' is not a worthy column name to rename!\n" +
+                            "🛡️ Proper format: RENAME COLUMN <old_name> TO <new_name> IN TABLE <table_name>;\n" +
+                            "📜 Example: RENAME COLUMN ancient_power TO divine_strength IN TABLE Gods;"
+            );
+        }
+        String oldColumnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🌪️ [WINDS OF CHANGE] Expect the sacred TO keyword for transformation
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The RENAME spell requires the sacred 'TO' for transformation!
+                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                            🌌 Example: RENAME COLUMN mortal_strength TO godly_might IN TABLE Heroes;"""
+            );
+        }
+
+        if (peek().type != TokenType.TO) {
+            throw new RuntimeException(
+                    "⚡ [ZEUS'S THUNDER] Missing the sacred 'TO' in your renaming ritual!\n" +
+                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO <new_name> IN TABLE <table_name>;\n" +
+                            "📜 The gods demand proper transformation syntax!"
+            );
+        }
+        consume(TokenType.TO);
+
+        // 🏛️ [TEMPLE OF WISDOM] Capture the new name that shall replace the old
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The RENAME spell lacks the new column name!
+                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                            🌌 Example: RENAME COLUMN weak_shield TO aegis_protection IN TABLE Equipment;"""
+            );
+        }
+
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "⚡ [ARES'S FURY] '" + peek().value + "' is not a worthy new name for the column!\n" +
+                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO <new_name> IN TABLE <table_name>;\n" +
+                            "📜 Choose a name fit for the gods!"
+            );
+        }
+        String newColumnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🌊 [POSEIDON'S DECREE] Expect the IN keyword to specify the realm (table)
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The RENAME spell requires 'IN TABLE' to specify the realm!
+                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                            🌌 Example: RENAME COLUMN old_power TO new_power IN TABLE Artifacts;"""
+            );
+        }
+
+        if (peek().type != TokenType.IN) {
+            throw new RuntimeException(
+                    "⚡ [ATHENA'S WISDOM] Missing the sacred 'IN' to specify the table realm!\n" +
+                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" +
+                            "📜 The gods must know which realm to transform!"
+            );
+        }
+        consume(TokenType.IN);
+
+        // 🏺 [PANDORA'S VESSEL] Expect the TABLE keyword before the realm name
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The RENAME spell requires 'TABLE' after 'IN'!
+                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                            🌌 Example: RENAME COLUMN old_relic TO sacred_relic IN TABLE Treasures;"""
+            );
+        }
+
+        if (peek().type != TokenType.TABLE) {
+            throw new RuntimeException(
+                    "⚡ [HADES'S JUDGMENT] Missing the sacred 'TABLE' keyword!\n" +
+                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" +
+                            "📜 The underworld demands proper table reference!"
+            );
+        }
+        consume(TokenType.TABLE);
+
+        // 🏛️ [MOUNT OLYMPUS] Capture the name of the table realm to be transformed
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    """
+                            🔥 [FLAMES OF THE FORGE] The RENAME spell lacks the table name!
+                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                            🌌 Example: RENAME COLUMN mortal_name TO heroic_title IN TABLE Champions;"""
+            );
+        }
+
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "⚡ [OLYMPIAN RAGE] '" + peek().value + "' is not a worthy table name!\n" +
+                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" +
+                            "📜 Name a realm worthy of the gods!"
+            );
+        }
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // ⚰️ [FINAL JUDGMENT] Seal the command with the sacred semicolon
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    "🔥 [FLAMES OF THE FORGE] The RENAME ritual requires the sacred ';' to complete!\n" +
+                            "⚔️ Your command: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE " + tableName + ";\n" +
+                            "📜 The gods demand proper closure!"
+            );
+        }
+
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "⚡ [FINAL WRATH] Missing the sacred semicolon ';' to seal the renaming ritual!\n" +
+                            "🛡️ Complete command: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE " + tableName + ";\n" +
+                            "📜 Without it, the transformation cannot be bound!"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 🌪️ [CHAOS PREVENTION] Reject any forbidden tokens after the sacred seal
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "🌪️ [CHAOS ECHOES] Extra symbols detected after the sacred ';'!\n" +
+                            "⚔️ The RENAME command must end cleanly with the semicolon.\n" +
+                            "📜 Remove these chaotic remnants: " + tokens.get(position).value
+            );
+        }
+
+        // 🎯 [Kratos's TRIUMPH] Forge the command with the captured elements
+        return new RenameColumnCommand(oldColumnName, tableName, newColumnName);
+    }
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -1585,6 +1764,28 @@ public class Parser {
                 }
                 return parseDropColumnsCommand();
 
+            } else if (peek().type == TokenType.RENAME) {
+                advance();
+
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] RENAME command incomplete!
+                                    🛡️ You must specify: RENAME COLUMN <OLD_COLUMN_NAME> TO <NEW_COLUMN_NAME> IN TABLE <TABLE_NAME>
+                                    🌌 Example: RENAME COLUMN age TO years IN TABLE warriors."""
+                    );
+                }
+
+                Token second = peek();
+                if (second.type != TokenType.COLUMN) {
+                    throw new RuntimeException(
+                            "⚡ [BROKEN RUNE] The prophecy spoke of the COLUMN rune, " +
+                                    "yet you offer '" + second.value + "'! " +
+                                    "Summon the COLUMN rune to reshape destiny."
+                    );
+                }
+
+                return parseRenameColumnCommand();
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }

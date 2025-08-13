@@ -280,7 +280,6 @@ public class Table {
      * @throws RuntimeException if the column does not exist in the schema.
      */
 
-
     public void removeColumnFromTable(String columnName) {
         // Step 1: Find the index of the column in the schema
         int colIndex = -1;
@@ -305,6 +304,39 @@ public class Table {
             // so we remove the value at the same index as the removed column.
             row.values.remove(colIndex);
         }
+    }
+
+    /**
+     * ⚔️ Renames a column within the table’s schema
+     * 🛠️ FUNCTIONAL STEPS:
+     * 1️⃣ Search for the column in the schema whose name matches `oldName`.
+     * 2️⃣ If a match is found, update its name to `newName`.
+     * 3️⃣ Does not alter any row data — only the column metadata is changed.
+     * ⚠️ NOTE:
+     * - If multiple columns have the same name (which ideally should not happen),
+     *   all matching columns will be renamed.
+     * - No validation for reserved keywords or duplicate column names is done here.
+     *
+     * @param oldName The current name of the column to be changed.
+     * @param newName The new name to bestow upon the column.
+     */
+
+    public void renameColumnFromTable(String oldName, String newName) {
+        for (int i = 0; i < columnList.size(); i++) {
+            // 🔍 STEP I: Seek the target column — Kratos hunts his prey
+            if (columnList.stream()
+                    .anyMatch(columnDefinition -> columnDefinition.columnName.equals(oldName))) {
+
+                // ⚒️ STEP II: Change the column’s identity — rebirth in the fires of war
+                columnList.get(i).setColumnName(newName);
+                return; //🛡️ STEP III: Mission complete — retreat from battle
+            }
+        }
+        // 💀 If no match is found, the enemy is nowhere to be seen
+        throw new RuntimeException(
+                "🌪️ [LOST IN THE MISTS] Kratos searches for column '" + oldName +
+                        "' but finds only silence in the void!"
+        );
     }
 
     // Method: getColumnIndexByName(String name)

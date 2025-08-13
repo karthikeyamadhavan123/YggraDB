@@ -108,6 +108,7 @@ public class DatabaseManager {
     /**
      * 🌈 [REALM ENTRY] 🌈
      * Crosses the Bifrost to enter a specific database realm.
+     *
      * @param dbName Name of the realm to enter
      * @throws RuntimeException if realm doesn't exist
      */
@@ -494,8 +495,8 @@ public class DatabaseManager {
     /**
      * Alters the structure of an existing table by adding new columns to it.
      *
-     * @param toAddColumns The list of new columns to forge into the table.
-     * @param tableName    The name of the table whose fate is about to change.
+     * @param toAddColumns  The list of new columns to forge into the table.
+     * @param tableName     The name of the table whose fate is about to change.
      * @param defaultValues default value is null.
      */
 
@@ -526,7 +527,7 @@ public class DatabaseManager {
         }
         // 4. 🏗️ Add each new column to the table
         for (int i = 0; i < toAddColumns.size(); i++) {
-            table.addColumnsToExistingTable(toAddColumns.get(i),defaultValues.get(i)!= null ? defaultValues.get(i):null);
+            table.addColumnsToExistingTable(toAddColumns.get(i), defaultValues.get(i) != null ? defaultValues.get(i) : null);
             System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() +
                     "' has been bestowed upon table '" + tableName + "'!");
         }
@@ -545,8 +546,8 @@ public class DatabaseManager {
      *
      * @param tableName The name of the table to be cleansed by divine fire
      * @throws RuntimeException When the realms are not aligned or the table eludes our grasp
-
-     * 💀 "The cycle ends here. We must be better than this." - Kratos 💀
+     *                          <p>
+     *                          💀 "The cycle ends here. We must be better than this." - Kratos 💀
      */
 
     public void truncateTable(String tableName) {
@@ -598,14 +599,15 @@ public class DatabaseManager {
     /**
      * Drops one or more columns from the specified table in the current database.
      * This method:
-     *  1. Ensures a database ("realm") is currently selected.
-     *  2. Validates that the target table exists in the current database.
-     *  3. Iterates over each column name provided and removes it from the table schema
-     *     and all associated data rows.
-     *  4. Prints a confirmation message upon successful removal.
+     * 1. Ensures a database ("realm") is currently selected.
+     * 2. Validates that the target table exists in the current database.
+     * 3. Iterates over each column name provided and removes it from the table schema
+     * and all associated data rows.
+     * 4. Prints a confirmation message upon successful removal.
      * The behavior is equivalent to multiple "ALTER TABLE <tableName> DROP COLUMN <columnName>" commands.
+     *
      * @param deletedColumns List of column names to remove.
-     * @param tableName The name of the table from which to drop the columns.
+     * @param tableName      The name of the table from which to drop the columns.
      * @throws RuntimeException if no database is selected or the table does not exist.
      */
 
@@ -646,6 +648,58 @@ public class DatabaseManager {
         // STEP V: Confirm success to the player
         System.out.println("🗡️ [COLUMNS VANQUISHED] The following columns have been erased from '"
                 + tableName + "': " + deletedColumns);
+    }
+
+    /**
+     * ⚔️ Renames a column in a specified table within the currently selected database ("realm").
+     * 🛠️ FUNCTIONAL STEPS:
+     * 1️⃣ Validate that a database is currently selected — operations cannot proceed without a battlefield.
+     * 2️⃣ Retrieve the specified table from the current database.
+     * 3️⃣ Verify that the table exists; if not, summon Kratos’ wrath.
+     * 4️⃣ Invoke the table’s column renaming logic to replace `oldName` with `newName`.
+     * 5️⃣ Announce the successful transformation.
+     *
+     * @param oldName   The current column name to be replaced.
+     * @param tableName The name of the table containing the column.
+     * @param newName   The new name to grant the column.
+     * @throws RuntimeException if:
+     *                          - No database is currently in use.
+     *                          - The target table does not exist in the current database.
+     */
+
+    public void renameColumns(String oldName, String tableName, String newName) {
+        // STEP I: Ensure a database ("realm") is currently selected
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    """
+                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                            KRATOS ROARS: 'You dare attempt to purge the columns without first
+                            declaring your battlefield?!' 🗡️
+                            💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
+                            🔥 'Face me when you are prepared for war!' - Kratos
+                            """
+            );
+        }
+
+        // STEP II: Retrieve the target table from the current database
+        Table table = getTable(tableName);
+
+        // STEP III: Validate that the table exists
+        if (table == null) {
+            throw new RuntimeException(
+                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
+                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" +
+                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
+                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
+                            "💡 Ensure the table exists before invoking the cleansing fire!"
+            );
+        }
+
+        // STEP IV: Command the table to rename the column
+        table.renameColumnFromTable(oldName, newName);
+
+        // STEP V: Announce the victory
+        System.out.println("Changed column name from " + oldName + " to " + newName);
     }
 
 }

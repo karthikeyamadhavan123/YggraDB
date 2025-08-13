@@ -2,7 +2,6 @@ package com.yggra.cli;
 
 import com.yggra.commands.SQLCommand;
 import com.yggra.executor.SQLExecutor;
-import com.yggra.models.Database;
 import com.yggra.models.DatabaseManager;
 import com.yggra.parser.Parser;
 import com.yggra.parser.Token;

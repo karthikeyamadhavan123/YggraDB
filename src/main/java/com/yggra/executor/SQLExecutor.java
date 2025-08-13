@@ -109,6 +109,21 @@ public class SQLExecutor {
                     .dropColumnsofTable(dropColumnsCommand.tobeDeletedColumns,
                             dropColumnsCommand.tableName);
 
+            // ⚔️ COMMAND HANDLER: RenameColumnCommand
+            // 🛠️ FUNCTIONAL STEPS:
+            // 1️⃣ Receive a RenameColumnCommand containing the old column name, table name, and new name.
+            // 2️⃣ Forward the request to the DatabaseManager for execution.
+            // 3️⃣ The DatabaseManager will handle validations, table retrieval, and column renaming.
+            // 4️⃣ Any violations of the sacred order will trigger Kratos-style runtime exceptions.
+
+            case RenameColumnCommand renameColumnCommand -> DatabaseManager.getInstance()
+                    .renameColumns(
+                            renameColumnCommand.oldColumnName, // Current column name
+                            renameColumnCommand.tableName,     // Target table name
+                            renameColumnCommand.newName        // New column name
+                    );
+
+
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->
                     throw new RuntimeException("⚡ [CHAOS UNLEASHED] The command you utter holds no power in these realms — speak a known incantation!");

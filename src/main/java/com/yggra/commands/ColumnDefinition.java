@@ -89,4 +89,11 @@ public class ColumnDefinition {
         return columnName;
     }
 
+
+    //sets new column name for the particular column
+
+    public void setColumnName(String newName){
+        this.columnName=newName;
+    }
+
 }

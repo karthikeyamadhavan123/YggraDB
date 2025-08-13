@@ -211,6 +211,9 @@ public class Lexer {
                         case "FROM":
                             tokens.add(new Token(TokenType.FROM, rawKeyword));
                             break;
+                        case "IN":
+                            tokens.add(new Token(TokenType.IN, rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }
