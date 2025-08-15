@@ -214,6 +214,9 @@ public class Lexer {
                         case "IN":
                             tokens.add(new Token(TokenType.IN, rawKeyword));
                             break;
+                        case "MODIFY":
+                            tokens.add(new Token(TokenType.MODIFY, rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }

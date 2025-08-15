@@ -1583,6 +1583,86 @@ public class Parser {
     }
 
     /**
+     * 🤺Parses the MODIFY COLUMN command in the form:
+     * MODIFY COLUMN (<COLUMN_NAME> <NEW_DATATYPE>) IN TABLE <TABLE_NAME>;
+     * Expected grammar:
+     *   MODIFY COLUMN (column_name datatype [, column_name datatype ...]) IN TABLE table_name;
+     * Purpose:
+     *   This method validates the syntax for modifying one or more column datatypes
+     *   in a table, throwing thematic error messages if the format is wrong.
+     *
+     * @return ModifyDatatypeColumn object containing parsed command details (currently null placeholder)
+     */
+
+    private ModifyDatatypeColumn parseModifyDataTypeCommand() {
+
+        // Step 1: Expect and consume the COLUMN keyword after MODIFY
+        consume(TokenType.COLUMN);
+
+        // Step 2: Expect and consume the LEFT_PAREN to start the modification list
+        if (peek().type != TokenType.LEFT_PAREN) {
+            throw new RuntimeException(
+                    "⚡ [BROKEN RUNE] The Allfather demands a '(' to open the column transformation ritual!\n" +
+                            "🛡️ Example: MODIFY COLUMN (name VARCHAR(50)) IN TABLE Valhalla;"
+            );
+        }
+        consume(TokenType.LEFT_PAREN);
+
+        List<ColumnDefinition> parsedColumns = parseColumnDefinitions();
+
+        // Step 4: Expect and consume the RIGHT_PAREN to close the modification list
+        if (peek().type != TokenType.RIGHT_PAREN) {
+            throw new RuntimeException(
+                    "⚡ [BROKEN RUNE] The ritual circle remains open!\n" +
+                            "🌌 Close it with ')' before invoking the table name."
+            );
+        }
+        consume(TokenType.RIGHT_PAREN);
+
+        // Step 5: Expect and consume the IN keyword
+        if (peek().type != TokenType.IN) {
+            throw new RuntimeException(
+                    "⚡ [MISSING RUNE] The path to the table realm is blocked!\n" +
+                            "🛡️ Speak the IN rune before naming the table."
+            );
+        }
+        consume(TokenType.IN);
+
+        // Step 6: Expect and consume the TABLE keyword
+        if (peek().type != TokenType.TABLE) {
+            throw new RuntimeException(
+                    "⚡ [BROKEN RUNE] The prophecy demands the TABLE rune!\n" +
+                            "🌌 Without TABLE, the realm cannot be summoned."
+            );
+        }
+        consume(TokenType.TABLE);
+
+        // Step 7: Expect and consume the table name (IDENTIFIER)
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "⚡ [NAMELESS REALM] The table has no name!\n" +
+                            "🛡️ Speak the table's true name to bind the spell."
+            );
+        }
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // Step 8: Expect and consume the SEMICOLON to mark command end
+        consume(TokenType.SEMICOLON);
+
+        // Step 9: Ensure there are no extra tokens after the command
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "🌪️ [CHAOS ECHOES] Extra symbols linger beyond the sacred ';'!\n" +
+                            "⚔️ The MODIFY COLUMN command must end cleanly."
+            );
+        }
+
+        return new ModifyDatatypeColumn(tableName,parsedColumns);
+    }
+
+
+    /**
      * Parse - Main entry point for parsing SQL commands
      * Determines command type (CREATE or INSERT) and delegates to appropriate parser
      * Handles top-level parsing errors with comprehensive error reporting
@@ -1786,6 +1866,27 @@ public class Parser {
                 }
 
                 return parseRenameColumnCommand();
+            } else if (peek().type == TokenType.MODIFY) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] The MODIFY ritual is incomplete!
+                                    🛡️ You must speak the full incantation:
+                                    MODIFY COLUMN <COLUMN_NAME> <NEW_DATATYPE> IN TABLE <TABLE_NAME>;
+                                    🌌 Example: MODIFY COLUMN age INT IN TABLE Midgardians;
+                                    """
+                    );
+                }
+                Token second = peek();
+                if (second.type != TokenType.COLUMN) {
+                    throw new RuntimeException(
+                            "⚡ [BROKEN RUNE] The prophecy demanded the COLUMN rune, " +
+                                    "yet you brandish '" + second.value + "'! " +
+                                    "Summon the COLUMN rune to channel the Allfather's will."
+                    );
+                }
+                return parseModifyDataTypeCommand();
             } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
             }

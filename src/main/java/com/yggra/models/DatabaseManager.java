@@ -527,7 +527,7 @@ public class DatabaseManager {
         }
         // 4. 🏗️ Add each new column to the table
         for (int i = 0; i < toAddColumns.size(); i++) {
-            table.addColumnsToExistingTable(toAddColumns.get(i), defaultValues.get(i) != null ? defaultValues.get(i) : null);
+            table.addColumnsToExistingTable(toAddColumns.get(i), defaultValues!= null ? defaultValues.get(i) : null);
             System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() +
                     "' has been bestowed upon table '" + tableName + "'!");
         }
@@ -700,6 +700,59 @@ public class DatabaseManager {
 
         // STEP V: Announce the victory
         System.out.println("Changed column name from " + oldName + " to " + newName);
+    }
+
+    /**
+     * Modifies the datatypes of specified columns in a given table.
+     * Flow:
+     *  1. Ensure a database is currently selected before performing any table operations.
+     *  2. Retrieve the target table object from the active database.
+     *  3. Validate that the table exists; throw an error if not found.
+     *  4. Delegate the datatype modification to the Table class's
+     *     `modifyDataTypeColumnsFromTable()` method.
+     * Behavior:
+     *  - Throws thematic (God of War–style) RuntimeExceptions if preconditions are not met.
+     *  - Relies on Table to handle column-level validation and atomic updates.
+     *
+     * @param tableName Name of the table in which the columns will be modified.
+     * @param columns   List of ColumnDefinition objects containing column names,
+     *                  new datatypes, and optional lengths.
+     */
+
+    public void modifyDataTypecolumns(String tableName, List<ColumnDefinition> columns) {
+
+        // STEP I: Ensure a database ("realm") is currently selected before proceeding.
+        // Without an active database context, table-level operations cannot be performed.
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    """
+                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                            KRATOS ROARS: 'You dare attempt to purge the columns without first
+                            declaring your battlefield?!' 🗡️
+                            💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
+                            🔥 'Face me when you are prepared for war!' - Kratos
+                            """
+            );
+        }
+
+        // STEP II: Retrieve the target table from the currently active database.
+        Table table = getTable(tableName);
+
+        // STEP III: Validate that the table exists.
+        // If no table by this name exists in the current database, abort with thematic error.
+        if (table == null) {
+            throw new RuntimeException(
+                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
+                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" +
+                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
+                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
+                            "💡 Ensure the table exists before invoking the cleansing fire!"
+            );
+        }
+
+        // STEP IV: Delegate the datatype modification task to the Table object.
+        // This ensures all column-level validation and updates are handled at the table level.
+        table.modifyDataTypeColumnsFromTable(columns);
     }
 
 }

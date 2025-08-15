@@ -6,6 +6,8 @@ import com.yggra.parser.TokenType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -272,9 +274,9 @@ public class Table {
      * Removes a column from the table schema and deletes all data associated with it in every row.
      * This method behaves like a SQL "ALTER TABLE <tableName> DROP COLUMN <columnName>" operation.
      * It:
-     *  1. Locates the column in the table's schema.
-     *  2. Removes the column definition from the schema.
-     *  3. Removes the corresponding value from every row in the table to maintain column alignment.
+     * 1. Locates the column in the table's schema.
+     * 2. Removes the column definition from the schema.
+     * 3. Removes the corresponding value from every row in the table to maintain column alignment.
      *
      * @param columnName The name of the column to remove.
      * @throws RuntimeException if the column does not exist in the schema.
@@ -314,7 +316,7 @@ public class Table {
      * 3️⃣ Does not alter any row data — only the column metadata is changed.
      * ⚠️ NOTE:
      * - If multiple columns have the same name (which ideally should not happen),
-     *   all matching columns will be renamed.
+     * all matching columns will be renamed.
      * - No validation for reserved keywords or duplicate column names is done here.
      *
      * @param oldName The current name of the column to be changed.
@@ -338,6 +340,55 @@ public class Table {
                         "' but finds only silence in the void!"
         );
     }
+
+    /**
+     * Alters the datatypes of one or more existing columns in a table.
+     * This method performs the operation in an "all-or-nothing" manner:
+     * - If ANY column specified for modification does not exist, the operation is aborted.
+     * - If all columns exist, their datatypes are updated.
+     * Uses a HashMap for O(n) performance, making it efficient for bulk modifications.
+     *
+     * @param modifiedDataTypesColumn List of ColumnDefinition objects containing:
+     * - columnName (String): The name of the column to modify
+     * - type (TokenType): The new datatype token
+     * - length (int): Optional length/size for the datatype
+     * @throws RuntimeException if any specified column does not exist in the current table schema.
+     */
+
+    public void modifyDataTypeColumnsFromTable(List<ColumnDefinition> modifiedDataTypesColumn) {
+
+        // Step 1: Build a fast lookup map (column name → existing column definition)
+        // This avoids repeated list scanning and ensures O(1) column existence checks.
+        Map<String, ColumnDefinition> columnMap = columnList.stream()
+                .collect(Collectors.toMap(col -> col.columnName, col -> col));
+
+        // Step 2: Validate all requested modifications BEFORE applying any changes.
+        // Ensures atomicity: the operation will fail entirely if even one column doesn't exist.
+        for (ColumnDefinition definition : modifiedDataTypesColumn) {
+            if (!columnMap.containsKey(definition.columnName)) {
+                throw new RuntimeException(
+                        "⚠️ [BROKEN RUNE] The Valkyries refuse your request!\n" +
+                                "🛡️ No such column exists in this realm: '" + definition.columnName + "'\n" +
+                                "🌌 The MODIFY COLUMN ritual has been abandoned — no changes applied."
+                );
+            }
+        }
+
+        // Step 3: Apply all datatype modifications now that validation has passed.
+        // Each column definition in the table is updated with its new type and length.
+        for (ColumnDefinition definition : modifiedDataTypesColumn) {
+            ColumnDefinition existing = columnMap.get(definition.columnName);
+            existing.setNewDataTypeColumn(definition.type, definition.length);
+        }
+
+        // Step 4: Announce success in God of War style.
+        // No individual column logs are shown here, only a single confirmation message.
+        System.out.println(
+                "⚡ [VALHALLA'S BLESSING] All columns transformed successfully!\n" +
+                        "🔥 The Norns have rewritten the fate of your table."
+        );
+    }
+
 
     // Method: getColumnIndexByName(String name)
 }

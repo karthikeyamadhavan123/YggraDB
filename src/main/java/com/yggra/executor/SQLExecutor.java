@@ -123,6 +123,13 @@ public class SQLExecutor {
                             renameColumnCommand.newName        // New column name
                     );
 
+            // This case is triggered when the parsed command is recognized as a ModifyDatatypeColumn object.
+            //  1. Retrieve the DatabaseManager singleton instance.
+            //  2. Call `modifyDataTypecolumns()` to perform the datatype change
+
+            case ModifyDatatypeColumn modifyDatatypeColumn -> DatabaseManager.getInstance()
+                    .modifyDataTypecolumns(modifyDatatypeColumn.tableName, modifyDatatypeColumn.columns);
+
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

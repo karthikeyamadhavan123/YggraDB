@@ -91,9 +91,35 @@ public class ColumnDefinition {
 
 
     //sets new column name for the particular column
-
     public void setColumnName(String newName){
         this.columnName=newName;
     }
+
+    /**
+     * Updates this column's datatype and optional length.
+     * Behavior:
+     * - If the new type is VARCHAR and a positive length is provided,
+     *   set the column type to VARCHAR and store the given length.
+     * - For all other cases (including VARCHAR with invalid length),
+     *   default to INT and set length to -1 (no length restriction).
+     *
+     * @param type   The new datatype token (e.g., TokenType.VARCHAR or TokenType.INT)
+     * @param length The length for VARCHAR columns, ignored for INT.
+     */
+
+    public void setNewDataTypeColumn(TokenType type, int length) {
+
+        // Case 1: A VARCHAR type with a valid length (> 0) — set as VARCHAR with the given size.
+        if (type == TokenType.VARCHAR && length > 0) {
+            this.type = TokenType.VARCHAR;
+            this.length = length;
+        }
+        // Case 2: All other cases — set as INT with no length restriction (-1 marks "no length").
+        else {
+            this.type = TokenType.INT;
+            this.length = -1;
+        }
+    }
+
 
 }
