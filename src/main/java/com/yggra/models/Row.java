@@ -12,7 +12,6 @@ public class Row {
     /**
      * 📜 The sacred list of values that this row holds.
      * Each value corresponds to a column in the table's schema.
-     *
      * Note:
      *  - The index of each value in this list matches the index of the column in the table's columnList.
      *  - Can store any object type, but it is the table’s duty to ensure

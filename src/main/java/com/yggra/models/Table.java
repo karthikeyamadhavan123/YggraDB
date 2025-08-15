@@ -48,6 +48,14 @@ public class Table {
         this.tableName = newName;
     }
 
+    private Object getTypeDefault(TokenType type) {
+        return switch (type) {
+            case INT -> 0;
+            case VARCHAR -> "";
+            default -> null;
+        };
+    }
+
     /**
      * Adds a single new column to an existing table's schema.
      *
@@ -61,12 +69,15 @@ public class Table {
                             "Provide a valid column definition!"
             );
         }
-        if (!validateDefaultValue(column, defaultValue)) {
-            throw new RuntimeException(
-                    "⚡ [WRONG POWER] The default value '" + defaultValue +
-                            "' defies the laws of Midgard! Match its might to the column's true type."
-            );
 
+        if (defaultValue != null) {
+            if (!validateDefaultValue(column, defaultValue)) {
+                throw new RuntimeException(
+                        "⚡ [WRONG POWER] The default value '" + defaultValue +
+                                "' defies the laws of Midgard! Match its might to the column's true type."
+                );
+
+            }
         }
 
         for (ColumnDefinition existingColumn : columnList) {
@@ -81,11 +92,18 @@ public class Table {
         //add columns to the existing columnList.
         columnList.add(column);
 
-        // add the default value is it is null else add defaultValue.
-        for (Row row : rowList) {
-            //check the datatypes of default row values
-            row.addDefaultValues(defaultValue.value);
+        // Determine the actual value to insert for existing rows
+        Object valueToInsert;
+        if (defaultValue != null) {
+            valueToInsert = defaultValue.value;
+        } else {
+            valueToInsert = getTypeDefault(column.getType());
         }
+        // Add the value to each existing row
+        for (Row row : rowList) {
+            row.addDefaultValues(valueToInsert);
+        }
+
     }
 
     /**
@@ -349,9 +367,9 @@ public class Table {
      * Uses a HashMap for O(n) performance, making it efficient for bulk modifications.
      *
      * @param modifiedDataTypesColumn List of ColumnDefinition objects containing:
-     * - columnName (String): The name of the column to modify
-     * - type (TokenType): The new datatype token
-     * - length (int): Optional length/size for the datatype
+     *                                - columnName (String): The name of the column to modify
+     *                                - type (TokenType): The new datatype token
+     *                                - length (int): Optional length/size for the datatype
      * @throws RuntimeException if any specified column does not exist in the current table schema.
      */
 

@@ -493,12 +493,24 @@ public class DatabaseManager {
     }
 
     /**
-     * Alters the structure of an existing table by adding new columns to it.
-     *
-     * @param toAddColumns  The list of new columns to forge into the table.
-     * @param tableName     The name of the table whose fate is about to change.
-     * @param defaultValues default value is null.
+     * Alters the structure of an existing table by adding one or more new columns.
+     * This method will:
+     * Verify that a database (realm) is currently selected.
+     * Locate the target table by name.
+     * Validate that at least one column definition is provided.
+     * Add each column to the table’s schema in the given order.
+     * Populate each existing row with its corresponding default value (if provided),
+     * or with the type’s fallback value (e.g., 0 for INT, NULL for VARCHAR).
+     * If fewer defaults are provided than columns, the remaining columns will receive
+     * fallback values instead of null entries.
+     * @param toAddColumns  The ordered list of column definitions to add to the table.
+     * @param tableName     The name of the table whose schema is being altered.
+     * @param defaultValues A list of default values to assign to each new column’s existing rows.
+     *                      May be {@code null} or shorter than the number of columns; missing
+     *                      defaults are replaced with safe fallback values.
+     * @throws RuntimeException if no database is selected, the table does not exist, or the column list is empty.
      */
+
 
     public void alterColumnsofTable(List<ColumnDefinition> toAddColumns, String tableName, List<ValueDefinition> defaultValues) {
         // 1. 🔮 Ensure the Bifrost is aligned with a realm (database is selected)
@@ -525,12 +537,18 @@ public class DatabaseManager {
                             "The gods demand at least one new column!"
             );
         }
+
         // 4. 🏗️ Add each new column to the table
         for (int i = 0; i < toAddColumns.size(); i++) {
-            table.addColumnsToExistingTable(toAddColumns.get(i), defaultValues!= null ? defaultValues.get(i) : null);
+            ValueDefinition givenDefault = null;
+            if (defaultValues != null && i < defaultValues.size()) {
+                givenDefault = defaultValues.get(i);
+            }
+            table.addColumnsToExistingTable(toAddColumns.get(i), givenDefault);
             System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() +
                     "' has been bestowed upon table '" + tableName + "'!");
         }
+
     }
 
     /**
@@ -705,14 +723,14 @@ public class DatabaseManager {
     /**
      * Modifies the datatypes of specified columns in a given table.
      * Flow:
-     *  1. Ensure a database is currently selected before performing any table operations.
-     *  2. Retrieve the target table object from the active database.
-     *  3. Validate that the table exists; throw an error if not found.
-     *  4. Delegate the datatype modification to the Table class's
-     *     `modifyDataTypeColumnsFromTable()` method.
+     * 1. Ensure a database is currently selected before performing any table operations.
+     * 2. Retrieve the target table object from the active database.
+     * 3. Validate that the table exists; throw an error if not found.
+     * 4. Delegate the datatype modification to the Table class's
+     * `modifyDataTypeColumnsFromTable()` method.
      * Behavior:
-     *  - Throws thematic (God of War–style) RuntimeExceptions if preconditions are not met.
-     *  - Relies on Table to handle column-level validation and atomic updates.
+     * - Throws thematic (God of War–style) RuntimeExceptions if preconditions are not met.
+     * - Relies on Table to handle column-level validation and atomic updates.
      *
      * @param tableName Name of the table in which the columns will be modified.
      * @param columns   List of ColumnDefinition objects containing column names,

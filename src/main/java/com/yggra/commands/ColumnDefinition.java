@@ -20,9 +20,10 @@ public class ColumnDefinition {
      * 🛠️ [FORGING THE COLUMN] 🛠️
      * Constructs a fully defined column with its name, type, and proper length.
      * The constructor invokes the ancient validation ritual to ensure the column abides by Yggra’s decree.
+     *
      * @param columnName The name bestowed upon this column
-     * @param type The datatype rune (INT, VARCHAR, etc.)
-     * @param length The size of the VARCHAR scroll; INTs require -1 by edict
+     * @param type       The datatype rune (INT, VARCHAR, etc.)
+     * @param length     The size of the VARCHAR scroll; INTs require -1 by edict
      * @throws IllegalArgumentException If the laws of datatype and length are broken
      */
 
@@ -38,10 +39,11 @@ public class ColumnDefinition {
      * 🪶 [LIGHTWEIGHT VARIANT] 🪶
      * For INSERT commands, only the column name need be invoked.
      * The type and length are not inscribed in this instance.
+     *
      * @param columnName The name of the column to accept new data
      */
 
-    public ColumnDefinition(String columnName){
+    public ColumnDefinition(String columnName) {
         this.columnName = columnName;
     }
 
@@ -53,14 +55,14 @@ public class ColumnDefinition {
      * Violators of this order shall be cast into the runtime void!
      */
 
-    private void validateColumn(){
-        if(type== TokenType.VARCHAR){
-            if(length<=0){
+    private void validateColumn() {
+        if (type == TokenType.VARCHAR) {
+            if (length <= 0) {
                 throw new IllegalArgumentException("💀 [FORBIDDEN LENGTH] The gods reject a VARCHAR of length " + length + ". Provide a positive length or be cast into the void!");
             }
 
-        } else if (type==TokenType.INT) {
-            if(length!=-1){
+        } else if (type == TokenType.INT) {
+            if (length != -1) {
                 throw new IllegalArgumentException("⚔️ [UNNECESSARY ATTRIBUTE] INT columns do not wield length. Use -1, as decreed by Yggra!");
             }
         }
@@ -70,6 +72,7 @@ public class ColumnDefinition {
      * 🪞 [MIRROR TO MORTALS] 🪞
      * Returns a string that reflects the column’s essence in SQL form.
      * Used for both debugging and scribe output.
+     *
      * @return String representing the column declaration
      */
 
@@ -85,23 +88,23 @@ public class ColumnDefinition {
     }
 
     //returns a current columnName
-    public String getColumnName(){
+    public String getColumnName() {
         return columnName;
     }
 
 
     //sets new column name for the particular column
-    public void setColumnName(String newName){
-        this.columnName=newName;
+    public void setColumnName(String newName) {
+        this.columnName = newName;
     }
 
     /**
      * Updates this column's datatype and optional length.
      * Behavior:
      * - If the new type is VARCHAR and a positive length is provided,
-     *   set the column type to VARCHAR and store the given length.
+     * set the column type to VARCHAR and store the given length.
      * - For all other cases (including VARCHAR with invalid length),
-     *   default to INT and set length to -1 (no length restriction).
+     * default to INT and set length to -1 (no length restriction).
      *
      * @param type   The new datatype token (e.g., TokenType.VARCHAR or TokenType.INT)
      * @param length The length for VARCHAR columns, ignored for INT.
@@ -121,5 +124,14 @@ public class ColumnDefinition {
         }
     }
 
+    /**
+     * Retrieves the type of this token.
+     * @return The {@link TokenType} representing this token’s classification
+     *         (e.g., KEYWORD, IDENTIFIER, STRING_LITERAL).
+     */
+
+    public TokenType getType() {
+        return this.type;
+    }
 
 }
