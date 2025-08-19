@@ -1,0 +1,4 @@
+Example how to store the commands performance:
+Command: CREATE DATABASE
+Runs: 20
+Avg execution time: X.XXXX ms

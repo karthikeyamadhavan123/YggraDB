@@ -9,46 +9,17 @@ package com.yggra.parser;
 
 public enum TokenType {
     // 📜 [COMMAND RUNES] – Keywords that begin divine operations
-    CREATE,
-    INSERT,
-    INTO,
-    VALUES,
-    TABLE,
-    DATABASE,
-    USE,
-    DROP,
-    SHOW,
-    DATABASES,
-    CURRENT,
-    TABLES,
-    ALTER,
-    RENAME,
-    NONE,
-    ADD,
-    COLUMN,
-    TO,
-    DEFAULT,
-    TRUNCATE,
-    REMOVE,
-    FROM,
-    IN,
-    MODIFY,
-
+    CREATE, INSERT, INTO, VALUES, TABLE, DATABASE, USE, DROP, SHOW, DATABASES, CURRENT, TABLES, ALTER, RENAME, NONE,ADD, COLUMN, TO, DEFAULT, TRUNCATE, REMOVE, FROM, IN, MODIFY ,SET,FOR,
 
     // 📐 [DATA TYPE RUNES] – Define the essence of columns
-    INT,
-    VARCHAR,
+    INT, VARCHAR,
 
     // 🏷️ [IDENTIFIER RUNES] – Names of tables, columns, and other mortal constructs
     IDENTIFIER,
 
     // 🔢 [LITERAL RUNES] – Mortal values like numbers or strings
-    NUMBER_LITERAL,
-    STRING_LITERAL,
+    NUMBER_LITERAL, STRING_LITERAL,
 
     // ⚙️ [SYMBOLIC RUNES] – Structural symbols used in SQL scrolls
-    LEFT_PAREN,
-    RIGHT_PAREN,
-    COMMA,
-    SEMICOLON
+    LEFT_PAREN, RIGHT_PAREN, COMMA, SEMICOLON
 }

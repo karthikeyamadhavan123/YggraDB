@@ -361,7 +361,6 @@ public class DatabaseManager {
             if (table.validateRow(values, typesOfColumn, lengths, columnNames) != null) {
                 List<Object> returnedValue = table.validateRow(values, typesOfColumn, lengths, columnNames);
                 table.addRow(new Row(returnedValue));
-                System.out.println(table);
             }
 
         } catch (Exception e) {
@@ -503,6 +502,7 @@ public class DatabaseManager {
      * or with the type’s fallback value (e.g., 0 for INT, NULL for VARCHAR).
      * If fewer defaults are provided than columns, the remaining columns will receive
      * fallback values instead of null entries.
+     *
      * @param toAddColumns  The ordered list of column definitions to add to the table.
      * @param tableName     The name of the table whose schema is being altered.
      * @param defaultValues A list of default values to assign to each new column’s existing rows.
@@ -771,6 +771,135 @@ public class DatabaseManager {
         // STEP IV: Delegate the datatype modification task to the Table object.
         // This ensures all column-level validation and updates are handled at the table level.
         table.modifyDataTypeColumnsFromTable(columns);
+    }
+
+    /**
+     * Sets a default value for a specific column in a given table.
+     *
+     * @param tableName   The name of the table where the column resides.
+     * @param columnName  The name of the column to assign the default value to.
+     * @param defaultValue The default value being declared for the column.
+     * Saga Flow:
+     *   1. Ensure a database is active.
+     *   2. Retrieve the target table from the current database.
+     *   3. Verify that the table exists.
+     *   4. Retrieve and validate the column.
+     *   5. Perform type compatibility checks.
+     *   6. If all conditions are met, assign the default value.
+     */
+
+    public void setDefaultValue(String tableName, String columnName, ValueDefinition defaultValue) {
+        // STEP I: Verify that a database context exists.
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    """
+                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                            KRATOS ROARS: 'You dare forge defaults in the abyss,
+                            without first declaring your battlefield?!' 🗡️
+                            
+                            💀 The Ghost of Sparta DEMANDS:
+                            "USE <database_name>" before you strike!
+                            
+                            🔥 'Face me only when you are prepared for war!' - Kratos
+                            """
+            );
+        }
+
+        // STEP II: Retrieve the target table from the currently active database.
+        Table table = getTable(tableName);
+
+        // STEP III: Validate that the table exists.
+        if (table == null) {
+            throw new RuntimeException(
+                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
+                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" skulks in shadows, " +
+                            "fleeing from my blades like a coward!' ⚔️\n" +
+                            "🏛️ No such vessel stands in this realm for my wrath to consume!\n" +
+                            "🔥 'Reveal yourself, or be deemed unworthy of my destruction!' - Ghost of Sparta"
+            );
+        }
+
+        // STEP IV: Retrieve the target column definition.
+        ColumnDefinition column = table.getColumn(columnName);
+
+        // STEP V: Validate that the column exists.
+        if (column == null) {
+            throw new RuntimeException(
+                    "🩸 [SYMBOL LOST] 🩸\n" +
+                            "KRATOS SNARLS: 'The column \"" + columnName + "\" is but dust in the wind!'\n" +
+                            "⚔️ The Norns decree: No such symbol lives within table \"" + tableName + "\".\n" +
+                            "🔥 'Name it true, or suffer the wrath of misremembered fate!' - Kratos"
+            );
+        }
+
+        // STEP VI: Check type compatibility between value and column.
+        if (!table.checkValueTypes(defaultValue, column.type)) {
+            throw new RuntimeException(
+                    "⚔️🔥 [TYPE JUDGMENT] ⚔️🔥\n" +
+                            "The Allfather thunders: 'The column \"" + columnName + "\" demands offerings of type " + column.type + "!'\n" +
+                            "💀 You dared present: " + defaultValue + "\n" +
+                            "🌋 'Foolish mortal — your gift is unworthy!' - Kratos"
+            );
+        }
+
+        // STEP VII: All conditions met — set the default value.
+        column.setDefault(defaultValue);
+        System.out.println("🛠️ [DECREE CARVED] Default value bound to column '" + columnName + "' in table '" + tableName + "'!");
+    }
+
+    /**
+     * ⚔️ DROP DEFAULT VALUE
+     * Purpose:
+     *   - Removes the default value from a given column inside a specified table.
+     *   - Ensures the database, table, and column all exist before attempting removal.
+     *   - Validates that the column indeed carries a default before "banishing" it.
+     * Usage:
+     *   - Invoked when the parser encounters:
+     *       DROP DEFAULT FOR COLUMN <columnName> IN TABLE <tableName>;
+     * Lore:
+     *   - 🌌 Kratos growls: "Defaults are carved runes of fate.
+     *     To erase one is to unbind destiny itself."
+     */
+
+    public void dropDefaultValue(String tableName, String columnName) {
+        // 🛡️ Step 1: Ensure a database is selected
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException(
+                    "🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
+                            "👉 Use `USE <database>` first!"
+            );
+        }
+
+        // 🏛️ Step 2: Fetch the target table
+        Table table = getTable(tableName);
+        if (table == null) {
+            throw new RuntimeException(
+                    "🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'"
+            );
+        }
+
+        // 🪓 Step 3: Fetch the target column
+        ColumnDefinition column = table.getColumn(columnName);
+        if (column == null) {
+            throw new RuntimeException(
+                    "💀 [PHANTOM COLUMN] The Allfather roars: 'Column \"" + columnName + "\" is but an illusion!'"
+            );
+        }
+
+        // 🔍 Step 4: Ensure the column actually has a default before removing
+        if (!column.hasDefaultValue) {
+            throw new RuntimeException(
+                    "⚔️ [NO DEFAULT TO SLAY] Kratos snarls: 'Column \"" + columnName +
+                            "\" bears no default rune to shatter!'"
+            );
+        }
+
+        // 🔥 Step 5: Remove the default value
+        column.dropDefault();
+
+        // 🎉 Step 6: Confirm the operation
+        System.out.println("🔥 [DEFAULT BANISHED] The default for column '"
+                + columnName + "' has been shattered!");
     }
 
 }

@@ -16,6 +16,13 @@ public class ColumnDefinition {
     // 🧭 The specified length for VARCHAR columns. For INT, -1 is the law of the realm.
     public int length;
 
+    //checks for column has default value or not default is set to false
+    public boolean hasDefaultValue;
+
+    //contains the default value of a column while setting
+
+    public ValueDefinition defaultValue;
+
     /**
      * 🛠️ [FORGING THE COLUMN] 🛠️
      * Constructs a fully defined column with its name, type, and proper length.
@@ -31,9 +38,10 @@ public class ColumnDefinition {
         this.columnName = columnName;
         this.type = type;
         this.length = length;
+        this.hasDefaultValue = false;
+        this.defaultValue = null;
         validateColumn();
     }
-
 
     /**
      * 🪶 [LIGHTWEIGHT VARIANT] 🪶
@@ -46,6 +54,20 @@ public class ColumnDefinition {
     public ColumnDefinition(String columnName) {
         this.columnName = columnName;
     }
+
+    // set
+    public void setDefault(ValueDefinition defaultValue) {
+        this.hasDefaultValue = true;
+        this.defaultValue = defaultValue;
+    }
+
+   //default
+    public void dropDefault() {
+        this.hasDefaultValue = false;
+        this.defaultValue = null;
+    }
+
+
 
     /**
      * ⚖️ [TRIAL OF VALIDATION] ⚖️

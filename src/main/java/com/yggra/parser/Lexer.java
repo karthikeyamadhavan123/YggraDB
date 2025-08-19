@@ -23,6 +23,7 @@ public class Lexer {
         return Character.isDigit(ch);
     }
 
+
     /**
      * Tokenizes the input SQL string into a list of Token objects.
      *
@@ -216,6 +217,12 @@ public class Lexer {
                             break;
                         case "MODIFY":
                             tokens.add(new Token(TokenType.MODIFY, rawKeyword));
+                            break;
+                        case "SET":
+                            tokens.add(new Token(TokenType.SET, rawKeyword));
+                            break;
+                        case "FOR":
+                            tokens.add(new Token(TokenType.FOR, rawKeyword));
                             break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));

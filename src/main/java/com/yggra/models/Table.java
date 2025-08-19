@@ -407,6 +407,44 @@ public class Table {
         );
     }
 
+    /**
+     * Retrieves the definition of a column by name from the table's column list.
+     *
+     * @param columnName The name of the column being searched for.
+     * @return The matching ColumnDefinition if found, otherwise null.
+     *
+     * Saga Note: If null is returned, it means the column is lost in the void of Ginnungagap.
+     */
+
+    public ColumnDefinition getColumn(String columnName) {
+        // 🔍 Search through all columns in the table
+        for (ColumnDefinition columnDefinition : columnList) {
+            // ⚔️ If the column name matches, return its definition
+            if (columnDefinition.columnName.equals(columnName)) {
+                return columnDefinition;
+            }
+        }
+        // 🌑 No such column exists — return null to signal absence
+        throw new RuntimeException("🩸 [SYMBOL LOST] Column '" + columnName + "' does not exist in this realm!");
+    }
+
+    /**
+     * Checks whether a provided default value can be safely cast
+     * or converted to the type of the target column.
+     * @param defaultValue The value being proposed as the default.
+     * @param columnType   The expected type of the column (e.g., INT, VARCHAR).
+     * @return true if the value can be converted, false if incompatible.
+     * Saga Note: Returns false if the value defies the laws of type judgment,
+     * and the Allfather rejects it.
+     */
+
+    public boolean checkValueTypes(ValueDefinition defaultValue, TokenType columnType) {
+        // 🔮 Attempt to convert the given value to the column's type
+        Object convertValue = convertValue(defaultValue, columnType);
+
+        // 🛡️ If conversion succeeds (not null), the type is compatible
+        return convertValue != null;
+    }
 
     // Method: getColumnIndexByName(String name)
 }

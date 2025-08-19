@@ -1661,6 +1661,180 @@ public class Parser {
         return new ModifyDatatypeColumn(tableName,parsedColumns);
     }
 
+    /**
+     * Parses a SET DEFAULT VALUE command of the form:
+     *   SET DEFAULT COLUMN <columnName> IN TABLE <tableName> DEFAULT <value>;
+     * Returns a SetDefaultValueColumn object representing the parsed command.
+     * Saga-style errors are thrown if tokens are missing or invalid.
+     */
+
+    private SetDefaultValueColumn parseSetDefaultValueCommand() {
+        // 🔮 Expect the COLUMN keyword
+        consume(TokenType.COLUMN);
+
+        // ⚔️ Verify a column name follows
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚡ By Odin's beard! You spoke of a COLUMN, yet no name was offered.");
+        }
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("🪓 The Norns whisper: A column name was foretold, but instead I see " + peek().value);
+        }
+        String columnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🛡️ Expect the IN keyword
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🔥 The path ends in shadow... the IN keyword was promised, yet nothing came.");
+        }
+        if (peek().type != TokenType.IN) {
+            throw new RuntimeException("🐍 Midgard Serpent coils — 'IN' was demanded, but instead you gave " + peek().value);
+        }
+        consume(TokenType.IN);
+
+        // 🏛️ Expect the TABLE keyword
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌑 Silence before Ragnarok — TABLE keyword was expected, but void answered.");
+        }
+        if (peek().type != TokenType.TABLE) {
+            throw new RuntimeException("🩸 The gods rage! A TABLE was sought, but you forged " + peek().value + " instead.");
+        }
+        consume(TokenType.TABLE);
+
+        // ⚒️ Parse the table name
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("⚔️ A table name should rise, but I see only chaos: " + peek().value);
+        }
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🌌 Expect DEFAULT keyword before value
+        consume(TokenType.DEFAULT);
+
+        // 🪶 Parse the default value (string or number)
+        ValueDefinition defaultValue;
+        if (peek().type == TokenType.STRING_LITERAL) {
+            defaultValue = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+            consume(TokenType.STRING_LITERAL);
+        }
+        else if (peek().type == TokenType.NUMBER_LITERAL) {
+            defaultValue = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+            consume(TokenType.NUMBER_LITERAL);
+        }
+        else {
+            throw new RuntimeException("🌋 The realm trembles — an unknown value awakens: " + peek().value);
+        }
+
+        // 🛡️ Ensure the final SEMICOLON is present
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚡ The Bifröst shatters — a semicolon was the final seal, yet instead came " + peek().value);
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 👁️ Ensure no extra tokens lurk after the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException("👁️ The Fates hiss: Something lurks beyond the end... a shadow not meant to be.");
+        }
+
+        // 🏹 Return a fully parsed command object
+        return new SetDefaultValueColumn(tableName, columnName, defaultValue);
+    }
+
+    /**
+     * 🎯 Parses a `DROP DEFAULT` SQL command.
+     * Expected syntax:
+     *   DROP DEFAULT FOR COLUMN <columnName> IN TABLE <tableName>;
+     * Flow:
+     *   1. Validate mandatory keywords in order
+     *   2. Extract column and table names
+     *   3. Enforce semicolon termination
+     *   4. Return AST node (DropDefaultValueColumn)
+     * Errors are themed in a God of War–style.
+     */
+
+    private DropDefaultValueColumn parseDropDefaultValueColumn() {
+
+        // ⚡ STEP I: Expect the DEFAULT keyword (after DROP)
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌑 [VOID CLAIMS ALL] DEFAULT was demanded, but no words remain.");
+        }
+        if (peek().type != TokenType.DEFAULT) {
+            throw new RuntimeException("🌑 [SHADOW OF DECEIT] DEFAULT was foretold, yet you speak: " + peek().value);
+        }
+        consume(TokenType.DEFAULT);
+
+        // ⚔️ STEP II: Expect the FOR keyword
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🩸 [SILENCE OF THE NORN] The Fates awaited 'FOR', but the scroll ends.");
+        }
+        if (peek().type != TokenType.FOR) {
+            throw new RuntimeException("🩸 [OATHBROKEN] The word 'FOR' must guide this path, not " + peek().value);
+        }
+        consume(TokenType.FOR);
+
+        // 🛡️ STEP III: Expect the COLUMN keyword
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🐍 [SERPENT’S HUNGER] The saga ends before COLUMN could be named.");
+        }
+        if (peek().type != TokenType.COLUMN) {
+            throw new RuntimeException("🐍 [COILS OF JÖRMUNGANDR] COLUMN was demanded, yet you forged " + peek().value);
+        }
+        consume(TokenType.COLUMN);
+
+        // 🎯 STEP IV: Parse the column name
+        if (position >= tokens.size()) {
+            throw new RuntimeException("💀 [NAMELESS CURSE] COLUMN was called, but no name follows.");
+        }
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("💀 [NAMELESS CURSE] A column name must rise, but instead came " + peek().value);
+        }
+        String columnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🏛️ STEP V: Expect the IN keyword
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🔥 [BROKEN REALM] The prophecy ends before IN could appear.");
+        }
+        if (peek().type != TokenType.IN) {
+            throw new RuntimeException("🔥 [BROKEN REALM] IN was sought, but " + peek().value + " was found.");
+        }
+        consume(TokenType.IN);
+
+        // 🏹 STEP VI: Expect the TABLE keyword
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚔️ [SILENT PILLARS] The saga ends before TABLE could stand.");
+        }
+        if (peek().type != TokenType.TABLE) {
+            throw new RuntimeException("⚔️ [SILENT PILLARS] TABLE must stand here, not " + peek().value);
+        }
+        consume(TokenType.TABLE);
+
+        // 🛡️ STEP VII: Parse the table name
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🌪️ [NAMELESS TEMPLE] The table has no name — void consumes it.");
+        }
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("🌪️ [NAMELESS TEMPLE] A table name was foretold, not " + peek().value);
+        }
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // 🔒 STEP VIII: Expect semicolon to end statement
+        if (position >= tokens.size()) {
+            throw new RuntimeException("⚡ [BIFRÖST SUNDERED] The saga ends without its final seal ';'.");
+        }
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value);
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 👁️ STEP IX: Ensure no trailing tokens exist
+        if (position < tokens.size()) {
+            throw new RuntimeException("👁️ [WHISPERS BEYOND] Shadows remain past the end... " + peek().value);
+        }
+
+        return new DropDefaultValueColumn(tableName, columnName);
+    }
+
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -1712,8 +1886,12 @@ public class Parser {
                 // PARSE DROP DATABASE COMMAND;
                 if (second.type == TokenType.DATABASE) {
                     return parseDropDatabase();
+                // PARSE DROP TABLE COMMAND;
                 } else if (second.type == TokenType.TABLE) {
                     return parseDropTable();
+                // PARSE DROP DEFAULT VALUE COMMAND;
+                } else if (second.type==TokenType.DEFAULT) {
+                    return parseDropDefaultValueColumn();
                 } else {
                     throw new RuntimeException("🌀 [REALM MISALIGNED] 'DROP' spoken, but '" + second.value + "' stands in defiance — only DATABASE AND TABLE may be struck down!");
                 }
@@ -1887,9 +2065,36 @@ public class Parser {
                     );
                 }
                 return parseModifyDataTypeCommand();
+            } else if (peek().type==TokenType.SET) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException(
+                            """
+                                    ⚡ [BROKEN RUNE] The MODIFY ritual is incomplete!
+                                    🛡️ You must speak the full incantation:
+                                    SET COLUMN <COLUMN_NAME>  IN TABLE <TABLE_NAME> TO <DEFAULT_VALUE>;
+                                    🌌 Example: MODIFY COLUMN age INT IN TABLE Midgardians;
+                                    """
+                    );
+                }
+                Token second = peek();
+                if (second.type != TokenType.COLUMN) {
+                    throw new RuntimeException(
+                            "⚡ [BROKEN RUNE] The prophecy demanded the COLUMN rune, " +
+                                    "yet you brandish '" + second.value + "'! " +
+                                    "Summon the COLUMN rune to channel the Allfather's will."
+                    );
+                }
+                return parseSetDefaultValueCommand();
             } else {
-                throw new RuntimeException("⛓️ [CHAINS OF FATE] Expected CREATE or INSERT but found " + first.type + " ('" + first.value + "') — only these commands are known to the oracle!");
+                throw new RuntimeException(
+                        "⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" +
+                                "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT.\n" +
+                                "❌ But instead received: " + first.type + " ('" + first.value + "').\n" +
+                                "⚔️ Only these divine runes may command the realms of Yggra!"
+                );
             }
+
         } catch (Exception e) {
             // Enhanced error reporting with parser state information
             System.err.println("💀 [PARSING CATASTROPHE] Error at position " + position + (position < tokens.size() ? " near token: '" + tokens.get(position).value + "'" : " (end of input)"));
@@ -1897,4 +2102,5 @@ public class Parser {
             return null;
         }
     }
+
 }

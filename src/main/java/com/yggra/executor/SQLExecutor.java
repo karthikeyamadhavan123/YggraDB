@@ -131,6 +131,35 @@ public class SQLExecutor {
                     .modifyDataTypecolumns(modifyDatatypeColumn.tableName, modifyDatatypeColumn.columns);
 
 
+            // 🛠️ Handle the `SET DEFAULT` command
+            // When the parser produces a SetDefaultValueColumn node, we must apply it:
+            //   - Look up the target table
+            //   - Look up the target column
+            //   - Type-check the provided default value
+            //   - If valid, set the default at the column level
+            //   - Otherwise, raise a themed God of War–style error
+
+            case SetDefaultValueColumn setDefaultValueColumn -> DatabaseManager.getInstance()
+                    .setDefaultValue(
+                            setDefaultValueColumn.tableName,   // 🎯 The name of the table where the column lives
+                            setDefaultValueColumn.columnName,  // 🎯 The specific column to update
+                            setDefaultValueColumn.defaultValue // 🎁 The new default value to bind to this column
+                    );
+
+                // ⚔️ DROP DEFAULT VALUE Command Execution
+                // Function: Removes the default value constraint from a specific column in a table.
+                // Flow:
+                //   1. Get the singleton DatabaseManager instance
+                //   2. Call dropDefaultValue(tableName, columnName)
+                //   3. Database schema is updated — the column no longer carries a default
+
+            case DropDefaultValueColumn dropDefaultValueColumn ->
+                    DatabaseManager.getInstance().dropDefaultValue(
+                            dropDefaultValueColumn.tableName,
+                            dropDefaultValueColumn.columnName
+                    );
+
+
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->
                     throw new RuntimeException("⚡ [CHAOS UNLEASHED] The command you utter holds no power in these realms — speak a known incantation!");
