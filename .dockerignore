@@ -1,0 +1,47 @@
+# .dockerignore for YggraDB Java project
+
+# Git files
+.git/
+.gitignore
+.github/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Build outputs
+target/
+bin/
+build/
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven wrapper (if you're not using it)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Temporary files
+tmp/
+temp/
+
+# Environment files (sensitive data)
+.env
+*.env
+
+# Docker files (optional)
+docker-compose.yml
+docker-compose.yaml
