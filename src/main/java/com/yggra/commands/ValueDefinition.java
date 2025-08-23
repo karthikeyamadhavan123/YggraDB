@@ -31,6 +31,22 @@ public class ValueDefinition {
     }
 
     /**
+     * Constructs a ValueDefinition with only a type, without an explicit value.
+     * This is typically used for DEFAULT handling when:
+     *  - A column declares a DEFAULT but no explicit value is provided at parse time.
+     *  - A placeholder is needed to represent the default of a given type
+     *    (e.g., INT column defaults to 0, VARCHAR defaults to empty string, etc.),
+     *    which can later be resolved during execution.
+     *
+     * @param type The data type of the default value (e.g., INT, VARCHAR).
+     *             The actual value may be assigned later during execution.
+     */
+
+    public ValueDefinition(TokenType type) {
+        this.type = type;
+    }
+
+    /**
      * 🪞 [MIRROR OF ESSENCE] 🪞
      * Returns the stringifier form of this value — useful for debugging or reflection,
      * showing both type and the literal value it holds.

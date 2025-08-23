@@ -2,7 +2,8 @@
 
 > *"Where every query echoes through the Nine Realms and data flows like the rivers of Midgard"*
 
-**A mythic SQL-like database system where every command is a saga, every table a realm of power, and every query a journey through the branches of the World Tree.**
+**A mythic SQL-like database system where every command is a saga, every table a realm of power, and every query a
+journey through the branches of the World Tree.**
 
 ![Version](https://img.shields.io/badge/version-v0.1.0-gold?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-23-red?style=for-the-badge&logo=java)
@@ -13,9 +14,12 @@
 
 ## 🌟 **The Legend Begins**
 
-YggraDB is not just another database - it's a **mythological experience**. Inspired by Norse mythology and the World Tree Yggdrasil, this database system transforms mundane data operations into epic sagas. Built with Java 23 and Maven, it brings the power of the gods to your data management needs.
+YggraDB is not just another database - it's a **mythological experience**. Inspired by Norse mythology and the World
+Tree Yggdrasil, this database system transforms mundane data operations into epic sagas. Built with Java 23 and Maven,
+it brings the power of the gods to your data management needs.
 
 ### ✨ **What Makes YggraDB Special**
+
 - 🎭 **Mythological Theming**: Every operation has epic Norse-themed responses
 - 🛡️ **Robust Security**: Advanced SQL injection protection with colorful warnings
 - 🎨 **Beautiful ASCII Output**: Tables formatted like ancient runestones
@@ -27,6 +31,7 @@ YggraDB is not just another database - it's a **mythological experience**. Inspi
 ## 🏛️ **Current Realms (v0.1.0 - Asgard Foundation)**
 
 ### **⚒️ Database Operations**
+
 ```sql
 -- Forge new realms from the void
 CREATE DATABASE Valhalla;        -- ⚒️ [DWARVEN FORGE] Database 'Valhalla' forged in the fires of Nidavellir!
@@ -49,6 +54,7 @@ DROP DATABASE Helheim;           -- 💀 [RAGNARÖK] The realm 'Helheim' crumble
 ```
 
 ### **🏛️ Table Operations (Data Halls)**
+
 ```sql
 -- Construct mighty halls
 CREATE TABLE Warriors (
@@ -92,6 +98,7 @@ DROP TABLE AncientOnes;          -- ⚰️ [FORGOTTEN SAGA] The hall fades from 
 ## 🎨 **Epic Output Examples**
 
 ### ⚔️ **Warrior's Table Display**
+
 ```
 ⚔️ WARRIORS ⚔️
 🛡️ |  id   |   name   | strength | is_immortal | homeland  | battles_won |
@@ -104,6 +111,7 @@ Rows: 3 | ⚒️ Forged in the fires of Nidavellir | ⚡ Blessed by Thor's hamme
 ```
 
 ### 🏛️ **Gods Table Display**
+
 ```
 ⚡ GODS ⚡
 🌟 | god_id |    domain     |  weapon   |  realm  | worshippers |
@@ -140,11 +148,13 @@ INSERT INTO Warriors VALUES (1, 'Loki', 85.5); DROP TABLE Warriors;
 ## 🚀 **Installation - Claiming Your Hammer**
 
 ### **Prerequisites**
+
 - ☕ **Java 23** or higher (The power of modern Midgard)
 - 📦 **Maven 3.8+** (The tools of the dwarven smiths)
 - 💻 **Any IDE** (Your forge of choice)
 
 ### **Quick Start - The Warrior's Path**
+
 ```bash
 # Clone the repository from the cosmic GitHub tree
 git clone https://github.com/karthikeyamadhavan123/yggra-db.git
@@ -163,6 +173,7 @@ mvn compile exec:java
 ```
 
 ### **Advanced Setup - The Sage's Ritual**
+
 ```bash
 # Run all tests (The Trial of Worthiness)
 mvn test
@@ -182,32 +193,35 @@ java -Xmx2g -jar target/yggra-db.jar
 ## 📚 **Command Grimoire - Complete Reference**
 
 ### **🏛️ Database Realm Commands**
-| Command | Syntax | Example | Output Theme |
-|---------|--------|---------|--------------|
-| **Create Database** | `CREATE DATABASE <name>` | `CREATE DATABASE Asgard` | ⚒️ Dwarven Forge |
-| **Use Database** | `USE <name>` | `USE Valhalla` | 🛡️ Bifrost Bridge |
-| **Rename Database** | `ALTER DATABASE <old> RENAME <new>` | `ALTER DATABASE Midgard RENAME Earth` | ✏️ Odin's Decree |
-| **Show Databases** | `SHOW DATABASES` | `SHOW DATABASES` | 👁️ Odin's Sight |
-| **Current Database** | `SHOW CURRENT DATABASE` | `SHOW CURRENT DATABASE` | 🗺️ Heimdall's Watch |
-| **Drop Database** | `DROP DATABASE <name>` | `DROP DATABASE Helheim` | 💀 Ragnarök |
-| **Exit Realm** | `USE NONE` | `USE NONE` | 🌫️ Void Walker |
+
+| Command              | Syntax                              | Example                               | Output Theme         |
+|----------------------|-------------------------------------|---------------------------------------|----------------------|
+| **Create Database**  | `CREATE DATABASE <name>`            | `CREATE DATABASE Asgard`              | ⚒️ Dwarven Forge     |
+| **Use Database**     | `USE <name>`                        | `USE Valhalla`                        | 🛡️ Bifrost Bridge   |
+| **Rename Database**  | `ALTER DATABASE <old> RENAME <new>` | `ALTER DATABASE Midgard RENAME Earth` | ✏️ Odin's Decree     |
+| **Show Databases**   | `SHOW DATABASES`                    | `SHOW DATABASES`                      | 👁️ Odin's Sight     |
+| **Current Database** | `SHOW CURRENT DATABASE`             | `SHOW CURRENT DATABASE`               | 🗺️ Heimdall's Watch |
+| **Drop Database**    | `DROP DATABASE <name>`              | `DROP DATABASE Helheim`               | 💀 Ragnarök          |
+| **Exit Realm**       | `USE NONE`                          | `USE NONE`                            | 🌫️ Void Walker      |
 
 ### **⚔️ Table Hall Commands**
-| Command | Syntax | Example | Output Theme |
-|---------|--------|---------|--------------|
-| **Create Table** | `CREATE TABLE <name> (<columns>)` | `CREATE TABLE Heroes (id INT, name VARCHAR(50))` | 🏗️ Master Builder |
-| **Insert Data** | `INSERT INTO <table> VALUES (<values>)` | `INSERT INTO Heroes VALUES (1, 'Thor')` | ⚡ Valkyrie's Choice |
-| **Rename Table** | `ALTER TABLE <old> RENAME <new>` | `ALTER TABLE Heroes RENAME Legends` | 📜 Skald's Revision |
-| **Add Columns** | `ADD COLUMN (<cols>) TO TABLE <name> DEFAULT <vals>` | `ADD COLUMN (age INT) TO TABLE Heroes DEFAULT (25)` | 🔨 Expansion Ritual |
-| **Show Tables** | `SHOW TABLES` | `SHOW TABLES` | 📋 Heimdall's Census |
-| **Show Table** | `SHOW TABLE <name>` | `SHOW TABLE Warriors` | 🔍 Wise Raven |
-| **Drop Table** | `DROP TABLE <name>` | `DROP TABLE OldGods` | ⚰️ Forgotten Saga |
+
+| Command          | Syntax                                               | Example                                             | Output Theme         |
+|------------------|------------------------------------------------------|-----------------------------------------------------|----------------------|
+| **Create Table** | `CREATE TABLE <name> (<columns>)`                    | `CREATE TABLE Heroes (id INT, name VARCHAR(50))`    | 🏗️ Master Builder   |
+| **Insert Data**  | `INSERT INTO <table> VALUES (<values>)`              | `INSERT INTO Heroes VALUES (1, 'Thor')`             | ⚡ Valkyrie's Choice  |
+| **Rename Table** | `ALTER TABLE <old> RENAME <new>`                     | `ALTER TABLE Heroes RENAME Legends`                 | 📜 Skald's Revision  |
+| **Add Columns**  | `ADD COLUMN (<cols>) TO TABLE <name> DEFAULT <vals>` | `ADD COLUMN (age INT) TO TABLE Heroes DEFAULT (25)` | 🔨 Expansion Ritual  |
+| **Show Tables**  | `SHOW TABLES`                                        | `SHOW TABLES`                                       | 📋 Heimdall's Census |
+| **Show Table**   | `SHOW TABLE <name>`                                  | `SHOW TABLE Warriors`                               | 🔍 Wise Raven        |
+| **Drop Table**   | `DROP TABLE <name>`                                  | `DROP TABLE OldGods`                                | ⚰️ Forgotten Saga    |
 
 ---
 
 ## 🌠 **The Ragnarök Roadmap - Future Sagas**
 
 ### **🏆 v0.2.0 - "The All-Seeing Eye" (SELECT Queries)**
+
 *Target: 4-6 weeks from now*
 
 ```sql
@@ -233,6 +247,7 @@ SELECT * FROM Warriors WHERE name LIKE 'Thor%' AND battles_won > 50;
 ```
 
 **Expected Output:**
+
 ```
 👁️ DIVINE SELECTION - WARRIORS ⚔️
 🔥 | name     | strength | battles_won |
@@ -245,6 +260,7 @@ SELECT * FROM Warriors WHERE name LIKE 'Thor%' AND battles_won > 50;
 ```
 
 ### **⚖️ v0.3.0 - "The Norn's Web" (Advanced Operations)**
+
 *Target: 8-10 weeks from now*
 
 ```sql
@@ -266,6 +282,7 @@ SELECT homeland FROM Warriors GROUP BY homeland HAVING COUNT(*) >= 5;
 ```
 
 ### **🌉 v0.4.0 - "The Bifrost Bridge" (JOIN Operations)**
+
 *Target: 12-14 weeks from now*
 
 ```sql
@@ -291,6 +308,7 @@ WHERE b.outcome = 'Victory' OR b.outcome IS NULL;
 ```
 
 ### **💎 v0.5.0 - "The Eternal Covenant" (Transactions)**
+
 *Target: 16-18 weeks from now*
 
 ```sql
@@ -312,6 +330,7 @@ ROLLBACK;
 ```
 
 ### **🏰 v0.6.0 - "The Eternal Archive" (Advanced Features)**
+
 *Target: 20-24 weeks from now*
 
 - 💾 **Database Persistence** (Save to Midgard's files)
@@ -327,6 +346,7 @@ ROLLBACK;
 YggraDB is battle-tested with comprehensive JUnit 5 coverage:
 
 ### **Running the Sacred Tests**
+
 ```bash
 # Run all trials of worthiness
 mvn test
@@ -342,14 +362,16 @@ mvn surefire-report:report
 ```
 
 ### **Test Coverage Realms**
+
 - ✅ **Database Operations** (100% coverage)
-- ✅ **Table Management** (98% coverage) 
+- ✅ **Table Management** (98% coverage)
 - ✅ **Data Insertion** (95% coverage)
 - ✅ **Security Protection** (100% coverage)
 - ✅ **Output Formatting** (92% coverage)
 - ⏳ **SELECT Queries** (Coming in v0.2.0)
 
 ### **Test Structure**
+
 ```
 src/test/java/
 ├── operations/
@@ -372,6 +394,7 @@ src/test/java/
 ## 🎯 **Performance Metrics - Worthy of the Gods**
 
 ### **Current Benchmarks (v0.1.0)**
+
 - **Database Creation**: < 10ms (Faster than Thor's lightning)
 - **Table Creation**: < 15ms (Swift as Odin's ravens)
 - **Data Insertion**: < 5ms per row (Quick as Loki's wit)
@@ -379,6 +402,7 @@ src/test/java/
 - **Startup Time**: < 2 seconds (Instant as divine will)
 
 ### **Projected Performance (v0.6.0)**
+
 - **Complex SELECT**: < 50ms for 10k rows
 - **JOIN Operations**: < 100ms for multi-table queries
 - **Transaction Processing**: < 20ms per transaction
@@ -388,11 +412,13 @@ src/test/java/
 
 ## 🤝 **Join the Sacred Order - Contributing**
 
-Become a legendary contributor to the YggraDB saga! All skill levels welcome, from code warriors to documentation skalds.
+Become a legendary contributor to the YggraDB saga! All skill levels welcome, from code warriors to documentation
+skalds.
 
 ### **🛡️ Ways to Contribute**
 
 #### **⚔️ Code Warriors**
+
 ```bash
 # Fork and clone the sacred repository
 git clone https://github.com/yourusername/yggra-db.git
@@ -416,18 +442,21 @@ git push origin feature/loki-mischief-queries
 ```
 
 #### **📜 Documentation Skalds**
+
 - Write epic tutorials and guides
 - Improve README sections
 - Add code examples
 - Translate to other languages (Speak in many tongues!)
 
-#### **🧪 Test Shamans**  
+#### **🧪 Test Shamans**
+
 - Write comprehensive test cases
 - Performance benchmarking
 - Security penetration testing
 - Bug hunting and reporting
 
 #### **🎨 Design Völvas**
+
 - ASCII art improvements
 - UI/UX enhancements
 - Theme design
@@ -436,29 +465,29 @@ git push origin feature/loki-mischief-queries
 ### **📋 Contribution Guidelines**
 
 1. **Epic Code Standards**
-   - Follow Norse naming conventions where possible
-   - Add mythological comments: `// Thor's hammer strikes the database`
-   - Write tests for new features (Trial by combat!)
-   - Document public methods like ancient runes
+    - Follow Norse naming conventions where possible
+    - Add mythological comments: `// Thor's hammer strikes the database`
+    - Write tests for new features (Trial by combat!)
+    - Document public methods like ancient runes
 
 2. **Sacred Pull Request Process**
-   - Use descriptive titles with emoji: `⚡ Add SELECT queries with WHERE clause magic`
-   - Explain the saga in your description
-   - Include test coverage (minimum 85%)
-   - Update documentation if needed
+    - Use descriptive titles with emoji: `⚡ Add SELECT queries with WHERE clause magic`
+    - Explain the saga in your description
+    - Include test coverage (minimum 85%)
+    - Update documentation if needed
 
 3. **The Honor Code**
-   - Be respectful to all contributors (Worthy of Asgard)
-   - Help newcomers find their path
-   - Share knowledge like the wise ravens
-   - Celebrate others' victories in Valhalla
+    - Be respectful to all contributors (Worthy of Asgard)
+    - Help newcomers find their path
+    - Share knowledge like the wise ravens
+    - Celebrate others' victories in Valhalla
 
 ### **🏆 Hall of Fame - Legendary Contributors**
 
 *The first contributors will be forever remembered in this sacred hall*
 
-| Name | Contribution | Mythic Title | Date Joined |
-|------|-------------|--------------|-------------|
+| Name              | Contribution       | Mythic Title | Date Joined        |
+|-------------------|--------------------|--------------|--------------------|
 | *Awaiting Heroes* | *Your legend here* | *Your title* | *Your saga begins* |
 
 ---
@@ -466,18 +495,21 @@ git push origin feature/loki-mischief-queries
 ## 🐛 **Known Dragons - Current Limitations**
 
 ### **🔥 Major Dragons (Actively Being Slayed)**
+
 - **No SELECT Support**: The all-seeing eye is still being forged
 - **Single Command Only**: Multiple statements cause chaos (like Loki)
 - **No Persistence**: Data vanishes when the program ends (like Ragnarök)
 - **Memory Storage Only**: Everything lives in RAM's embrace
 
 ### **🐍 Minor Serpents (Future Quests)**
+
 - Unicode symbols in names need testing (Runes are complex)
 - Large dataset performance not optimized (For when armies gather)
 - No transaction rollback (Mistakes echo through time)
 - Limited data type support (More types coming like the seasons)
 
 ### **🗡️ Squashed Bugs (Victory Log)**
+
 - ✅ SQL injection protection (Heimdall guards the gates)
 - ✅ Case-insensitive commands (Understanding all tongues)
 - ✅ Proper error messaging (Clear as Odin's wisdom)
@@ -488,6 +520,7 @@ git push origin feature/loki-mischief-queries
 ## 📈 **Development Progress - The Sacred Chronicle**
 
 ### **📊 Lines of Code Saga**
+
 ```
 📅 Week 1:  ~500 LOC   (Database foundations laid)
 📅 Week 2:  ~1,200 LOC (Table operations complete)
@@ -498,6 +531,7 @@ git push origin feature/loki-mischief-queries
 ```
 
 ### **🏛️ Feature Completion**
+
 - ✅ **Database Management**: 100% (CREATE, USE, DROP, RENAME, SHOW)
 - ✅ **Table Operations**: 100% (CREATE, DROP, RENAME, SHOW, ALTER)
 - ✅ **Data Insertion**: 100% (INSERT INTO with validation)
@@ -512,12 +546,14 @@ git push origin feature/loki-mischief-queries
 ## 🌟 **Community & Support**
 
 ### **🏛️ Sacred Halls (Communication)**
+
 - **GitHub Issues**: [Report bugs and request features](https://github.com/karthikeyamadhavan123/yggra-db/issues)
 - **Discussions**: [Share ideas and get help](https://github.com/karthikeyamadhavan123/yggra-db/discussions)
 - **Discord** *(Coming Soon)*: Real-time warrior chat
 - **Reddit** *(Coming Soon)*: r/YggraDB community
 
 ### **📚 Documentation Temple**
+
 - **Wiki**: Comprehensive guides and tutorials *(Coming Soon)*
 - **API Docs**: JavaDoc documentation *(Coming Soon)*
 - **Video Tutorials**: YouTube series *(Planned)*
@@ -561,6 +597,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 Imagine YggraDB in its final form:
 
 ### **🌟 The Ultimate Vision (v2.0.0)**
+
 ```sql
 -- Advanced AI-powered natural language queries
 TELL ME ABOUT warriors from norway with more than 50 battles;
@@ -581,7 +618,8 @@ VOICE: "Show me all gods with thunder domain"
 ```
 
 ### **🚀 Enterprise Features (v3.0.0)**
-- **🏰 High Availability Clustering** (Multiple Asgards)
+
+- **🏰 High Availability Clustering** (Multiple Asgard's)
 - **⚡ Distributed Processing** (Power of all Nine Realms)
 - **🛡️ Enterprise Security** (Worthy of cosmic secrets)
 - **📊 Advanced Analytics** (Wisdom beyond mortal comprehension)
@@ -592,13 +630,15 @@ VOICE: "Show me all gods with thunder domain"
 ## 💝 **Acknowledgments - The Honor Roll**
 
 ### **🏆 Inspirations & References**
+
 - **Norse Mythology**: The eternal source of epic theming
-- **PostgreSQL**: For architectural inspiration  
+- **PostgresSQL**: For architectural inspiration
 - **SQLite**: For elegant simplicity
 - **H2 Database**: For Java integration patterns
 - **The Tolkien Estate**: For showing us what mythic computing could be
 
 ### **🛠️ Built With Divine Tools**
+
 - **Java 23**: The lightning-fast foundation
 - **Maven**: The reliable build system
 - **JUnit 5**: The testing framework of champions
@@ -609,18 +649,21 @@ VOICE: "Show me all gods with thunder domain"
 
 ## 🌊 **Final Words - The Skald's Ending**
 
-*"In the beginning was the void, and from the void came data. From data came tables, and from tables came the need for a database worthy of legend. YggraDB is that legend - a database not just for storing information, but for transforming the mundane act of data management into an epic adventure."*
+*"In the beginning was the void, and from the void came data. From data came tables, and from tables came the need for a
+database worthy of legend. YggraDB is that legend - a database not just for storing information, but for transforming
+the mundane act of data management into an epic adventure."*
 
 **Together, we shall build a database worthy of the gods themselves!** ⚡
 
 ---
 
 ### 📞 **Contact the Creator**
-- **GitHub**: [@karthikeyamadhavan123](https://github.com/karthikeyamadhavan123)
 
+- **GitHub**: [@karthikeyamadhavan123](https://github.com/karthikeyamadhavan123)
 
 ---
 
-*"May your queries be swift as Sleipnir, your data as eternal as Yggdrasil, and your code as legendary as the Poetic Edda."* 
+*"May your queries be swift as Sleipnir, your data as eternal as Yggdrasil, and your code as legendary as the Poetic
+Edda."*
 
 **⚔️ Happy Coding, Digital Vikings! ⚔️**

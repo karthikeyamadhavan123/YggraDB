@@ -224,6 +224,9 @@ public class Lexer {
                         case "FOR":
                             tokens.add(new Token(TokenType.FOR, rawKeyword));
                             break;
+                        case "NULL":
+                            tokens.add(new Token(TokenType.NULL, rawKeyword));
+                            break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
                     }

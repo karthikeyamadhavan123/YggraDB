@@ -49,6 +49,7 @@ public class DatabaseManager {
         return instance;
     }
 
+
     /**
      * 🔍 [REALM BINDING CHECK] 🔍
      * Determines if a realm (database) is currently bound to the warrior's will.
@@ -314,58 +315,69 @@ public class DatabaseManager {
      * ✍️ [RUNIC INSCRIPTION] ✍️
      * Inscribes new data into a table (INSERT operation).
      *
-     * @param tableName Target table name
-     * @param columns   List of column definitions
-     * @param values    List of values to insert
+     * @param tableName       Target table name
+     * @param providedColumns List of column definitions
+     * @param values          List of values to insert
      * @throws RuntimeException for various validation failures
      */
 
-    public void insertIntoTable(String tableName, List<ColumnDefinition> columns, List<ValueDefinition> values) {
+    public void insertIntoTable(String tableName, List<String> providedColumns, List<ValueDefinition> values) {
         try {
             if (!hasCurrentDatabase()) {
                 throw new RuntimeException(
-                        "🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>"
+                        """
+                                🔥 [ODIN'S WRATH] No realm is bound to your command!\s
+                                ⚡ First, claim a domain with: USE <database_name>\s
+                                The All-Father watches... and finds you wanting."""
                 );
             }
             Table table = getTable(tableName);
 
-            if (columns.size() != table.columnList.size()) {
-                throw new RuntimeException(
-                        "💢 [BOY!] \n" +
-                                "Column count mismatch! " + table.columnList.size() + " needed,\n" +
-                                "but you gave " + columns.size() + "!\n\n" +
-                                "Fix this. Now."
-                );
+            // 🛡️ [SHIELD OF VALHALLA] - Ensuring no null pointers breach our defenses
+            if (table.columnList == null || providedColumns == null) {
+                throw new RuntimeException("🌑 [GINNUNGAGAP'S VOID] - You offer nothingness where substance is demanded!");
+            }
+            // Validate column existence
+            for (String providedCol : providedColumns) {
+                if (table.columnList.stream().noneMatch(col -> col.columnName.equals(providedCol))) {
+                    throw new RuntimeException(
+                            "🗡️  [VALKYRIE'S DENIAL] Column '" + providedCol + "' is not worthy!\n" +
+                                    "   No such warrior stands among Odin's chosen.\n" +
+                                    "   Check your runes, mortal."
+                    );
+                }
             }
 
-            // 4. Validate column names (order matters)
+            // Check for duplicate columns in the provided list
+            Set<String> uniqueColumns = new HashSet<>(providedColumns);
+            if (uniqueColumns.size() != providedColumns.size()) {
+                throw new RuntimeException(
+                        """
+                                🔄 [ECHO OF CONFUSION] You speak the same column name twice!
+                                Even Loki's tricks cannot make one column hold two values.
+                                Remove the duplicate and try again."""
+                );
+            }
+            // Validate column names (order matters)
             List<String> tableColumns = table.columnList.stream()
-                    .map(col -> col.columnName)
-                    .toList();
-            List<String> providedColumns = columns.stream()
                     .map(col -> col.columnName)
                     .toList();
             List<TokenType> typesOfColumn = table.columnList.stream().map(type -> type.type).toList();
             List<Integer> lengths = table.columnList.stream().map(length -> length.length).toList();
-            List<String> columnNames = table.columnList.stream().map(column -> column.columnName).toList();
 
+            // Your validation logic here...
+            List<ValueDefinition> expandedRowValues = table.expandRow(providedColumns, values, table.columnList);
 
-            if (!tableColumns.equals(providedColumns)) {
-                throw new RuntimeException(
-                        "⚔️ [COLUMN NAMES REJECTED] \n" +
-                                "Table columns: " + tableColumns + "\n" +
-                                "Your columns : " + providedColumns + "\n\n" +
-                                "🛡️ The Allfather demands perfect alignment!"
-                );
-            }
-            if (table.validateRow(values, typesOfColumn, lengths, columnNames) != null) {
-                List<Object> returnedValue = table.validateRow(values, typesOfColumn, lengths, columnNames);
-                table.addRow(new Row(returnedValue));
-            }
+            List<Object> returnedValue = table.validateRow(expandedRowValues, typesOfColumn, lengths, tableColumns);
+            //Actually insert the row into the table storage
+            table.addRow(new Row(returnedValue));
+            System.out.println(table);
 
         } catch (Exception e) {
             throw new RuntimeException(
-                    "⚔️ [RAGE OF THE GODS] The Valkyries deny your INSERT!\n" + e.getMessage() + '\n'
+                    "⚡ [RAGNARÖK'S ECHO] The Valkyries deny your INSERT! \n" +
+                            "Mimir says: \"" + e.getMessage() + "\" \n" +
+                            "Return when you are worthy, mortal."
             );
         }
     }
@@ -382,7 +394,6 @@ public class DatabaseManager {
      *
      * @param tableName The name of the table to be dropped from the current database.
      */
-
 
     public void dropTable(String tableName) {
         try {
@@ -429,7 +440,6 @@ public class DatabaseManager {
             throw new RuntimeException("💥 [CRITICAL ERROR] An error occurred while dropping the table: " + e.getMessage());
         }
     }
-
 
     /**
      * ⚔️ [SUMMON THE ARCHIVES] Executes the 'SHOW TABLES' command by unveiling all
@@ -776,16 +786,16 @@ public class DatabaseManager {
     /**
      * Sets a default value for a specific column in a given table.
      *
-     * @param tableName   The name of the table where the column resides.
-     * @param columnName  The name of the column to assign the default value to.
+     * @param tableName    The name of the table where the column resides.
+     * @param columnName   The name of the column to assign the default value to.
      * @param defaultValue The default value being declared for the column.
-     * Saga Flow:
-     *   1. Ensure a database is active.
-     *   2. Retrieve the target table from the current database.
-     *   3. Verify that the table exists.
-     *   4. Retrieve and validate the column.
-     *   5. Perform type compatibility checks.
-     *   6. If all conditions are met, assign the default value.
+     *                     Saga Flow:
+     *                     1. Ensure a database is active.
+     *                     2. Retrieve the target table from the current database.
+     *                     3. Verify that the table exists.
+     *                     4. Retrieve and validate the column.
+     *                     5. Perform type compatibility checks.
+     *                     6. If all conditions are met, assign the default value.
      */
 
     public void setDefaultValue(String tableName, String columnName, ValueDefinition defaultValue) {
@@ -850,15 +860,15 @@ public class DatabaseManager {
     /**
      * ⚔️ DROP DEFAULT VALUE
      * Purpose:
-     *   - Removes the default value from a given column inside a specified table.
-     *   - Ensures the database, table, and column all exist before attempting removal.
-     *   - Validates that the column indeed carries a default before "banishing" it.
+     * - Removes the default value from a given column inside a specified table.
+     * - Ensures the database, table, and column all exist before attempting removal.
+     * - Validates that the column indeed carries a default before "banishing" it.
      * Usage:
-     *   - Invoked when the parser encounters:
-     *       DROP DEFAULT FOR COLUMN <columnName> IN TABLE <tableName>;
+     * - Invoked when the parser encounters:
+     * DROP DEFAULT FOR COLUMN <columnName> IN TABLE <tableName>;
      * Lore:
-     *   - 🌌 Kratos growls: "Defaults are carved runes of fate.
-     *     To erase one is to unbind destiny itself."
+     * - 🌌 Kratos growls: "Defaults are carved runes of fate.
+     * To erase one is to unbind destiny itself."
      */
 
     public void dropDefaultValue(String tableName, String columnName) {

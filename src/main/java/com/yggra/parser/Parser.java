@@ -97,11 +97,41 @@ public class Parser {
     }
 
     /**
-     * Parse Column Definition - Handles parsing of individual column specifications
-     * Expected format: column_name column_type [constraints]
-     * Supports INT and VARCHAR(n) data types
+     * ⚔️ [FORGE OF COLUMNS] ⚔️
+     * Parses a single column definition inside the CREATE TABLE ritual.
+     * 🔮 Expected format:
+     *   column_name column_type [VARCHAR(size) | INT] [DEFAULT literal_or_NULL]
+     * 🏛️ Supported column types:
+     *   - INT
+     *       • Optional DEFAULT may be:
+     *           → NUMBER_LITERAL (e.g., DEFAULT 0)
+     *           → NULL (e.g., DEFAULT NULL)
+     *   - VARCHAR(n)
+     *       • Requires a size declaration inside parentheses (e.g., VARCHAR(255))
+     *       • Optional DEFAULT may be:
+     *           → STRING_LITERAL (e.g., DEFAULT 'Kratos')
+     *           → NULL (e.g., DEFAULT NULL)
+     * 📜 Behavior:
+     *   - Requires a valid column name (IDENTIFIER).
+     *   - Requires a column type (INT or VARCHAR with size).
+     *   - Validates VARCHAR size syntax (must be NUMBER_LITERAL inside parentheses).
+     *   - Handles DEFAULT values:
+     *        • INT → NUMBER_LITERAL or NULL
+     *        • VARCHAR → STRING_LITERAL or NULL
+     *   - Differentiates between:
+     *        • No DEFAULT → hasDefault = false, value = null
+     *        • DEFAULT NULL → hasDefault = true, value = null
+     * ⚡ Outcome:
+     *   Returns a ColumnDefinition carrying the column name, type,
+     *   size (if applicable), and default value (literal or NULL).
      *
-     * @throws RuntimeException for various syntax errors in column definitions
+     * @return ColumnDefinition representing the parsed column metadata.
+     * @throws RuntimeException if:
+     *   - Column name is missing or invalid.
+     *   - Type is missing or unsupported.
+     *   - VARCHAR size is missing or invalid.
+     *   - DEFAULT value does not match type rules.
+     *   - Extra tokens appear after DEFAULT value.
      */
 
     private ColumnDefinition parseColumnDefinition() {
@@ -125,17 +155,42 @@ public class Parser {
         Token typeToken = peek();
         if (typeToken.type == TokenType.INT) {
             consume(TokenType.INT);
-            return new ColumnDefinition(colName, TokenType.INT, -1);
+
+            // Handle default value for INT
+            if (peek().type == TokenType.DEFAULT) {
+                consume(TokenType.DEFAULT);
+                TokenType type = peek().type;
+                String value = type==TokenType.NULL ? null :peek().value;
+
+                if (type == TokenType.NUMBER_LITERAL) {
+                    consume(TokenType.NUMBER_LITERAL);
+                } else if (type==TokenType.NULL) {
+                    consume(TokenType.NULL);
+                } else {
+                    throw new RuntimeException("❌ [BROKEN FORGE] INT may only be tempered with NUMBER or NULL — yet an unfit offering was given: " + value);
+                }
+
+                ValueDefinition defaultValue = new ValueDefinition(type, value);
+
+                if (position < tokens.size() && peek().type != TokenType.COMMA && peek().type != TokenType.RIGHT_PAREN) {
+                    throw new RuntimeException("⚡ [ODIN'S WRATH] Unexpected token after DEFAULT value: " + peek().value + ". Only ',' or ')' may follow!");
+                }
+
+                return new ColumnDefinition(colName, TokenType.INT, -1, true, defaultValue);
+            } else {
+                return new ColumnDefinition(colName, TokenType.INT, -1);
+            }
 
         } else if (typeToken.type == TokenType.VARCHAR) {
             consume(TokenType.VARCHAR);
-            // VARCHAR requires a (NUMBER) specification
+
+            // VARCHAR requires size
             if (position >= tokens.size()) {
                 throw new RuntimeException("📏 [BROKEN MEASURE] VARCHAR declared but size specification missing — how vast shall this text domain be?");
             }
 
             if (peek().type != TokenType.LEFT_PAREN) {
-                throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] VARCHAR demands size specification with '(' — the boundaries must be defined!");
+                throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] VARCHAR demands '(' to declare its size — boundaries must be set!");
             }
             consume(TokenType.LEFT_PAREN);
 
@@ -144,22 +199,47 @@ public class Parser {
             }
 
             if (peek().type != TokenType.NUMBER_LITERAL) {
-                throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Expected a valid Number literal for VARCHAR size!");
+                throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] VARCHAR size must be a NUMBER_LITERAL, not " + peek().value);
             }
             int size = parseInt(peek().value);
             consume(TokenType.NUMBER_LITERAL);
 
             if (position >= tokens.size()) {
-                throw new RuntimeException("🌉 [BRIDGE UNFINISHED] VARCHAR size given but closing ')' missing — the specification remains incomplete!");
+                throw new RuntimeException("🌉 [BRIDGE UNFINISHED] VARCHAR size given but closing ')' missing — the declaration remains incomplete!");
             }
 
             if (peek().type != TokenType.RIGHT_PAREN) {
-                throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Expected a valid RIGHT_PAREN to close VARCHAR size specification!");
+                throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Expected ')' to close VARCHAR size specification, but found " + peek().value);
             }
             consume(TokenType.RIGHT_PAREN);
-            return new ColumnDefinition(colName, TokenType.VARCHAR, size);
+
+            // Handle default value for VARCHAR
+            if (peek().type == TokenType.DEFAULT) {
+                consume(TokenType.DEFAULT);
+                TokenType type = peek().type;
+                String value = type==TokenType.NULL ? null :peek().value;
+
+                if (type == TokenType.STRING_LITERAL) {
+                    consume(TokenType.STRING_LITERAL);
+                } else if (type==TokenType.NULL) {
+                    consume(TokenType.NULL);
+                } else {
+                    throw new RuntimeException("❌ [SHATTERED LUTE] VARCHAR may only echo with STRING or NULL — but a false sound was heard: " + value);
+                }
+
+                ValueDefinition defaultValue = new ValueDefinition(type, value);
+
+                if (peek().type != TokenType.COMMA && peek().type != TokenType.RIGHT_PAREN) {
+                    throw new RuntimeException("⚡ [ZEUS’ DISPLEASURE] After the DEFAULT gift, nothing else may follow but ',' or ')' — yet " + peek().value + " dares intrude.");
+                }
+
+                return new ColumnDefinition(colName, TokenType.VARCHAR, size, true, defaultValue);
+            } else {
+                return new ColumnDefinition(colName, TokenType.VARCHAR, size);
+            }
+
         } else {
-            throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Expected a valid column type (INT or VARCHAR), but found: " + typeToken.value);
+            throw new RuntimeException("⚔️ [BLADE OF OLYMPUS] Expected column type (INT or VARCHAR), but found: " + typeToken.value);
         }
     }
 
@@ -171,9 +251,9 @@ public class Parser {
      * @throws RuntimeException for malformed lists (trailing commas, double commas, etc.)
      */
 
-    private List<ColumnDefinition> parseColumnInsertStatements() {
+    private List<String> parseColumnInsertStatements() {
         // Parse the first column name or value (at least one is required)
-        List<ColumnDefinition> columns = new ArrayList<>();
+        List<String> columns = new ArrayList<>();
         columns.add(parseColumnInsertStatement());
         // Handle comma-separated additional items
         while (position < tokens.size() && peek().type == TokenType.COMMA) {
@@ -196,14 +276,24 @@ public class Parser {
     }
 
     /**
-     * Parse Column Insert Statement - Handles parsing of individual column names or values
-     * Accepts identifiers (column names), number literals, or string literals
-     * Used for both INSERT column specifications.
+     * 🏛️ [COLUMN OFFERINGS FOR INSERT] 🏛️
+     * Parses a single column name in the ritual of an INSERT statement.
+     * 🔮 Expected format:
+     *   - IDENTIFIER (column_name)
+     * 📜 Behavior:
+     *   - Ensures a valid token exists at the current parsing position.
+     *   - Accepts only IDENTIFIER tokens as valid column names.
+     *   - Rejects invalid or unexpected tokens with mythic clarity.
+     * ⚡ Outcome:
+     *   Returns the name of the column (IDENTIFIER) to be used in INSERT operations.
      *
-     * @throws RuntimeException if no valid token is found at current position
+     * @return The parsed column name as a String.
+     * @throws RuntimeException if:
+     *         - No tokens remain when a column name is expected.
+     *         - A token other than IDENTIFIER is encountered.
      */
 
-    private ColumnDefinition parseColumnInsertStatement() {
+    private String parseColumnInsertStatement() {
         String columnName;
         // Ensure we have a token to examine
         if (position >= tokens.size()) {
@@ -217,45 +307,66 @@ public class Parser {
         } else {
             // For extensibility - other data types may be supported in future
             // Currently just logs the occurrence without throwing an error
-            throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
+            throw new RuntimeException("⚔️ [FALSE IDOL] INSERT expects a column name (IDENTIFIER), but a different token was offered — the gods reject this offering!");
         }
-        return new ColumnDefinition(columnName);
+        return columnName;
     }
 
-    /**
-     * Parse VALUES Insert Statement - Handles parsing of individual values .
-     * Accepts values, numbers, or strings
-     * Used for INSERT value specifications
+     /**
+     * 🔮 [VALUES OFFERINGS FOR INSERT] 🔮
+     * Parses a single value token in the sacred INSERT statement.
+     * 📜 Expected tokens:
+     *   - NUMBER_LITERAL (e.g., 42)
+     *   - STRING_LITERAL (e.g., 'Athena')
+     *   - DEFAULT (to invoke the table’s preordained value)
+     *   - NULL (to mark absence, the void embraced by the gods)
+     * ⚔️ Behavior:
+     *   - Ensures a token is available at the current parsing position.
+     *   - Rejects forbidden or chaotic symbols such as `;` or `--`.
+     *   - Returns a ValueDefinition encapsulating the token’s essence.
+     * 🌌 Outcome:
+     *   Produces a ValueDefinition representing the given value, prepared to be inscribed into the chosen column.
      *
-     * @throws RuntimeException if no valid token is found at current position
+     * @return A ValueDefinition containing type and value.
+     * @throws RuntimeException if:
+     *         - No tokens remain when a value is expected.
+     *         - A forbidden or malformed value is encountered.
+     *         - A token outside NUMBER_LITERAL, STRING_LITERAL, DEFAULT, or NULL is offered.
      */
 
     private ValueDefinition parseValuesInsertStatement() {
         // Ensure we have a token to examine
         if (position >= tokens.size()) {
-            throw new RuntimeException("📦 [EMPTY OFFERING] Expected value for insertion but found void — the gods demand tribute!");
+            throw new RuntimeException("📦 [EMPTY OFFERING] No value provided for INSERT — the altar cannot stand barren!");
         }
 
         if (peek().value.contains("--") || peek().value.contains(";") || peek().value.matches(".*\\W&&[^_].*")) {
             throw new RuntimeException(
-                    "🌪️ [CHAOS STORM] " +
-                            "Data values cannot contain ';' or '--'!"
+                    "🌪️ [CHAOS STORM] Forbidden runes detected (`;` or `--`) — such chaos cannot be inscribed into Yggra’s memory!"
             );
         }
-        // Accept various token types for INSERT operations:
+
+        // Accept valid INSERT values
         if (peek().type == TokenType.NUMBER_LITERAL) {
-            // Column names are just consumed here
             String value = peek().value;
             consume(TokenType.NUMBER_LITERAL);
             return new ValueDefinition(TokenType.NUMBER_LITERAL, value);
+
         } else if (peek().type == TokenType.STRING_LITERAL) {
             String value = peek().value;
             consume(TokenType.STRING_LITERAL);
             return new ValueDefinition(TokenType.STRING_LITERAL, value);
+
+        } else if (peek().type == TokenType.DEFAULT) {
+            consume(TokenType.DEFAULT);
+            return new ValueDefinition(TokenType.DEFAULT);
+
+        } else if (peek().type == TokenType.NULL) {
+            consume(TokenType.NULL);
+            return new ValueDefinition(TokenType.NULL, null);
+
         } else {
-            // For extensibility - other data types may be supported in future
-            // Currently just logs the occurrence without throwing an error
-            throw new RuntimeException("⚔️ [WRONG TRIBUTE] The value offered does not match the column's essence — the gods reject this false gift!");
+            throw new RuntimeException("⚔️ [REJECTED OFFERING] The gods accept only numbers, strings, DEFAULT, or NULL — yet something alien was offered!");
         }
     }
 
@@ -465,13 +576,21 @@ public class Parser {
         return columnsTobeAdded;
     }
 
-
     /**
      * Parse Column Definitions - Handles parsing of comma-separated column list
-     * Ensures proper comma placement and validates column definition syntax
-     * Format: column_def1, column_def2, ..., column_defN
-     *
-     * @throws RuntimeException for malformed column lists
+     * for a CREATE TABLE statement.
+     * Features:
+     * - Ensures at least one column definition is present.
+     * - Validates proper comma placement and prevents trailing/duplicate commas.
+     * - Delegates to parseColumnDefinition() for each column, supporting:
+     *      • INT and VARCHAR(n) types
+     *      • DEFAULT value clauses
+     *      • NULL as a valid default
+     * Format:
+     *   column_def1, column_def2, ..., column_defN
+     * Error Handling:
+     * - Throws @RuntimeException for malformed column lists
+     *   (missing column after comma, double commas, trailing commas, etc.).
      */
 
     private List<ColumnDefinition> parseColumnDefinitions() {
@@ -854,14 +973,20 @@ public class Parser {
         return new ExitDatabaseCommand();
     }
 
-    //Table related functions
+        //🗿THE CODEX OF TABLES
+        // A SCRIBE'S TOOLS, FORGED IN THE FIRES OF MIDGARD
 
     /**
-     * Parse CREATE TABLE Command - Handles the complete CREATE TABLE statement parsing
+     * Parse CREATE TABLE Command - Handles the complete CREATE TABLE statement parsing.
      * Expected format: CREATE TABLE table_name (column_definitions);
-     * Validates table name, parentheses matching, and semicolon termination
-     *
-     * @throws RuntimeException for various CREATE TABLE syntax errors
+     * Features:
+     * - Validates table name, parentheses matching, and semicolon termination.
+     * - Supports column definitions with data types (INT, VARCHAR(n), etc.).
+     * - Recognizes and applies DEFAULT value clauses for columns.
+     * - Allows NULL as a valid default value when specified.
+     * Error Handling:
+     * - Throws @RuntimeException for syntax errors (missing commas, unmatched parentheses, etc.).
+     * - Rejects invalid datatype/length combinations (e.g., INT with length).
      */
 
     private CreateTableCommand parseCreateTable() {
@@ -1035,7 +1160,7 @@ public class Parser {
             throw new RuntimeException("🏹 [EMPTY QUIVER] The insertion was summoned, yet no columns were named — a hunter cannot shoot without arrows!");
         }
         // Parse the comma-separated list of column names
-        List<ColumnDefinition> columns = parseColumnInsertStatements();
+        List<String> columns = parseColumnInsertStatements();
 
         // Check for closing parenthesis after column list
         if (position >= tokens.size()) {
@@ -1586,10 +1711,10 @@ public class Parser {
      * 🤺Parses the MODIFY COLUMN command in the form:
      * MODIFY COLUMN (<COLUMN_NAME> <NEW_DATATYPE>) IN TABLE <TABLE_NAME>;
      * Expected grammar:
-     *   MODIFY COLUMN (column_name datatype [, column_name datatype ...]) IN TABLE table_name;
+     * MODIFY COLUMN (column_name datatype [, column_name datatype ...]) IN TABLE table_name;
      * Purpose:
-     *   This method validates the syntax for modifying one or more column datatypes
-     *   in a table, throwing thematic error messages if the format is wrong.
+     * This method validates the syntax for modifying one or more column datatypes
+     * in a table, throwing thematic error messages if the format is wrong.
      *
      * @return ModifyDatatypeColumn object containing parsed command details (currently null placeholder)
      */
@@ -1658,12 +1783,12 @@ public class Parser {
             );
         }
 
-        return new ModifyDatatypeColumn(tableName,parsedColumns);
+        return new ModifyDatatypeColumn(tableName, parsedColumns);
     }
 
     /**
      * Parses a SET DEFAULT VALUE command of the form:
-     *   SET DEFAULT COLUMN <columnName> IN TABLE <tableName> DEFAULT <value>;
+     * SET DEFAULT COLUMN <columnName> IN TABLE <tableName> DEFAULT <value>;
      * Returns a SetDefaultValueColumn object representing the parsed command.
      * Saga-style errors are thrown if tokens are missing or invalid.
      */
@@ -1715,12 +1840,10 @@ public class Parser {
         if (peek().type == TokenType.STRING_LITERAL) {
             defaultValue = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
             consume(TokenType.STRING_LITERAL);
-        }
-        else if (peek().type == TokenType.NUMBER_LITERAL) {
+        } else if (peek().type == TokenType.NUMBER_LITERAL) {
             defaultValue = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
             consume(TokenType.NUMBER_LITERAL);
-        }
-        else {
+        } else {
             throw new RuntimeException("🌋 The realm trembles — an unknown value awakens: " + peek().value);
         }
 
@@ -1742,12 +1865,12 @@ public class Parser {
     /**
      * 🎯 Parses a `DROP DEFAULT` SQL command.
      * Expected syntax:
-     *   DROP DEFAULT FOR COLUMN <columnName> IN TABLE <tableName>;
+     * DROP DEFAULT FOR COLUMN <columnName> IN TABLE <tableName>;
      * Flow:
-     *   1. Validate mandatory keywords in order
-     *   2. Extract column and table names
-     *   3. Enforce semicolon termination
-     *   4. Return AST node (DropDefaultValueColumn)
+     * 1. Validate mandatory keywords in order
+     * 2. Extract column and table names
+     * 3. Enforce semicolon termination
+     * 4. Return AST node (DropDefaultValueColumn)
      * Errors are themed in a God of War–style.
      */
 
@@ -1886,11 +2009,11 @@ public class Parser {
                 // PARSE DROP DATABASE COMMAND;
                 if (second.type == TokenType.DATABASE) {
                     return parseDropDatabase();
-                // PARSE DROP TABLE COMMAND;
+                    // PARSE DROP TABLE COMMAND;
                 } else if (second.type == TokenType.TABLE) {
                     return parseDropTable();
-                // PARSE DROP DEFAULT VALUE COMMAND;
-                } else if (second.type==TokenType.DEFAULT) {
+                    // PARSE DROP DEFAULT VALUE COMMAND;
+                } else if (second.type == TokenType.DEFAULT) {
                     return parseDropDefaultValueColumn();
                 } else {
                     throw new RuntimeException("🌀 [REALM MISALIGNED] 'DROP' spoken, but '" + second.value + "' stands in defiance — only DATABASE AND TABLE may be struck down!");
@@ -2065,7 +2188,7 @@ public class Parser {
                     );
                 }
                 return parseModifyDataTypeCommand();
-            } else if (peek().type==TokenType.SET) {
+            } else if (peek().type == TokenType.SET) {
                 advance();
                 if (position >= tokens.size()) {
                     throw new RuntimeException(
