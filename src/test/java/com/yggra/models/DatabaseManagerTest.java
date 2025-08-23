@@ -1,5 +1,8 @@
 package com.yggra.models;
 
+import com.yggra.commands.CreateDatabaseCommand;
+import com.yggra.commands.SQLCommand;
+import com.yggra.executor.SQLExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -77,5 +80,9 @@ class DatabaseManagerTest {
 
     @Test
     void showAllTables() {
+    }
+
+    @Test
+    void testCreateDatabase() {
     }
 }

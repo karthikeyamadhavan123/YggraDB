@@ -141,6 +141,7 @@ public class Table {
                 builder.append("| ");
                 for (Object value : row.values) {
                     String displayValue = (value == null || (value instanceof String && ((String) value).isEmpty())) ? "NULL" : value.toString();
+                    System.out.println(displayValue);
                     builder.append(String.format("%-15s | ", displayValue));
                 }
                 builder.append("\n");
@@ -156,48 +157,69 @@ public class Table {
     }
 
     /**
-     * ⚒️ [VALUE CONVERSION] ⚒️
-     * Converts a raw ValueDefinition into the proper Java type
-     * based on the column's expected data type.
+     * ⚒️ [VALUE CONVERSION RITUAL] ⚒️
+     * Transmutes a raw ValueDefinition into its destined Java type,
+     * ensuring it aligns with the column's declared essence.
+     * 📜 Accepted conversions:
+     *   - INT columns → NUMBER_LITERAL or NULL
+     *   - VARCHAR columns → STRING_LITERAL or NULL
+     * ⚔️ Behavior:
+     *   - Validates the offered token against the expected column type.
+     *   - Converts NUMBER_LITERAL → Integer, STRING_LITERAL → String.
+     *   - Preserves NULL as Java null (absence of value).
+     *   - Rejects invalid offerings with mythic judgment.
+     * 🌌 Outcome:
+     *   Returns a properly typed Java object (Integer, String, or null).
      *
-     * @param valDef     The raw value definition from the parser
-     * @param targetType The expected TokenType (INT/VARCHAR)
-     * @return The converted Java object (Integer/String)
-     * @throws RuntimeException if type conversion fails
+     * @param valDef     The parsed value definition (from INSERT/DEFAULT/NULL).
+     * @param targetType The column’s declared TokenType (INT or VARCHAR).
+     * @return The converted Java object, or null if NULL is accepted.
+     * @throws RuntimeException if:
+     *         - The value type doesn’t match the column type.
+     *         - A forbidden/unknown target type is encountered.
+     *         - Number conversion fails for INT values.
      */
 
     private Object convertValue(ValueDefinition valDef, TokenType targetType) {
         try {
             return switch (targetType) {
                 case INT -> {
-                    if (valDef.type != TokenType.NUMBER_LITERAL) {
+                    if (valDef.type == TokenType.NUMBER_LITERAL) {
+                        yield Integer.parseInt(valDef.value);
+                    } else if (valDef.type == TokenType.NULL) {
+                        yield null;
+                    } else {
                         throw new RuntimeException(
-                                "⚔️ [TYPE JUDGMENT] The Allfather demands NUMBER_LITERAL for INT columns!\n" +
-                                        "You offered: " + valDef.type + " '" + valDef.value + "'"
+                                "⚔️ [TYPE JUDGMENT] INT columns accept only numbers or NULL.\n" +
+                                        "You dared offer: " + valDef.type + " '" + valDef.value + "'"
                         );
                     }
-                    yield Integer.parseInt(valDef.value);
                 }
                 case VARCHAR -> {
-                    if (valDef.type != TokenType.STRING_LITERAL) {
+                    if (valDef.type == TokenType.STRING_LITERAL) {
+                        yield valDef.value;
+                    } else if (valDef.type == TokenType.NULL) {
+                        yield null;
+                    } else {
                         throw new RuntimeException(
-                                "📜 [RUNIC MISMATCH] The Valkyries require STRING_LITERAL for VARCHAR!\n" +
-                                        "You chanted: " + valDef.type + " '" + valDef.value + "'"
+                                "📜 [RUNIC MISMATCH] VARCHAR columns accept only text or NULL.\n" +
+                                        "You dared chant: " + valDef.type + " '" + valDef.value + "'"
                         );
                     }
-                    yield valDef.value;
                 }
                 default -> throw new RuntimeException(
-                        "🌌 [FORBIDDEN KNOWLEDGE] The gods know not of type: " + targetType
+                        "🌌 [FORBIDDEN KNOWLEDGE] Unknown column type: " + targetType +
+                                " — the gods have not inscribed this essence."
                 );
             };
         } catch (NumberFormatException e) {
             throw new RuntimeException(
-                    "💢 [CONVERSION WRATH] Failed to convert '" + valDef.value + "' to " + targetType +
-                            "\nThe Norns whisper: " + e.getMessage()
+                    "💢 [CONVERSION WRATH] Failed to shape '" + valDef.value + "' into INT.\n" +
+                            "The Norns whisper: " + e.getMessage()
             );
         }
     }
+
 
     /**
      * 📜 [ROW INSCRIPTION] 📜
@@ -212,47 +234,141 @@ public class Table {
     }
 
     /**
-     * 🔍 [ROW VALIDATION] 🔍
-     * Validates and converts a list of ValueDefinitions into proper Java objects
-     * according to the table's schema.
+     * ⚔️ [RITUAL OF ROW VALIDATION] ⚔️
+     * Transforms and validates a single row of data before it is etched into Yggra's eternal tables.
+     * 🔮 Behavior:
+     *   - Iterates through each column in the row, aligned by position with the table schema.
+     *   - Handles special offerings:
+     *       • DEFAULT → Automatically retrieves the column's default value.
+     *       • NULL → Preserved as Java null.
+     *   - Converts raw ValueDefinition tokens into proper Java objects via {@link #convertValue}:
+     *       • INT → Integer or null
+     *       • VARCHAR → String or null
+     *   - Enforces VARCHAR length constraints; overly mighty strings trigger mythic wrath.
+     *   - Wraps individual column errors with column name and position for precise judgment.
+     * 🏛️ Outcome:
+     *   Returns a list of Java-typed objects representing the row, ready for insertion into the table.
+     * ⚡ Exceptions:
+     *   - Throws RuntimeException if:
+     *       • A value cannot be converted to its expected type.
+     *       • A VARCHAR exceeds its defined length.
+     *       • Any other violation occurs in the sanctum of row validation.
      *
-     * @param row         List of raw value definitions
-     * @param columnTypes Expected types for each column
-     * @param lengths     Length constraints for VARCHAR columns
-     * @param columNames  Column names for error reporting
-     * @return List of converted values ready for insertion
-     * @throws RuntimeException if validation fails at any column
+     * @param row         List of parsed {@link ValueDefinition} objects from the INSERT command.
+     * @param columnTypes List of {@link TokenType} representing each column's declared type.
+     * @param lengths     List of Integer defining max length for VARCHAR columns (-1 for INT).
+     * @param columnNames  List of column names corresponding to the table schema.
+     * @return List of Objects (Integer/String/null) converted and validated for table insertion.
      */
 
-    public List<Object> validateRow(List<ValueDefinition> row, List<TokenType> columnTypes, List<Integer> lengths, List<String> columNames) {
+    public List<Object> validateRow(List<ValueDefinition> row, List<TokenType> columnTypes, List<Integer> lengths, List<String> columnNames) {
+        // ⚱️ [VESSEL OF TRANSFORMATION] - Prepare the sacred container for converted values
         List<Object> convertedValues = new ArrayList<>();
+
+        // 🌀 [RITUAL PROCESSION] - Walk through each column in the ordained order
         for (int i = 0; i < columnTypes.size(); i++) {
-            ValueDefinition valDef = row.get(i); // gets whether it numberLiteral or String and values
-            TokenType tokenDef = columnTypes.get(i);
-            Integer length = lengths.get(i);
-            String columnName = columNames.get(i);
-            //INT OR VARCHAR
-            try {
-                Object convertedValue = convertValue(valDef, tokenDef);
-                if (tokenDef == TokenType.VARCHAR && convertedValue instanceof String strValue) {
-                    if (strValue.length() > length) {
-                        throw new RuntimeException(
-                                "🛡️ [STRING TOO MIGHTY] Column '" +
-                                        "' can only hold " + length + " runes\n" +
-                                        "You wield " + strValue.length() + ": " +
-                                        (strValue.length() > 20 ? strValue.substring(0, 20) + "..." : strValue)
-                        );
-                    }
-                }
+            // 📜 [GATHERING THE SACRED TOKENS] - Extract the elements needed for this column's judgment
+            ValueDefinition valDef = row.get(i);        // The raw offering from mortal hands
+            TokenType expectedType = columnTypes.get(i);  // The divine type demanded by the schema
+            Integer maxLength = lengths.get(i);          // The boundary set by the gods
+            String columnName = columnNames.get(i);      // The name by which this column is known
+            ColumnDefinition colDef = getColumn(columnName); // The full divine definition
+
+            // 🔱 [FORK IN THE PATH] - Handle DEFAULT tokens with divine intervention
+            if (colDef.hasDefaultValue && valDef.type == TokenType.DEFAULT) {
+                // 🎭 [DIVINE SUBSTITUTION] - Replace DEFAULT with the column's blessed value
+                ValueDefinition defaultValue = colDef.getDefaultValue();
+                Object convertedValue = convertValue(defaultValue, expectedType);
                 convertedValues.add(convertedValue);
-            } catch (RuntimeException e) {
-                throw new RuntimeException(
-                        "🔥 [ROW REJECTED] At column '" + columnName + "' (position " + (i + 1) + ")\n" +
-                                e.getMessage()
-                );
+            } else {
+                // ⚡ [TRIAL BY FIRE] - Subject the mortal value to divine judgment
+                try {
+                    // 🔮 [ALCHEMICAL TRANSFORMATION] - Convert the raw value to its destined form
+                    Object convertedValue = convertValue(valDef, expectedType);
+
+                    // 📏 [MEASURING THE MIGHTY STRING] - Special judgment for VARCHAR warriors
+                    if (expectedType == TokenType.VARCHAR && convertedValue instanceof String strValue) {
+                        // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
+                        if (strValue.length() > maxLength) {
+                            throw new RuntimeException(
+                                    "🛡️ [STRING TOO MIGHTY] Column '" + columnName +
+                                            "' can only hold " + maxLength + " runes\n" +
+                                            "You wield " + strValue.length() + ": " +
+                                            (strValue.length() > 20 ? strValue.substring(0, 20) + "..." : strValue)
+                            );
+                        }
+                    }
+
+                    // ✅ [BLESSING OF ACCEPTANCE] - The value has proven worthy
+                    convertedValues.add(convertedValue);
+
+                } catch (RuntimeException e) {
+                    // 🔥 [WRATH OF THE VALIDATORS] - Wrap failure in contextual divine judgment
+                    throw new RuntimeException(
+                            "🔥 [ROW REJECTED] At column '" + columnName + "' (position " + (i + 1) + ")\n" +
+                                    e.getMessage()
+                    );
+                }
             }
         }
+
+        // 🏆 [TRIUMPHANT RETURN] - Present the sanctified row to the caller
         return convertedValues;
+    }
+
+    /**
+     * 🌊 [RITUAL OF ROW EXPANSION] 🌊
+     * Expands a partial row offering into the full schema required by the divine table.
+     * 🔮 Sacred Purpose:
+     *   When mortals offer only partial tribute (INSERT with subset of columns),
+     *   this ritual fills the gaps according to divine law and cosmic balance.
+     * 🏛️ Divine Process:
+     *   - Walks through the complete table schema in ordained order
+     *   - For each column, seeks the mortal's offering in their provided list
+     *   - If found: Preserves their offering exactly as given
+     *   - If missing with DEFAULT: Creates a DEFAULT token to invoke column's blessed value
+     *   - If missing without DEFAULT: Creates a NULL token, accepting the void
+     * ⚡ Cosmic Law:
+     *   The returned row always matches the table schema length and order,
+     *   ensuring harmony between mortal intent and divine structure.
+     * 🎯 Divine Wisdom:
+     *   This allows mortals to INSERT partial data while maintaining table integrity,
+     *   letting the gods fill what mortals cannot provide.
+     *
+     * @param insertColumns  List of column names the mortal dares to specify
+     * @param insertValues   List of values offered for the specified columns
+     * @param schemaColumns  The complete divine schema defining table structure
+     * @return Expanded row matching full schema order with DEFAULTS/NULLs for missing columns
+     */
+
+    public List<ValueDefinition> expandRow(List<String> insertColumns, List<ValueDefinition> insertValues, List<ColumnDefinition> schemaColumns) {
+        // 🏺 [VESSEL OF EXPANSION] - Prepare container for the complete row
+        List<ValueDefinition> expandedRow = new ArrayList<>();
+
+        // 🚶‍♂️ [PILGRIMAGE THROUGH SCHEMA] - Walk the sacred path of table structure
+        for (ColumnDefinition columnDefinition : schemaColumns) {
+
+            // 🔍 [SEEKING THE MORTAL OFFERING] - Search for this column in their tribute
+            int idx = insertColumns.indexOf(columnDefinition.getColumnName());
+
+            // 🎭 [THE GREAT DECISION] - Three paths diverge in the divine wood
+            if (idx != -1) {
+                // 🎯 [PATH OF THE PROVIDED] - Mortal has offered tribute for this column
+                expandedRow.add(insertValues.get(idx));
+
+            } else if (columnDefinition.hasDefaultValue) {
+                // 🌟 [PATH OF DIVINE DEFAULT] - The column bears blessed default value
+                expandedRow.add(new ValueDefinition(TokenType.DEFAULT));
+
+            } else {
+                // 🌑 [PATH OF THE VOID] - Neither mortal offering nor divine default exists
+                // Accept the null, for even emptiness has its place in the cosmic order
+                expandedRow.add(new ValueDefinition(TokenType.NULL, null));
+            }
+        }
+
+        // 🏆 [COSMIC HARMONY ACHIEVED] - Return the row that satisfies both mortal and divine
+        return expandedRow;
     }
 
     /**
@@ -412,7 +528,7 @@ public class Table {
      *
      * @param columnName The name of the column being searched for.
      * @return The matching ColumnDefinition if found, otherwise null.
-     *
+     * <p>
      * Saga Note: If null is returned, it means the column is lost in the void of Ginnungagap.
      */
 
@@ -431,6 +547,7 @@ public class Table {
     /**
      * Checks whether a provided default value can be safely cast
      * or converted to the type of the target column.
+     *
      * @param defaultValue The value being proposed as the default.
      * @param columnType   The expected type of the column (e.g., INT, VARCHAR).
      * @return true if the value can be converted, false if incompatible.

@@ -69,10 +69,10 @@ public class YggraREPL {
                     Parser parser = new Parser(tokens);
                     SQLCommand command = parser.parse();
                     if (command != null) {
-//                        long startTime = System.nanoTime();
+                        long startTime = System.nanoTime();
                         executor.execute(command);
-//                        long endTime = System.nanoTime();
-//                        System.out.println("⏱️ Execution time: " + (endTime-startTime)*0.000001 + " ms");
+                        long endTime = System.nanoTime();
+                        System.out.println("⏱️ Execution time: " + (endTime-startTime)*0.000001 + " ms");
                     }
                 }
             } catch (Exception e) {
