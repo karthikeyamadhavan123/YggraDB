@@ -53,4 +53,31 @@ public class Row {
     public void addDefaultValues(Object object) {
         values.add(object);
     }
+
+    /**
+     * 🎯 Retrieves the value stored at the given column index for this row.
+     * Functional Details:
+     *  - Each row internally stores its data in a `values` list.
+     *  - The index provided here must correspond to the index of the column
+     *    in the table’s schema (`columnList`).
+     *  - This gives direct, O(1) access to the value in the row, making it
+     *    efficient for SELECT queries and internal lookups.
+     * Usage Example:
+     *   If the table schema is [id, name, age] and this row contains [1, "Kratos", 40]:
+     *     getValue(0) → 1
+     *     getValue(1) → "Kratos"
+     *     getValue(2) → 40
+     * Edge Cases:
+     *  - If the provided index is out of bounds, this will throw an
+     *    IndexOutOfBoundsException — the caller is responsible for ensuring
+     *    that the index is valid by resolving column names to indices first.
+     *  - Can return `null` if the row’s value at that column is missing or unset.
+     * @param index The index of the column whose value is being requested.
+     * @return The value at the given column index (maybe null).
+     */
+
+    public Object getValue(int index) {
+        return values.get(index);
+    }
+
 }
