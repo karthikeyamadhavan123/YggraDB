@@ -141,7 +141,6 @@ public class Table {
                 builder.append("| ");
                 for (Object value : row.values) {
                     String displayValue = (value == null || (value instanceof String && ((String) value).isEmpty())) ? "NULL" : value.toString();
-                    System.out.println(displayValue);
                     builder.append(String.format("%-15s | ", displayValue));
                 }
                 builder.append("\n");

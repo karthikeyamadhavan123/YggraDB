@@ -49,6 +49,109 @@ public class DatabaseManager {
         return instance;
     }
 
+    /**
+     * Resolves a list of requested column names into their index positions
+     * within the given table's schema.
+     * Example:
+     *   Table schema: [id, name, age]
+     *   Request: SELECT name,id
+     *   Output: [1, 0]  (name is column 1, id is column 0)
+     * Order is preserved so the user’s SELECT statement is honored exactly.
+     * @param columns list of requested column names
+     * @param table   table containing the schema (columnList)
+     * @return list of indices corresponding to the requested columns
+     *
+     * @throws RuntimeException if a requested column is missing (defensive check).
+     */
+
+
+    public static List<Integer> getIntegers(List<String> columns, Table table) {
+        List<Integer> columnIndices = new ArrayList<>();
+        for (String column : columns) {
+            boolean found = false;
+
+            // Linear scan over table schema (O(n) per lookup).
+            // For large schemas, this could be optimized with a hashmap
+            // mapping columnName -> index.
+            for (int j = 0; j < table.columnList.size(); j++) {
+                if (column.equals(table.columnList.get(j).columnName)) {
+                    columnIndices.add(j); // capture index
+                    found = true;
+                    break; // stop once match is found
+                }
+            }
+
+            // Defensive guard: if column not found, raise descriptive error.
+            if (!found) {
+                throw new RuntimeException("❌ [COLUMN CURSED] The Fates declare: 'No such column: " + column + "'");
+            }
+        }
+        return columnIndices;
+    }
+
+    /**
+     * Prints the result set of a SELECT query in ASCII table format.
+     * Each column is left-aligned, and column widths are adjusted
+     * based on the longest value in that column (including header).
+     * Example output for SELECT id, name:
+     *   | id | name    |
+     *   +----+---------+
+     *   | 3  | nitish  |
+     *   | 1  | karthik |
+     *   | 2  | veeru   |
+     * Null values are printed as the literal string "NULL".
+     *
+     * @param columns       the column names requested in the SELECT
+     * @param table         the table object containing schema + rows
+     * @param columnIndices resolved indices for each requested column
+     */
+
+    private void printTable(List<String> columns, Table table, List<Integer> columnIndices) {
+        // 🔍 Step 1: Compute column widths
+        // Each column must be wide enough for both the header and the longest value.
+        List<Integer> colWidths = new ArrayList<>();
+        for (int idx : columnIndices) {
+            int maxWidth = table.columnList.get(idx).columnName.length();
+
+            for (Row row : table.rowList) {
+                Object val = row.getValue(idx);
+                if (val != null) {
+                    maxWidth = Math.max(maxWidth, val.toString().length());
+                }
+            }
+
+            colWidths.add(maxWidth);
+        }
+
+        // 📝 Step 2: Print header row with column names
+        StringBuilder header = new StringBuilder("|");
+        for (int i = 0; i < columns.size(); i++) {
+            header.append(" ")
+                    .append(String.format("%-" + colWidths.get(i) + "s", columns.get(i)))
+                    .append(" |");
+        }
+        System.out.println(header);
+
+        // 🪓 Step 3: Print separator line for readability
+        StringBuilder sep = new StringBuilder("+");
+        for (int w : colWidths) {
+            sep.append("-".repeat(w + 2)).append("+");
+        }
+        System.out.println(sep);
+
+        // 📊 Step 4: Print each row’s values, aligned by column widths
+        for (Row row : table.rowList) {
+            StringBuilder rowStr = new StringBuilder("|");
+            for (int i = 0; i < columnIndices.size(); i++) {
+                Object val = row.getValue(columnIndices.get(i));
+                rowStr.append(" ")
+                        .append(String.format("%-" + colWidths.get(i) + "s", val != null ? val : "NULL"))
+                        .append(" |");
+            }
+            System.out.println(rowStr);
+        }
+    }
+
 
     /**
      * 🔍 [REALM BINDING CHECK] 🔍
@@ -71,10 +174,7 @@ public class DatabaseManager {
      */
 
     public Table getTable(final String tablename) {
-        return currentDatabase.tables.stream().filter(t -> t.tableName.equals(tablename)).findFirst().orElseThrow(() -> new RuntimeException(
-                "🔥 [FLAMES OF CONFLICT] Table '" + tablename + "' does not exist!\n" +
-                        "🛡️ Forge it first with: CREATE TABLE " + tablename + "!"
-        ));
+        return currentDatabase.tables.stream().filter(t -> t.tableName.equals(tablename)).findFirst().orElseThrow(() -> new RuntimeException("🔥 [FLAMES OF CONFLICT] Table '" + tablename + "' does not exist!\n" + "🛡️ Forge it first with: CREATE TABLE " + tablename + "!"));
     }
 
     /**
@@ -91,10 +191,7 @@ public class DatabaseManager {
         }
         // Prevent nested names (e.g., "Valhalla.Asgard")
         if (dbName.contains(".")) {
-            throw new RuntimeException(
-                    "⚡ [BIFROST SHATTERED] Realm names cannot contain '.' — " +
-                            "you cannot forge nested realms!"
-            );
+            throw new RuntimeException("⚡ [BIFROST SHATTERED] Realm names cannot contain '.' — " + "you cannot forge nested realms!");
         }
 
         synchronized (this) {
@@ -187,7 +284,6 @@ public class DatabaseManager {
         }
     }
 
-
     /**
      * 🌉 [BIFROST RENAME RITUAL] 🌉
      * Reshapes a realm’s destiny by changing its name within the World Tree’s registry.
@@ -204,34 +300,22 @@ public class DatabaseManager {
     public void renameDatabase(String oldName, String newName) {
         // 1. Check if inside a database
         if (hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    "⚡ [BIFROST LOCKED] You cannot rename realms while inside one!\n" +
-                            "🛡️ First exit with: USE NONE;"
-            );
+            throw new RuntimeException("⚡ [BIFROST LOCKED] You cannot rename realms while inside one!\n" + "🛡️ First exit with: USE NONE;");
         }
 
         // 2. Validate names
         if (oldName == null || oldName.trim().isEmpty()) {
-            throw new RuntimeException(
-                    "🌌 [VOID WHISPER] The old realm name is empty!\n" +
-                            "⚔️ Speak the name of the realm to be reshaped!"
-            );
+            throw new RuntimeException("🌌 [VOID WHISPER] The old realm name is empty!\n" + "⚔️ Speak the name of the realm to be reshaped!");
         }
 
         if (newName == null || newName.trim().isEmpty()) {
-            throw new RuntimeException(
-                    "🌀 [FATE UNWRITTEN] The new realm name is empty!\n" +
-                            "⚒️ Whisper a name worthy of Yggdrasil's branches!"
-            );
+            throw new RuntimeException("🌀 [FATE UNWRITTEN] The new realm name is empty!\n" + "⚒️ Whisper a name worthy of Yggdrasil's branches!");
         }
 
         // 3. Thread-safe rename operation
         synchronized (this) {
             if (!databases.containsKey(oldName)) {
-                throw new RuntimeException(
-                        "❌ [REALM UNKNOWN] No realm named '" + oldName + "' exists!\n" +
-                                "🌍 Available realms: " + String.join(", ", databases.keySet())
-                );
+                throw new RuntimeException("❌ [REALM UNKNOWN] No realm named '" + oldName + "' exists!\n" + "🌍 Available realms: " + String.join(", ", databases.keySet()));
             }
             // Fetch and remove the old realm from the cosmic ledger
             Database dbToRename = databases.remove(oldName);
@@ -240,14 +324,10 @@ public class DatabaseManager {
             databases.put(newName, dbToRename);
 
             // 🎉 Announce the transformation
-            System.out.println(
-                    "🌠 [YGGDRASIL'S WILL] Realm '" + oldName +
-                            "' is now known as '" + newName + "'!"
-            );
+            System.out.println("🌠 [YGGDRASIL'S WILL] Realm '" + oldName + "' is now known as '" + newName + "'!");
         }
 
     }
-
 
     /**
      * 🚪 [REALM EXIT] 🚪
@@ -273,7 +353,6 @@ public class DatabaseManager {
         currentDatabase = null;
     }
 
-
     /**
      * 🏗️ [TABLE FORGING] 🏗️
      * Crafts a new table in the current realm.
@@ -286,17 +365,12 @@ public class DatabaseManager {
     public void addTable(final String tablename, List<ColumnDefinition> columns) {
         try {
             if (!hasCurrentDatabase()) {
-                throw new RuntimeException(
-                        "🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>"
-                );
+                throw new RuntimeException("🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>");
             }
             boolean tableExists = currentDatabase.tables.stream().anyMatch(table -> table.tableName.equals(tablename));
 
             if (tableExists) {
-                throw new RuntimeException(
-                        "🔥 [FLAMES OF CONFLICT] Table '" + tablename + "' already exists!\n" +
-                                "🛡️ Choose a name worthy of Valhalla!"
-                );
+                throw new RuntimeException("🔥 [FLAMES OF CONFLICT] Table '" + tablename + "' already exists!\n" + "🛡️ Choose a name worthy of Valhalla!");
 
             } else {
                 Table table = new Table(tablename, columns);
@@ -305,9 +379,7 @@ public class DatabaseManager {
             }
 
         } catch (RuntimeException e) {
-            throw new RuntimeException(
-                    "⚔️ [RAGE OF THE GODS] " + e.getMessage() + "🏺 The Fates weave a tangled web... Consult the Norns for wisdom!"
-            );
+            throw new RuntimeException("⚔️ [RAGE OF THE GODS] " + e.getMessage() + "🏺 The Fates weave a tangled web... Consult the Norns for wisdom!");
         }
     }
 
@@ -324,12 +396,10 @@ public class DatabaseManager {
     public void insertIntoTable(String tableName, List<String> providedColumns, List<ValueDefinition> values) {
         try {
             if (!hasCurrentDatabase()) {
-                throw new RuntimeException(
-                        """
-                                🔥 [ODIN'S WRATH] No realm is bound to your command!\s
-                                ⚡ First, claim a domain with: USE <database_name>\s
-                                The All-Father watches... and finds you wanting."""
-                );
+                throw new RuntimeException("""
+                        🔥 [ODIN'S WRATH] No realm is bound to your command!\s
+                        ⚡ First, claim a domain with: USE <database_name>\s
+                        The All-Father watches... and finds you wanting.""");
             }
             Table table = getTable(tableName);
 
@@ -340,28 +410,20 @@ public class DatabaseManager {
             // Validate column existence
             for (String providedCol : providedColumns) {
                 if (table.columnList.stream().noneMatch(col -> col.columnName.equals(providedCol))) {
-                    throw new RuntimeException(
-                            "🗡️  [VALKYRIE'S DENIAL] Column '" + providedCol + "' is not worthy!\n" +
-                                    "   No such warrior stands among Odin's chosen.\n" +
-                                    "   Check your runes, mortal."
-                    );
+                    throw new RuntimeException("🗡️  [VALKYRIE'S DENIAL] Column '" + providedCol + "' is not worthy!\n" + "   No such warrior stands among Odin's chosen.\n" + "   Check your runes, mortal.");
                 }
             }
 
             // Check for duplicate columns in the provided list
             Set<String> uniqueColumns = new HashSet<>(providedColumns);
             if (uniqueColumns.size() != providedColumns.size()) {
-                throw new RuntimeException(
-                        """
-                                🔄 [ECHO OF CONFUSION] You speak the same column name twice!
-                                Even Loki's tricks cannot make one column hold two values.
-                                Remove the duplicate and try again."""
-                );
+                throw new RuntimeException("""
+                        🔄 [ECHO OF CONFUSION] You speak the same column name twice!
+                        Even Loki's tricks cannot make one column hold two values.
+                        Remove the duplicate and try again.""");
             }
             // Validate column names (order matters)
-            List<String> tableColumns = table.columnList.stream()
-                    .map(col -> col.columnName)
-                    .toList();
+            List<String> tableColumns = table.columnList.stream().map(col -> col.columnName).toList();
             List<TokenType> typesOfColumn = table.columnList.stream().map(type -> type.type).toList();
             List<Integer> lengths = table.columnList.stream().map(length -> length.length).toList();
 
@@ -371,14 +433,9 @@ public class DatabaseManager {
             List<Object> returnedValue = table.validateRow(expandedRowValues, typesOfColumn, lengths, tableColumns);
             //Actually insert the row into the table storage
             table.addRow(new Row(returnedValue));
-            System.out.println(table);
 
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "⚡ [RAGNARÖK'S ECHO] The Valkyries deny your INSERT! \n" +
-                            "Mimir says: \"" + e.getMessage() + "\" \n" +
-                            "Return when you are worthy, mortal."
-            );
+            throw new RuntimeException("⚡ [RAGNARÖK'S ECHO] The Valkyries deny your INSERT! \n" + "Mimir says: \"" + e.getMessage() + "\" \n" + "Return when you are worthy, mortal.");
         }
     }
 
@@ -407,19 +464,14 @@ public class DatabaseManager {
             // 🌌 Check if warrior is bound to a realm
 
             if (!hasCurrentDatabase()) {
-                throw new RuntimeException(
-                        "🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>"
-                );
+                throw new RuntimeException("🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>");
             }
 
             // 🔍 Check if table truly exists in the current realm
 
             boolean tableExists = currentDatabase.tables.stream().anyMatch(table -> table.tableName.equals(tableName));
             if (!tableExists) {
-                throw new RuntimeException(
-                        "❌ [PHANTOM TABLE] Table '" + tableName + "' does not exist in this realm!\n" +
-                                "🧭 Seek it in other lands or summon it anew with CREATE TABLE."
-                );
+                throw new RuntimeException("❌ [PHANTOM TABLE] Table '" + tableName + "' does not exist in this realm!\n" + "🧭 Seek it in other lands or summon it anew with CREATE TABLE.");
             }
 
             // ⚔️ Purge the table from the list of known relics
@@ -453,9 +505,7 @@ public class DatabaseManager {
 
     public void showAllTables() {
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    "🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>"
-            );
+            throw new RuntimeException("🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>");
         }
         List<Table> allTables = currentDatabase.tables;
         if (currentDatabase.tables.isEmpty()) {
@@ -488,9 +538,7 @@ public class DatabaseManager {
     public void alterTableName(String oldTableName, String newTableName) {
         // 1. 🔮 Ensure the Bifrost is aligned with a realm
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    "🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>"
-            );
+            throw new RuntimeException("🌌 [VOID OF REALMS] No database bound to your will! ⚡ First, summon a realm with: USE <database_name>");
         }
         // 2. 🕵️ Search for the ancient table by its old name
         Table table = getTable(oldTableName);
@@ -525,27 +573,18 @@ public class DatabaseManager {
     public void alterColumnsofTable(List<ColumnDefinition> toAddColumns, String tableName, List<ValueDefinition> defaultValues) {
         // 1. 🔮 Ensure the Bifrost is aligned with a realm (database is selected)
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    "🌌 [VOID OF REALMS] No database bound to your will! ⚡ " +
-                            "First, summon a realm with: USE <database_name>"
-            );
+            throw new RuntimeException("🌌 [VOID OF REALMS] No database bound to your will! ⚡ " + "First, summon a realm with: USE <database_name>");
         }
 
         // 2. 🕵️ Seek out the ancient table by name
         Table table = getTable(tableName);
         if (table == null) {
-            throw new RuntimeException(
-                    "🪨 [TABLE LOST IN THE MISTS] The table '" + tableName + "' could not be found in this realm! " +
-                            "Ensure it exists before attempting to alter it."
-            );
+            throw new RuntimeException("🪨 [TABLE LOST IN THE MISTS] The table '" + tableName + "' could not be found in this realm! " + "Ensure it exists before attempting to alter it.");
         }
 
         // 3. 📜 Ensure columns to add are not empty
         if (toAddColumns == null || toAddColumns.isEmpty()) {
-            throw new RuntimeException(
-                    "⚠️ [EMPTY OFFERING] No columns were provided for addition. " +
-                            "The gods demand at least one new column!"
-            );
+            throw new RuntimeException("⚠️ [EMPTY OFFERING] No columns were provided for addition. " + "The gods demand at least one new column!");
         }
 
         // 4. 🏗️ Add each new column to the table
@@ -555,8 +594,7 @@ public class DatabaseManager {
                 givenDefault = defaultValues.get(i);
             }
             table.addColumnsToExistingTable(toAddColumns.get(i), givenDefault);
-            System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() +
-                    "' has been bestowed upon table '" + tableName + "'!");
+            System.out.println("⚒️ [FORGE SUCCESS] Column '" + toAddColumns.get(i).getColumnName() + "' has been bestowed upon table '" + tableName + "'!");
         }
 
     }
@@ -584,14 +622,12 @@ public class DatabaseManager {
         // Just as Kratos cannot channel his rage without a target realm,
         // we cannot cleanse tables without a database connection
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    """
-                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
-                            KRATOS ROARS: 'You dare attempt to cleanse the tables without first \
-                            choosing your battlefield?!' 🗡️
-                            💀 The Ghost of Sparta demands: First bind yourself to a realm with: USE <database_name>
-                            🔥 'Face me when you are prepared for war!' - Kratos"""
-            );
+            throw new RuntimeException("""
+                    ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                    KRATOS ROARS: 'You dare attempt to cleanse the tables without first \
+                    choosing your battlefield?!' 🗡️
+                    💀 The Ghost of Sparta demands: First bind yourself to a realm with: USE <database_name>
+                    🔥 'Face me when you are prepared for war!' - Kratos""");
         }
 
         // ⚔️ STEP II: HUNT THE TARGET TABLE LIKE A GOD-SLAYER
@@ -602,13 +638,7 @@ public class DatabaseManager {
         // 🏛️ STEP III: VALIDATE THE TARGET EXISTS IN THIS REALM
         // Even the God of War cannot destroy what does not exist
         if (table == null) {
-            throw new RuntimeException(
-                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
-                            "KRATOS BELLOWS: 'The table '" + tableName + "' hides from my blades like a coward!' ⚔️\n" +
-                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
-                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
-                            "💡 Ensure the table exists before invoking the cleansing fire!"
-            );
+            throw new RuntimeException("🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" + "KRATOS BELLOWS: 'The table '" + tableName + "' hides from my blades like a coward!' ⚔️\n" + "🏛️ This realm holds no such vessel for my wrath to consume!\n" + "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" + "💡 Ensure the table exists before invoking the cleansing fire!");
         }
 
         // ⚡ STEP IV: UNLEASH THE BLADES OF CHAOS - TOTAL ANNIHILATION
@@ -643,15 +673,13 @@ public class DatabaseManager {
         // STEP I: Ensure a database ("realm") is currently selected
         // Without a target realm, operations cannot proceed.
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    """
-                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
-                            KRATOS ROARS: 'You dare attempt to purge the columns without first
-                            declaring your battlefield?!' 🗡️
-                            💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
-                            🔥 'Face me when you are prepared for war!' - Kratos
-                            """
-            );
+            throw new RuntimeException("""
+                    ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                    KRATOS ROARS: 'You dare attempt to purge the columns without first
+                    declaring your battlefield?!' 🗡️
+                    💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
+                    🔥 'Face me when you are prepared for war!' - Kratos
+                    """);
         }
 
         // STEP II: Retrieve the target table from the current database
@@ -659,13 +687,7 @@ public class DatabaseManager {
 
         // STEP III: Validate that the table exists in this database
         if (table == null) {
-            throw new RuntimeException(
-                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
-                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" +
-                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
-                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
-                            "💡 Ensure the table exists before invoking the cleansing fire!"
-            );
+            throw new RuntimeException("🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" + "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" + "🏛️ This realm holds no such vessel for my wrath to consume!\n" + "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" + "💡 Ensure the table exists before invoking the cleansing fire!");
         }
 
         // STEP IV: Remove each specified column from the table
@@ -674,8 +696,7 @@ public class DatabaseManager {
         }
 
         // STEP V: Confirm success to the player
-        System.out.println("🗡️ [COLUMNS VANQUISHED] The following columns have been erased from '"
-                + tableName + "': " + deletedColumns);
+        System.out.println("🗡️ [COLUMNS VANQUISHED] The following columns have been erased from '" + tableName + "': " + deletedColumns);
     }
 
     /**
@@ -698,15 +719,13 @@ public class DatabaseManager {
     public void renameColumns(String oldName, String tableName, String newName) {
         // STEP I: Ensure a database ("realm") is currently selected
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    """
-                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
-                            KRATOS ROARS: 'You dare attempt to purge the columns without first
-                            declaring your battlefield?!' 🗡️
-                            💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
-                            🔥 'Face me when you are prepared for war!' - Kratos
-                            """
-            );
+            throw new RuntimeException("""
+                    ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                    KRATOS ROARS: 'You dare attempt to purge the columns without first
+                    declaring your battlefield?!' 🗡️
+                    💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
+                    🔥 'Face me when you are prepared for war!' - Kratos
+                    """);
         }
 
         // STEP II: Retrieve the target table from the current database
@@ -714,13 +733,7 @@ public class DatabaseManager {
 
         // STEP III: Validate that the table exists
         if (table == null) {
-            throw new RuntimeException(
-                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
-                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" +
-                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
-                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
-                            "💡 Ensure the table exists before invoking the cleansing fire!"
-            );
+            throw new RuntimeException("🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" + "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" + "🏛️ This realm holds no such vessel for my wrath to consume!\n" + "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" + "💡 Ensure the table exists before invoking the cleansing fire!");
         }
 
         // STEP IV: Command the table to rename the column
@@ -752,15 +765,13 @@ public class DatabaseManager {
         // STEP I: Ensure a database ("realm") is currently selected before proceeding.
         // Without an active database context, table-level operations cannot be performed.
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    """
-                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
-                            KRATOS ROARS: 'You dare attempt to purge the columns without first
-                            declaring your battlefield?!' 🗡️
-                            💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
-                            🔥 'Face me when you are prepared for war!' - Kratos
-                            """
-            );
+            throw new RuntimeException("""
+                    ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                    KRATOS ROARS: 'You dare attempt to purge the columns without first
+                    declaring your battlefield?!' 🗡️
+                    💀 The Ghost of Sparta demands: "USE <database_name>" before you strike!
+                    🔥 'Face me when you are prepared for war!' - Kratos
+                    """);
         }
 
         // STEP II: Retrieve the target table from the currently active database.
@@ -769,13 +780,7 @@ public class DatabaseManager {
         // STEP III: Validate that the table exists.
         // If no table by this name exists in the current database, abort with thematic error.
         if (table == null) {
-            throw new RuntimeException(
-                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
-                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" +
-                            "🏛️ This realm holds no such vessel for my wrath to consume!\n" +
-                            "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" +
-                            "💡 Ensure the table exists before invoking the cleansing fire!"
-            );
+            throw new RuntimeException("🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" + "KRATOS BELLOWS: 'The table \"" + tableName + "\" hides from my blades like a coward!' ⚔️\n" + "🏛️ This realm holds no such vessel for my wrath to consume!\n" + "🔥 'Show yourself, or be deemed unworthy of destruction!' - Ghost of Sparta\n" + "💡 Ensure the table exists before invoking the cleansing fire!");
         }
 
         // STEP IV: Delegate the datatype modification task to the Table object.
@@ -801,18 +806,16 @@ public class DatabaseManager {
     public void setDefaultValue(String tableName, String columnName, ValueDefinition defaultValue) {
         // STEP I: Verify that a database context exists.
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    """
-                            ⚡🌊 [WRATH OF THE VOID] ⚡🌊
-                            KRATOS ROARS: 'You dare forge defaults in the abyss,
-                            without first declaring your battlefield?!' 🗡️
-                            
-                            💀 The Ghost of Sparta DEMANDS:
-                            "USE <database_name>" before you strike!
-                            
-                            🔥 'Face me only when you are prepared for war!' - Kratos
-                            """
-            );
+            throw new RuntimeException("""
+                    ⚡🌊 [WRATH OF THE VOID] ⚡🌊
+                    KRATOS ROARS: 'You dare forge defaults in the abyss,
+                    without first declaring your battlefield?!' 🗡️
+                    
+                    💀 The Ghost of Sparta DEMANDS:
+                    "USE <database_name>" before you strike!
+                    
+                    🔥 'Face me only when you are prepared for war!' - Kratos
+                    """);
         }
 
         // STEP II: Retrieve the target table from the currently active database.
@@ -820,13 +823,7 @@ public class DatabaseManager {
 
         // STEP III: Validate that the table exists.
         if (table == null) {
-            throw new RuntimeException(
-                    "🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" +
-                            "KRATOS BELLOWS: 'The table \"" + tableName + "\" skulks in shadows, " +
-                            "fleeing from my blades like a coward!' ⚔️\n" +
-                            "🏛️ No such vessel stands in this realm for my wrath to consume!\n" +
-                            "🔥 'Reveal yourself, or be deemed unworthy of my destruction!' - Ghost of Sparta"
-            );
+            throw new RuntimeException("🌪️💀 [FURY OF THE LOST HUNT] 🌪️💀\n" + "KRATOS BELLOWS: 'The table \"" + tableName + "\" skulks in shadows, " + "fleeing from my blades like a coward!' ⚔️\n" + "🏛️ No such vessel stands in this realm for my wrath to consume!\n" + "🔥 'Reveal yourself, or be deemed unworthy of my destruction!' - Ghost of Sparta");
         }
 
         // STEP IV: Retrieve the target column definition.
@@ -834,22 +831,12 @@ public class DatabaseManager {
 
         // STEP V: Validate that the column exists.
         if (column == null) {
-            throw new RuntimeException(
-                    "🩸 [SYMBOL LOST] 🩸\n" +
-                            "KRATOS SNARLS: 'The column \"" + columnName + "\" is but dust in the wind!'\n" +
-                            "⚔️ The Norns decree: No such symbol lives within table \"" + tableName + "\".\n" +
-                            "🔥 'Name it true, or suffer the wrath of misremembered fate!' - Kratos"
-            );
+            throw new RuntimeException("🩸 [SYMBOL LOST] 🩸\n" + "KRATOS SNARLS: 'The column \"" + columnName + "\" is but dust in the wind!'\n" + "⚔️ The Norns decree: No such symbol lives within table \"" + tableName + "\".\n" + "🔥 'Name it true, or suffer the wrath of misremembered fate!' - Kratos");
         }
 
         // STEP VI: Check type compatibility between value and column.
         if (!table.checkValueTypes(defaultValue, column.type)) {
-            throw new RuntimeException(
-                    "⚔️🔥 [TYPE JUDGMENT] ⚔️🔥\n" +
-                            "The Allfather thunders: 'The column \"" + columnName + "\" demands offerings of type " + column.type + "!'\n" +
-                            "💀 You dared present: " + defaultValue + "\n" +
-                            "🌋 'Foolish mortal — your gift is unworthy!' - Kratos"
-            );
+            throw new RuntimeException("⚔️🔥 [TYPE JUDGMENT] ⚔️🔥\n" + "The Allfather thunders: 'The column \"" + columnName + "\" demands offerings of type " + column.type + "!'\n" + "💀 You dared present: " + defaultValue + "\n" + "🌋 'Foolish mortal — your gift is unworthy!' - Kratos");
         }
 
         // STEP VII: All conditions met — set the default value.
@@ -874,42 +861,86 @@ public class DatabaseManager {
     public void dropDefaultValue(String tableName, String columnName) {
         // 🛡️ Step 1: Ensure a database is selected
         if (!hasCurrentDatabase()) {
-            throw new RuntimeException(
-                    "🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
-                            "👉 Use `USE <database>` first!"
-            );
+            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " + "👉 Use `USE <database>` first!");
         }
 
         // 🏛️ Step 2: Fetch the target table
         Table table = getTable(tableName);
         if (table == null) {
-            throw new RuntimeException(
-                    "🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'"
-            );
+            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
         }
 
         // 🪓 Step 3: Fetch the target column
         ColumnDefinition column = table.getColumn(columnName);
         if (column == null) {
-            throw new RuntimeException(
-                    "💀 [PHANTOM COLUMN] The Allfather roars: 'Column \"" + columnName + "\" is but an illusion!'"
-            );
+            throw new RuntimeException("💀 [PHANTOM COLUMN] The Allfather roars: 'Column \"" + columnName + "\" is but an illusion!'");
         }
 
         // 🔍 Step 4: Ensure the column actually has a default before removing
         if (!column.hasDefaultValue) {
-            throw new RuntimeException(
-                    "⚔️ [NO DEFAULT TO SLAY] Kratos snarls: 'Column \"" + columnName +
-                            "\" bears no default rune to shatter!'"
-            );
+            throw new RuntimeException("⚔️ [NO DEFAULT TO SLAY] Kratos snarls: 'Column \"" + columnName + "\" bears no default rune to shatter!'");
         }
 
         // 🔥 Step 5: Remove the default value
         column.dropDefault();
 
         // 🎉 Step 6: Confirm the operation
-        System.out.println("🔥 [DEFAULT BANISHED] The default for column '"
-                + columnName + "' has been shattered!");
+        System.out.println("🔥 [DEFAULT BANISHED] The default for column '" + columnName + "' has been shattered!");
+    }
+
+    /**
+     * Executes a SELECT query on a given table inside the currently active database.
+     * Supports:
+     *   - Selecting all columns (via SELECT ALL).
+     *   - Selecting a subset of columns in any order.
+     *   - Proper error handling with saga-inspired error messages.
+     *   - Printing results in a tabular ASCII format.
+     * @param tableName the name of the table to fetch rows from
+     * @param columns   list of columns requested in the SELECT statement
+     * @throws RuntimeException if no database is selected, the table does not exist,or any requested column is missing from the schema.
+     */
+
+    public void selectCommand(String tableName, List<String> columns) {
+        // 🛡️ Step 1: Ensure a database is currently active
+        // Without a selected database (via USE <dbname>), a SELECT has no context.
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
+                    "👉 Use `USE <database>` first!");
+        }
+
+        // 🏛️ Step 2: Retrieve the target table object
+        // If the table name is invalid or does not exist, the SELECT cannot proceed.
+        Table table = getTable(tableName);
+        if (table == null) {
+            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
+        }
+
+        // 🌐 Step 3: Handle SELECT ALL
+        // If the user writes `SELECT ALL`, we bypass column-specific handling
+        // and just print the table directly with its full schema.
+        if (columns.size() == 1 && columns.getFirst().equalsIgnoreCase("ALL")) {
+            System.out.println(table); // delegate to Table.toString()
+            return;
+        }
+
+        // ⚔️ Step 4: Validate requested columns against table schema
+        // Ensure that every requested column exists in table.columnList.
+        // If even one column is invalid, the query is aborted.
+        for (String column : columns) {
+            if (table.columnList.stream().noneMatch(c -> c.columnName.equals(column))) {
+                throw new RuntimeException("💥 [COLUMN LOST] Mimir mutters: 'The column '" + column + "' does not exist in table '" + tableName + "'!'");
+            }
+        }
+
+        // 📜 Step 5: Resolve requested column names into indices
+        // Column indices are used internally for quick access into row values.
+        // The returned list preserves the order of the requested columns,
+        // so SELECT name,id behaves differently from SELECT id,name.
+        List<Integer> columnIndices = getIntegers(columns, table);
+
+        // 🖼️ Step 6: Render results in ASCII tabular format
+        // Dynamically sizes each column so values and headers align neatly.
+        printTable(columns, table, columnIndices);
     }
 
 }

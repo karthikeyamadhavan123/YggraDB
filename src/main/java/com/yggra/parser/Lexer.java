@@ -83,7 +83,10 @@ public class Lexer {
                 tokens.add(new Token(TokenType.SEMICOLON, ";"));
                 current++;
                 break;
-
+            case '*':
+                tokens.add(new Token(TokenType.ASTERISK,"*"));
+                current++;
+                break;
             // String literals enclosed in single quotes
             case '\'':
                 current++; // Skip opening quote
@@ -111,7 +114,6 @@ public class Lexer {
                     throw new RuntimeException("⚠️ [ERROR] String literal was never closed. By the gods, finish what you started!");
                 }
                 break;
-
             // Default case for identifiers, numbers, keywords, etc.
             default:
                 // Number literal (e.g., 123)
@@ -226,6 +228,12 @@ public class Lexer {
                             break;
                         case "NULL":
                             tokens.add(new Token(TokenType.NULL, rawKeyword));
+                            break;
+                        case "SELECT":
+                            tokens.add(new Token(TokenType.SELECT,rawKeyword));
+                            break;
+                        case "WHERE":
+                            tokens.add(new Token(TokenType.WHERE,rawKeyword));
                             break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));
