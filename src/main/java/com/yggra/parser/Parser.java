@@ -100,38 +100,38 @@ public class Parser {
      * ⚔️ [FORGE OF COLUMNS] ⚔️
      * Parses a single column definition inside the CREATE TABLE ritual.
      * 🔮 Expected format:
-     *   column_name column_type [VARCHAR(size) | INT] [DEFAULT literal_or_NULL]
+     * column_name column_type [VARCHAR(size) | INT] [DEFAULT literal_or_NULL]
      * 🏛️ Supported column types:
-     *   - INT
-     *       • Optional DEFAULT may be:
-     *           → NUMBER_LITERAL (e.g., DEFAULT 0)
-     *           → NULL (e.g., DEFAULT NULL)
-     *   - VARCHAR(n)
-     *       • Requires a size declaration inside parentheses (e.g., VARCHAR(255))
-     *       • Optional DEFAULT may be:
-     *           → STRING_LITERAL (e.g., DEFAULT 'Kratos')
-     *           → NULL (e.g., DEFAULT NULL)
+     * - INT
+     * • Optional DEFAULT may be:
+     * → NUMBER_LITERAL (e.g., DEFAULT 0)
+     * → NULL (e.g., DEFAULT NULL)
+     * - VARCHAR(n)
+     * • Requires a size declaration inside parentheses (e.g., VARCHAR(255))
+     * • Optional DEFAULT may be:
+     * → STRING_LITERAL (e.g., DEFAULT 'Kratos')
+     * → NULL (e.g., DEFAULT NULL)
      * 📜 Behavior:
-     *   - Requires a valid column name (IDENTIFIER).
-     *   - Requires a column type (INT or VARCHAR with size).
-     *   - Validates VARCHAR size syntax (must be NUMBER_LITERAL inside parentheses).
-     *   - Handles DEFAULT values:
-     *        • INT → NUMBER_LITERAL or NULL
-     *        • VARCHAR → STRING_LITERAL or NULL
-     *   - Differentiates between:
-     *        • No DEFAULT → hasDefault = false, value = null
-     *        • DEFAULT NULL → hasDefault = true, value = null
+     * - Requires a valid column name (IDENTIFIER).
+     * - Requires a column type (INT or VARCHAR with size).
+     * - Validates VARCHAR size syntax (must be NUMBER_LITERAL inside parentheses).
+     * - Handles DEFAULT values:
+     * • INT → NUMBER_LITERAL or NULL
+     * • VARCHAR → STRING_LITERAL or NULL
+     * - Differentiates between:
+     * • No DEFAULT → hasDefault = false, value = null
+     * • DEFAULT NULL → hasDefault = true, value = null
      * ⚡ Outcome:
-     *   Returns a ColumnDefinition carrying the column name, type,
-     *   size (if applicable), and default value (literal or NULL).
+     * Returns a ColumnDefinition carrying the column name, type,
+     * size (if applicable), and default value (literal or NULL).
      *
      * @return ColumnDefinition representing the parsed column metadata.
      * @throws RuntimeException if:
-     *   - Column name is missing or invalid.
-     *   - Type is missing or unsupported.
-     *   - VARCHAR size is missing or invalid.
-     *   - DEFAULT value does not match type rules.
-     *   - Extra tokens appear after DEFAULT value.
+     *                          - Column name is missing or invalid.
+     *                          - Type is missing or unsupported.
+     *                          - VARCHAR size is missing or invalid.
+     *                          - DEFAULT value does not match type rules.
+     *                          - Extra tokens appear after DEFAULT value.
      */
 
     private ColumnDefinition parseColumnDefinition() {
@@ -160,11 +160,11 @@ public class Parser {
             if (peek().type == TokenType.DEFAULT) {
                 consume(TokenType.DEFAULT);
                 TokenType type = peek().type;
-                String value = type==TokenType.NULL ? null :peek().value;
+                String value = type == TokenType.NULL ? null : peek().value;
 
                 if (type == TokenType.NUMBER_LITERAL) {
                     consume(TokenType.NUMBER_LITERAL);
-                } else if (type==TokenType.NULL) {
+                } else if (type == TokenType.NULL) {
                     consume(TokenType.NULL);
                 } else {
                     throw new RuntimeException("❌ [BROKEN FORGE] INT may only be tempered with NUMBER or NULL — yet an unfit offering was given: " + value);
@@ -217,11 +217,11 @@ public class Parser {
             if (peek().type == TokenType.DEFAULT) {
                 consume(TokenType.DEFAULT);
                 TokenType type = peek().type;
-                String value = type==TokenType.NULL ? null :peek().value;
+                String value = type == TokenType.NULL ? null : peek().value;
 
                 if (type == TokenType.STRING_LITERAL) {
                     consume(TokenType.STRING_LITERAL);
-                } else if (type==TokenType.NULL) {
+                } else if (type == TokenType.NULL) {
                     consume(TokenType.NULL);
                 } else {
                     throw new RuntimeException("❌ [SHATTERED LUTE] VARCHAR may only echo with STRING or NULL — but a false sound was heard: " + value);
@@ -279,18 +279,18 @@ public class Parser {
      * 🏛️ [COLUMN OFFERINGS FOR INSERT] 🏛️
      * Parses a single column name in the ritual of an INSERT statement.
      * 🔮 Expected format:
-     *   - IDENTIFIER (column_name)
+     * - IDENTIFIER (column_name)
      * 📜 Behavior:
-     *   - Ensures a valid token exists at the current parsing position.
-     *   - Accepts only IDENTIFIER tokens as valid column names.
-     *   - Rejects invalid or unexpected tokens with mythic clarity.
+     * - Ensures a valid token exists at the current parsing position.
+     * - Accepts only IDENTIFIER tokens as valid column names.
+     * - Rejects invalid or unexpected tokens with mythic clarity.
      * ⚡ Outcome:
-     *   Returns the name of the column (IDENTIFIER) to be used in INSERT operations.
+     * Returns the name of the column (IDENTIFIER) to be used in INSERT operations.
      *
      * @return The parsed column name as a String.
      * @throws RuntimeException if:
-     *         - No tokens remain when a column name is expected.
-     *         - A token other than IDENTIFIER is encountered.
+     *                          - No tokens remain when a column name is expected.
+     *                          - A token other than IDENTIFIER is encountered.
      */
 
     private String parseColumnInsertStatement() {
@@ -312,26 +312,26 @@ public class Parser {
         return columnName;
     }
 
-     /**
+    /**
      * 🔮 [VALUES OFFERINGS FOR INSERT] 🔮
      * Parses a single value token in the sacred INSERT statement.
      * 📜 Expected tokens:
-     *   - NUMBER_LITERAL (e.g., 42)
-     *   - STRING_LITERAL (e.g., 'Athena')
-     *   - DEFAULT (to invoke the table’s preordained value)
-     *   - NULL (to mark absence, the void embraced by the gods)
+     * - NUMBER_LITERAL (e.g., 42)
+     * - STRING_LITERAL (e.g., 'Athena')
+     * - DEFAULT (to invoke the table’s preordained value)
+     * - NULL (to mark absence, the void embraced by the gods)
      * ⚔️ Behavior:
-     *   - Ensures a token is available at the current parsing position.
-     *   - Rejects forbidden or chaotic symbols such as `;` or `--`.
-     *   - Returns a ValueDefinition encapsulating the token’s essence.
+     * - Ensures a token is available at the current parsing position.
+     * - Rejects forbidden or chaotic symbols such as `;` or `--`.
+     * - Returns a ValueDefinition encapsulating the token’s essence.
      * 🌌 Outcome:
-     *   Produces a ValueDefinition representing the given value, prepared to be inscribed into the chosen column.
+     * Produces a ValueDefinition representing the given value, prepared to be inscribed into the chosen column.
      *
      * @return A ValueDefinition containing type and value.
      * @throws RuntimeException if:
-     *         - No tokens remain when a value is expected.
-     *         - A forbidden or malformed value is encountered.
-     *         - A token outside NUMBER_LITERAL, STRING_LITERAL, DEFAULT, or NULL is offered.
+     *                          - No tokens remain when a value is expected.
+     *                          - A forbidden or malformed value is encountered.
+     *                          - A token outside NUMBER_LITERAL, STRING_LITERAL, DEFAULT, or NULL is offered.
      */
 
     private ValueDefinition parseValuesInsertStatement() {
@@ -583,14 +583,14 @@ public class Parser {
      * - Ensures at least one column definition is present.
      * - Validates proper comma placement and prevents trailing/duplicate commas.
      * - Delegates to parseColumnDefinition() for each column, supporting:
-     *      • INT and VARCHAR(n) types
-     *      • DEFAULT value clauses
-     *      • NULL as a valid default
+     * • INT and VARCHAR(n) types
+     * • DEFAULT value clauses
+     * • NULL as a valid default
      * Format:
-     *   column_def1, column_def2, ..., column_defN
+     * column_def1, column_def2, ..., column_defN
      * Error Handling:
      * - Throws @RuntimeException for malformed column lists
-     *   (missing column after comma, double commas, trailing commas, etc.).
+     * (missing column after comma, double commas, trailing commas, etc.).
      */
 
     private List<ColumnDefinition> parseColumnDefinitions() {
@@ -973,8 +973,8 @@ public class Parser {
         return new ExitDatabaseCommand();
     }
 
-        //🗿THE CODEX OF TABLES
-        // A SCRIBE'S TOOLS, FORGED IN THE FIRES OF MIDGARD
+    //🗿THE CODEX OF TABLES
+    // A SCRIBE'S TOOLS, FORGED IN THE FIRES OF MIDGARD
 
     /**
      * Parse CREATE TABLE Command - Handles the complete CREATE TABLE statement parsing.
@@ -1960,6 +1960,84 @@ public class Parser {
 
 
     /**
+     * 🌌 [SEER’S DIVINATION] 🌌
+     * Parses a `SELECT` SQL command from the token stream.
+     * The SELECT command in YggraDB follows this structure:
+     *   SELECT <columns> FROM <tableName>;
+     * Columns can be either:
+     *   - `*` (represented internally as ["ALL"])
+     *   - A list of identifiers (e.g., ["id", "name"])
+     * This method consumes tokens from the input and constructs a {@link SelectCommand}.
+     * Any violation of the expected grammar results in a God of War–style runtime error.
+     * ⚡ Responsibilities:
+     *  - Validate that columns are properly specified (`*` or identifiers).
+     *  - Ensure the `FROM` keyword appears after the column list.
+     *  - Validate that a table name follows `FROM`.
+     *  - Ensure the query is terminated by a semicolon.
+     *  - Guard against stray tokens beyond the query.
+     * 🛡️ Error Handling:
+     *  - If no `*` or identifiers found → raise: "❌ [FATE TWISTED] A SELECT must choose runes (* or identifiers), not this shadow."
+     *  - If `FROM` is missing → raise: "⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value
+     *  - If table name missing → raise: "🏛️ [NAMELESS REALM] No table name stands where destiny decrees — found " + peek().value
+     *  - If semicolon missing → raise: "⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value
+     *  - If extra tokens linger → raise: "👁️ [WHISPERS BEYOND] Shadows remain past the end... " + peek().value
+     */
+
+    private SelectCommand parseSelectCommand() {
+
+        // 🔮 STEP I: Ensure SELECT targets are valid (either * or identifiers)
+        if (peek().type != TokenType.ASTERISK && peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("❌ [FATE TWISTED] A SELECT must choose runes (* or identifiers), not " + peek().value);
+        }
+
+        List<String> columns;
+
+        // 🟊 STEP II: Handle `SELECT *`
+        if (peek().type == TokenType.ASTERISK) {
+            columns = new ArrayList<>();
+            consume(TokenType.ASTERISK);
+            columns.add("ALL");
+
+            if (peek().type != TokenType.FROM) {
+                throw new RuntimeException("⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value);
+            }
+
+            // 📜 STEP III: Handle `SELECT col1, col2, ...`
+        } else if (peek().type == TokenType.IDENTIFIER) {
+            columns = parseColumnInsertStatements();
+        } else {
+            throw new RuntimeException("❌ [FATE CORRUPTED] Unexpected token in SELECT — " + peek().value);
+        }
+
+        // 🏛️ STEP IV: Expect `FROM`
+        if (peek().type != TokenType.FROM) {
+            throw new RuntimeException("⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value);
+        }
+        consume(TokenType.FROM);
+
+        // 🏷️ STEP V: Expect table name
+        String tableName = peek().value;
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("🏛️ [NAMELESS REALM] No table name stands where destiny decrees — found " + tableName);
+        }
+        consume(TokenType.IDENTIFIER);
+
+        // ⛓️ STEP VI: Ensure semicolon terminates the query
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value);
+        }
+        consume(TokenType.SEMICOLON);
+
+        // 👁️ STEP VII: Ensure no trailing tokens
+        if (position < tokens.size()) {
+            throw new RuntimeException("👁️ [WHISPERS BEYOND] Shadows remain past the end... " + peek().value);
+        }
+
+        // 🎇 STEP VIII: Return parsed command
+        return new SelectCommand(tableName, columns);
+    }
+
+    /**
      * Parse - Main entry point for parsing SQL commands
      * Determines command type (CREATE or INSERT) and delegates to appropriate parser
      * Handles top-level parsing errors with comprehensive error reporting
@@ -2209,10 +2287,13 @@ public class Parser {
                     );
                 }
                 return parseSetDefaultValueCommand();
+            } else if (peek().type == TokenType.SELECT) {
+                advance();
+                return parseSelectCommand();
             } else {
                 throw new RuntimeException(
                         "⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" +
-                                "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT.\n" +
+                                "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT,SELECT.\n" +
                                 "❌ But instead received: " + first.type + " ('" + first.value + "').\n" +
                                 "⚔️ Only these divine runes may command the realms of Yggra!"
                 );
@@ -2225,5 +2306,6 @@ public class Parser {
             return null;
         }
     }
+
 
 }

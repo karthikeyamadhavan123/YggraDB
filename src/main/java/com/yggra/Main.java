@@ -16,6 +16,7 @@ public class Main {
      *
      * @param args Mortal parameters (currently ignored by the gods)
      */
+
     public static void main(String[] args) {
         // 📦 Initializes the Oracle and prepares for mortal queries
         YggraREPL repl = new YggraREPL();
