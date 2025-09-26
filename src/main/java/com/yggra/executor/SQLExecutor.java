@@ -158,7 +158,10 @@ public class SQLExecutor {
                             dropDefaultValueColumn.tableName,
                             dropDefaultValueColumn.columnName
                     );
-            case SelectCommand selectCommand -> DatabaseManager.getInstance().selectCommand(selectCommand.tableName,selectCommand.columns);
+
+            case SelectCommand selectCommand -> DatabaseManager.getInstance().selectCommand(selectCommand.tableName,selectCommand.columns,selectCommand.conditions);
+
+            case DeleteCommand deleteCommand -> DatabaseManager.getInstance().deleteCommand(deleteCommand.tableName, deleteCommand.condition);
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

@@ -1,5 +1,7 @@
 package com.yggra.commands;
 
+import com.yggra.common_models.Condition;
+
 import java.util.List;
 
 /**
@@ -40,6 +42,7 @@ public class SelectCommand extends SQLCommand {
     //   In `SELECT id FROM user WHERE age > 18;`
     //   conditions = [ Condition("age", ">", 18) ]
 
+    public List<Condition> conditions;
     /**
      * 🏗️ Constructs a new SELECT command representation.
      *
@@ -50,5 +53,11 @@ public class SelectCommand extends SQLCommand {
     public SelectCommand(String tableName, List<String> columns) {
         this.tableName = tableName;
         this.columns = columns;
+    }
+
+    public SelectCommand(String tableName, List<String> columns, List<Condition> conditions){
+        this.tableName = tableName;
+        this.columns = columns;
+        this.conditions=conditions;
     }
 }
