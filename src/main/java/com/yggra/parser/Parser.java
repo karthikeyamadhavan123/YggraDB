@@ -2038,7 +2038,6 @@ public class Parser {
         return new DeleteCommand(tableName, condition);
     }
 
-
     // ⛓️ STEP VI: Ensure semicolon terminates the query
 
     /**
