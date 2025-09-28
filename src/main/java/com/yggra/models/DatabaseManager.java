@@ -833,6 +833,7 @@ public class DatabaseManager {
         if (table == null) {
             throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
         }
+        table.validateDeleteCommand(table,condition);
     }
 
 }

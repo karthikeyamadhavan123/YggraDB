@@ -1984,58 +1984,59 @@ public class Parser {
             return new SelectCommand(tableName, columns, conditions);
     }
 
-//    private DeleteCommand parseDeleteCommand() {
-//        // Ensure table name exists
-//        if (peek().type != TokenType.IDENTIFIER) {
-//            throw new RuntimeException(
-//                    "❌ [DELETE ERROR] Expected table name, but found '" + peek().value + "'"
-//            );
-//        }
-//
-//        String tableName = peek().value;
-//        consume(TokenType.IDENTIFIER);
-//
-//        Condition condition = null;
-//
-//        // Optional WHERE clause
-//        if (peek().type == TokenType.WHERE) {
-//            consume(TokenType.WHERE);
-//
-//            if (peek().type != TokenType.IDENTIFIER) {
-//                throw new RuntimeException(
-//                        "❌ [DELETE ERROR] Expected column name after WHERE, but found '" + peek().value + "'"
-//                );
-//            }
-//
-//            String columnName = peek().value;
-//            consume(TokenType.IDENTIFIER);
-//
-//            TokenType operator = peek().type;
-//            consume(operator);
-//
-//            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
-//            consume(peek().type);
-//
-//            condition = new Condition(columnName, operator, value);
-//        }
-//
-//        // ✅ Check for semicolon
-//        if (peek().type != TokenType.SEMICOLON) {
-//            throw new RuntimeException(
-//                    "❌ [DELETE ERROR] Expected ';' at the end of DELETE statement, but found '" + peek().value + "'"
-//            );
-//        }
-//        consume(TokenType.SEMICOLON);
-//
-//        // ✅ Ensure nothing remains after the semicolon
-//        if (position<tokens.size()) {
-//            throw new RuntimeException(
-//                    "❌ [DELETE ERROR] Unexpected tokens after ';'. DELETE statement must end here."
-//            );
-//        }
-//
-//        return new DeleteCommand(tableName, condition);
-//    }
+    private DeleteCommand parseDeleteCommand() {
+        // Ensure table name exists
+        consume(TokenType.FROM);
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "❌ [DELETE ERROR] Expected table name, but found '" + peek().value + "'"
+            );
+        }
+
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        Condition condition = null;
+
+        // Optional WHERE clause
+        if (peek().type == TokenType.WHERE) {
+            consume(TokenType.WHERE);
+
+            if (peek().type != TokenType.IDENTIFIER) {
+                throw new RuntimeException(
+                        "❌ [DELETE ERROR] Expected column name after WHERE, but found '" + peek().value + "'"
+                );
+            }
+
+            String columnName = peek().value;
+            consume(TokenType.IDENTIFIER);
+
+            TokenType operator = peek().type;
+            consume(operator);
+
+            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
+            consume(peek().type);
+
+            condition = new Condition(columnName, operator, value);
+        }
+
+        // ✅ Check for semicolon
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "❌ [DELETE ERROR] Expected ';' at the end of DELETE statement, but found '" + peek().value + "'"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // ✅ Ensure nothing remains after the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "❌ [DELETE ERROR] Unexpected tokens after ';'. DELETE statement must end here."
+            );
+        }
+
+        return new DeleteCommand(tableName, condition);
+    }
 
 
     // ⛓️ STEP VI: Ensure semicolon terminates the query
@@ -2252,8 +2253,25 @@ public class Parser {
             } else if (peek().type == TokenType.SELECT) {
                 advance();
                 return parseSelectCommand();
-            }
-            else {
+            } else if (peek().type == TokenType.DELETE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] The DELETE ritual is incomplete!
+                            🛡️ You must speak the full incantation:
+                            DELETE FROM <table_name> [WHERE <condition>];
+                            🌌 Examples: DELETE FROM users WHERE age > 25;
+                            """);
+                }
+                Token second = peek();
+                if (second.type != TokenType.FROM) {
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
+                            "yet you brandish '" + second.value + "'! " +
+                            "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
+                            "📜 Correct syntax: DELETE FROM <table_name> [WHERE <condition>];");
+                }
+                return parseDeleteCommand();
+            } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" + "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT,SELECT.\n" + "❌ But instead received: " + first.type + " ('" + first.value + "').\n" + "⚔️ Only these divine runes may command the realms of Yggra!");
             }
 
@@ -2268,22 +2286,3 @@ public class Parser {
 }
 
 
-//else if (peek().type == TokenType.DELETE) {
-//advance();
-//                if (position >= tokens.size()) {
-//        throw new RuntimeException("""
-//                            ⚡ [BROKEN RUNE] The DELETE ritual is incomplete!
-//                            🛡️ You must speak the full incantation:
-//                            DELETE FROM <table_name> [WHERE <condition>];
-//                            🌌 Examples: DELETE FROM users WHERE age > 25;
-//                            """);
-//                }
-//Token second = peek();
-//                if (second.type != TokenType.FROM) {
-//        throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
-//                                           "yet you brandish '" + second.value + "'! " +
-//                                           "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
-//                                           "📜 Correct syntax: DELETE FROM <table_name> [WHERE <condition>];");
-//                }
-//                        return parseDeleteCommand();
-//            }
