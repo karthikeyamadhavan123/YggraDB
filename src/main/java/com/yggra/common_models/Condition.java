@@ -6,7 +6,7 @@ import com.yggra.parser.TokenType;
 
 public class Condition {
     public final String columnName;
-    public final TokenType condition;
+    public final TokenType condition; //greater than less than etc
     public final ValueDefinition conditionValue;
 
     //helps in where age >=18 like that scenarios where columName is age condition is >= value is 18;

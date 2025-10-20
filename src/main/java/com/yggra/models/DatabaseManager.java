@@ -1,8 +1,8 @@
 package com.yggra.models;
 
-import com.yggra.common_models.Condition;
 import com.yggra.commands.ColumnDefinition;
 import com.yggra.commands.ValueDefinition;
+import com.yggra.common_models.Condition;
 import com.yggra.parser.TokenType;
 
 import java.util.*;
@@ -817,24 +817,62 @@ public class DatabaseManager {
         // 🌐 Step 3: Handle SELECT ALL
         // If the user writes `SELECT ALL`, we bypass column-specific handling
         // and just print the table directly with its full schema.
-        table.validateSelectCommand(table,columns,conditions);
+        table.validateSelectCommand(table, columns, conditions);
 
     }
 
-    public void deleteCommand(String tableName,Condition condition){
+    /**
+     * 🗑️ Executes a DELETE command on the specified table with an optional condition.
+     * 📝 Syntax: DELETE FROM table_name [WHERE condition];
+     * ⚙️ Execution flow:
+     * 1. 🗄️ Verifies a database is currently selected
+     * 2. 🔍 Locates the target table in the current database
+     * 3. ✅ Validates the DELETE operation and condition
+     * 4. 🗑️ Delegates actual deletion to the table's validation method
+     * @param tableName The name of the table from which records will be deleted
+     * @param condition Optional WHERE clause condition to filter which rows to delete.
+     * If null, all rows in the table would be affected (depending on implementation)
+     * @throws RuntimeException if:
+     *         ❌ No database is currently selected (USE command required first)
+     *         ❌ The specified table does not exist in the current database
+     *         ❌ The DELETE operation validation fails (invalid condition, missing columns, etc.)
+     * 💡 Example usage:
+     *    - DELETE FROM users WHERE id = 5;  → Deletes specific row(s)
+     *    - DELETE FROM logs;                → Deletes all rows (if supported)
+     * ⚠️ Note: This method performs validation and delegates to table.validateDeleteCommand()
+     *          for the actual deletion logic.
+     */
+
+    public void deleteCommand(String tableName, Condition condition) {
         if (!hasCurrentDatabase()) {
             throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
                     "👉 Use `USE <database>` first!");
         }
 
         // 🏛️ Step 2: Retrieve the target table object
-        // If the table name is invalid or does not exist, the SELECT cannot proceed.
+        // If the table name is invalid or does not exist, the DELETE cannot proceed.
         Table table = getTable(tableName);
         if (table == null) {
             throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
         }
-        table.validateDeleteCommand(table,condition);
+        table.validateDeleteCommand(table, condition);
     }
 
+//    public void updateRowCommand(String tableName, HashMap<String, ValueDefinition> map, Condition condition) {
+//        if (!hasCurrentDatabase()) {
+//            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
+//                    "👉 Use `USE <database>` first!");
+//        }
+//
+//        // 🏛️ Step 2: Retrieve the target table object
+//        // If the table name is invalid or does not exist, the SELECT cannot proceed.
+//        Table table = getTable(tableName);
+//
+//        if (table == null) {
+//            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
+//        }
+//
+//        table.validateUpdateCommand(table, map, condition);
+//    }
 }
 

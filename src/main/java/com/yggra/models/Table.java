@@ -615,10 +615,50 @@ public class Table {
         return convertValue != null;
     }
 
+    /**
+     * 🔍 Validates and executes a SELECT command on the specified table.
+     * 📝 Supported syntax patterns:
+     * - SELECT ALL FROM table;                    → Returns all columns, all rows
+     * - SELECT col1, col2 FROM table;            → Returns specific columns, all rows
+     * - SELECT ALL FROM table WHERE condition;   → Returns all columns, filtered rows
+     * - SELECT col1, col2 FROM table WHERE condition; → Returns specific columns, filtered rows
+     * ⚙️ Execution flow:
+     * 1. 🎯 Determines query type (ALL vs specific columns, with/without WHERE)
+     * 2. ✅ Validates column names exist in the table schema
+     * 3. 🔍 Applies WHERE condition filtering (supports =, >, >=, <, <=, !=)
+     * 4. 🖼️ Renders results in formatted output
+     *
+     * @param table      The target table object containing schema and row data
+     * @param columns    List of column names to select, or ["ALL"] for all columns
+     * @param conditions List of WHERE conditions to filter rows (null if no WHERE clause)
+     * @throws RuntimeException if:
+     *                          ❌ Column name does not exist in table schema
+     *                          ❌ Data type mismatch in WHERE condition
+     *                          ❌ Unsupported comparison operator for given data type
+     *                          🎭 Supported operators:
+     *                          - EQUALS (=)           → Works with INT and VARCHAR
+     *                          - GREATER_THAN (>)     → Works with INT only
+     *                          - GREATER_THAN_EQUAL (>=) → Works with INT only
+     *                          - LESS_THAN (<)        → Works with INT only
+     *                          - LESS_THAN_EQUAL (<=) → Works with INT only
+     *                          - NOT_EQUALS (!=)      → Works with INT only
+     *                          ⚠️ Current limitations:
+     *                          - Only first condition in list is processed (multi-condition support planned)
+     *                          - Comparison operators (>, <, >=, <=, !=) only support INT type
+     *                          💡 Example usage:
+     *                          SELECT ALL FROM users;              → Show all user data
+     *                          SELECT name, age FROM users WHERE age = 28; → Show specific columns with filter
+     */
+
     public void validateSelectCommand(Table table, List<String> columns, List<Condition> conditions) {
+        // 🏛️ [PATH OF THE SCHOLAR] - No conditions, show all that exists
         if (conditions == null && columns.size() == 1 && columns.getFirst().equals("ALL")) {
+            System.out.println("⚡ [REALM UNVEILED] The Allfather grants you sight of all records!");
             System.out.println(table);
-        } else if (conditions == null && !columns.getFirst().equals("ALL")) {
+        }
+        // 📜 [CHOSEN COLUMNS] - Select specific columns without filtering
+        else if (conditions == null && !columns.getFirst().equals("ALL")) {
+            // ✅ Validate each requested column exists in the table
             for (String column : columns) {
                 if (table.columnList.stream().noneMatch(c -> c.columnName.equals(column))) {
                     throw new RuntimeException("💥 [COLUMN LOST] Mimir mutters: 'The column '" + column + "' does not exist in table '" + tableName + "'!'");
@@ -631,488 +671,635 @@ public class Table {
             List<Integer> columnIndices = getIntegers(columns, table);
             // 🖼️ Step 6: Render results in ASCII tabular format
             // Dynamically sizes each column so values and headers align neatly.
+            System.out.println("⚡ [CHRONICLES REVEALED] Behold the data you seek, mortal!");
             printTable(columns, table, columnIndices);
-        } else if (conditions != null && columns.size() == 1 && columns.getFirst().equals("ALL")) {
-//             do here the where condition
+        }
+        // 🔥 [JUDGMENT WITH CONDITIONS] - SELECT ALL but filter by WHERE clause
+        else if (conditions != null && columns.size() == 1 && columns.getFirst().equals("ALL")) {
+            System.out.println("⚔️ [THE HUNT BEGINS] Searching the Nine Realms for worthy records...");
+
+            // Extract the WHERE condition components
             TokenType condition = conditions.getFirst().condition;
-            String columnName = conditions.getFirst().columnName;//
+            String columnName = conditions.getFirst().columnName;
             ValueDefinition conditionValue = conditions.getFirst().conditionValue;
 
+            // ⚖️ [SCALES OF EQUALITY] - Filter by exact match
             if (condition == TokenType.EQUALS) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🔨 [MJOLNIR'S JUDGMENT] Seeking rows where " + columnName + " equals " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 if (row.getValue(i) == convertedValue) {
-                                    System.out.println(row);
+                                    System.out.println("✨ [WORTHY SOUL FOUND] " + row);
                                 }
                             }
                         } else if (table.columnList.get(i).getType() == TokenType.VARCHAR && convertedValue instanceof String strValue) {
+                            System.out.println("📖 [RUNES DECIPHERED] Seeking rows where " + columnName + " equals '" + strValue + "'...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 if (row.getValue(i).equals(convertedValue)) {
-                                    System.out.println(row);
+                                    System.out.println("✨ [WORTHY SOUL FOUND] " + row);
                                 }
                             }
                         } else {
-                            throw new RuntimeException("No other datatype is currently available");
+                            throw new RuntimeException("⚠️ [FORBIDDEN MAGIC] The Norns whisper: 'This datatype is beyond mortal comprehension!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.GREATER_THAN) {
+            }
+            // 🗡️ [GREATER POWER] - Filter by greater than
+            else if (condition == TokenType.GREATER_THAN) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("⚡ [SURPASSING STRENGTH] Seeking rows where " + columnName + " exceeds " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal > intValue) {
-                                        System.out.println(row);
+                                        System.out.println("💪 [MIGHTY WARRIOR FOUND] " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] The Valkyries found none worthy.");
                                     }
                                 }
                             }
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [INVALID COMPARISON] Baldur roars: 'Only numbers can be measured by strength!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.GREATER_THAN_EQUAL) {
+            }
+            // 🛡️ [EQUAL OR GREATER] - Filter by greater than or equal
+            else if (condition == TokenType.GREATER_THAN_EQUAL) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("⚔️ [EQUAL OR MIGHTIER] Seeking rows where " + columnName + " equals or surpasses " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal >= intValue) {
-                                        System.out.println(row);
+                                        System.out.println("🏆 [CHAMPION DISCOVERED] " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] Not even Atreus qualifies.");
                                     }
                                 }
                             }
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [INVALID COMPARISON] Freya warns: 'Only integers may be weighed on these scales!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.LESS_THAN_EQUAL) {
+            }
+            // ⬇️ [LESSER OR EQUAL] - Filter by less than or equal
+            else if (condition == TokenType.LESS_THAN_EQUAL) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🌊 [BENEATH THE THRESHOLD] Seeking rows where " + columnName + " falls to or below " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal <= intValue) {
-                                        System.out.println(row);
+                                        System.out.println("🎯 [HUMBLE SOUL FOUND] " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] All exceeded Odin's limit.");
                                     }
                                 }
                             }
-
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [INVALID COMPARISON] Brok grumbles: 'Can't measure words with numbers, ya daft!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.LESS_THAN) {
+            }
+            // ⬇️ [STRICTLY LESSER] - Filter by less than
+            else if (condition == TokenType.LESS_THAN) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🌑 [BELOW THE MARK] Seeking rows where " + columnName + " falls short of " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal < intValue) {
-                                        System.out.println(row);
+                                        System.out.println("🌟 [LESSER BEING FOUND] " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] None fell beneath Hell's threshold.");
                                     }
                                 }
                             }
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [INVALID COMPARISON] Sindri sighs: 'Numbers only, please. Standards matter!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.NOT_EQUALS) {
+            }
+            // ≠ [THE OUTCASTS] - Filter by not equals
+            else if (condition == TokenType.NOT_EQUALS) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🚫 [THE EXCLUDED] Seeking rows where " + columnName + " differs from " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (!rowVal.equals(intValue)) {
-                                        System.out.println(row);
+                                        System.out.println("🔮 [DIFFERENT PATH TAKEN] " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] All matched Týr's number.");
                                     }
                                 }
                             }
-
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [INVALID COMPARISON] Kratos grunts: 'Inequality requires numbers, not words!'");
                         }
                     }
                 }
             }
-        } else if (conditions != null) {
-//            for (Condition value : conditions) {
-//                TokenType condition = value.condition;
-//                String columnName = value.columnName;
-//                ValueDefinition conditionValue = value.conditionValue;
-//                System.out.println(condition);
-//                System.out.println(columnName);
-//                System.out.println(conditionValue);
-//            } do it when u have multiple conditions for now SELECT name,age FROM user WHERE age=28; I would like this to run.
+        }
+        // 🎯 [PRECISION STRIKE] - SELECT specific columns WITH WHERE condition
+        else if (conditions != null) {
+            System.out.println("🏹 [AIMED SHOT] Atreus draws his bow—targeting specific columns with precision...");
+
             List<Integer> columnIndices = getIntegers(columns, table);
             TokenType condition = conditions.getFirst().condition;
-            String columnName = conditions.getFirst().columnName;//
+            String columnName = conditions.getFirst().columnName;
             ValueDefinition conditionValue = conditions.getFirst().conditionValue;
+
+            // ⚖️ [EQUALS CONDITION] - Exact match with column selection
             if (condition == TokenType.EQUALS) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🔨 [PRECISION STRIKE] Hunting rows where " + columnName + " = " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 if (row.getValue(i) == convertedValue) {
+                                    System.out.println("🎯 [TARGET ACQUIRED] Selected columns:");
                                     for (Integer columnIndex : columnIndices) {
-                                        System.out.println(row.getValue(columnIndex));
+                                        System.out.println("   → " + row.getValue(columnIndex));
                                     }
                                 } else {
-                                    System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                    System.out.println("☢️ [NO MORTALS FOUND] The hunt yields nothing.");
                                 }
                             }
-
                         } else if (table.columnList.get(i).getType() == TokenType.VARCHAR && convertedValue instanceof String strValue) {
+                            System.out.println("📜 [RUNE MATCH] Hunting rows where " + columnName + " = '" + strValue + "'...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 if (row.getValue(i).equals(convertedValue)) {
+                                    System.out.println("🎯 [TARGET ACQUIRED] Selected columns:");
                                     for (Integer columnIndex : columnIndices) {
-                                        System.out.println(row.getValue(columnIndex));
+                                        System.out.println("   → " + row.getValue(columnIndex));
                                     }
                                 } else {
-                                    System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                    System.out.println("☢️ [NO MORTALS FOUND] Mimir finds no match in his tales.");
                                 }
                             }
                         }
                     }
                 }
-            } else if (condition == TokenType.GREATER_THAN) {
+            }
+            // 🗡️ [GREATER THAN] - With column selection
+            else if (condition == TokenType.GREATER_THAN) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("⚡ [SUPERIOR FORCE] Hunting rows where " + columnName + " > " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal > intValue) {
+                                        System.out.println("💪 [STRONGER FOUND] Selected columns:");
                                         for (Integer columnIndex : columnIndices) {
-                                            System.out.println(row.getValue(columnIndex));
+                                            System.out.println("   → " + row.getValue(columnIndex));
                                         }
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] None surpass Thor's might.");
                                     }
                                 }
                             }
-
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [TYPE MISMATCH] Kratos warns: 'Comparisons demand integer strength!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.GREATER_THAN_EQUAL) {
+            }
+            // 🛡️ [GREATER OR EQUAL] - With column selection
+            else if (condition == TokenType.GREATER_THAN_EQUAL) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("⚔️ [WORTHY OR GREATER] Hunting rows where " + columnName + " >= " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal >= intValue) {
+                                        System.out.println("🏆 [QUALIFIED WARRIOR] Selected columns:");
                                         for (Integer columnIndex : columnIndices) {
-                                            System.out.println(row.getValue(columnIndex));
+                                            System.out.println("   → " + row.getValue(columnIndex));
                                         }
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] The Einherjar find none worthy.");
                                     }
                                 }
                             }
-
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [TYPE MISMATCH] The World Serpent hisses: 'Only numbers may be compared!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.LESS_THAN_EQUAL) {
+            }
+            // ⬇️ [LESS OR EQUAL] - With column selection
+            else if (condition == TokenType.LESS_THAN_EQUAL) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🌊 [AT OR BELOW] Hunting rows where " + columnName + " <= " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal <= intValue) {
+                                        System.out.println("🎯 [WITHIN BOUNDS] Selected columns:");
                                         for (Integer columnIndex : columnIndices) {
-                                            System.out.println(row.getValue(columnIndex));
+                                            System.out.println("   → " + row.getValue(columnIndex));
                                         }
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] All exceeded Yggdrasil's limit.");
                                     }
                                 }
                             }
-
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [TYPE MISMATCH] Brok shouts: 'Ya can't weigh text, ya blockhead!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.LESS_THAN) {
+            }
+            // ⬇️ [STRICTLY LESS] - With column selection
+            else if (condition == TokenType.LESS_THAN) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🌑 [BENEATH THE LINE] Hunting rows where " + columnName + " < " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal < intValue) {
+                                        System.out.println("🌟 [BELOW THRESHOLD] Selected columns:");
                                         for (Integer columnIndex : columnIndices) {
-                                            System.out.println(row.getValue(columnIndex));
+                                            System.out.println("   → " + row.getValue(columnIndex));
                                         }
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] None dwelt in Niflheim's depths.");
                                     }
                                 }
                             }
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [TYPE MISMATCH] Sindri explains: 'Precision requires integers, not strings!'");
                         }
                     }
                 }
-            } else if (condition == TokenType.NOT_EQUALS) {
+            }
+            // ≠ [NOT EQUALS] - With column selection
+            else if (condition == TokenType.NOT_EQUALS) {
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🚫 [THE DIFFERENT] Hunting rows where " + columnName + " != " + intValue + "...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (!rowVal.equals(intValue)) {
+                                        System.out.println("🔮 [DIVERGENT PATH] Selected columns:");
                                         for (Integer columnIndex : columnIndices) {
-                                            System.out.println(row.getValue(columnIndex));
+                                            System.out.println("   → " + row.getValue(columnIndex));
                                         }
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] All followed Ragnarok's path.");
                                     }
                                 }
                             }
                         } else {
-                            throw new RuntimeException("For only INT it is possible");
+                            throw new RuntimeException("⚠️ [TYPE MISMATCH] Freya decrees: 'Difference is measured in numbers alone!'");
                         }
                     }
                 }
             }
         }
     }
+
+    /**
+     * 🗑️ Validates and executes a DELETE command on the specified table.
+     * <p>
+     * 📝 Supported syntax patterns:
+     * - DELETE FROM table;                  → Deletes ALL rows (clears table)
+     * - DELETE FROM table WHERE condition;  → Deletes rows matching condition
+     * <p>
+     * ⚙️ Execution flow:
+     * 1. 🎯 Checks if condition is null (delete all) or specific (filtered delete)
+     * 2. 🔍 Locates target column in table schema
+     * 3. 🔄 Iterates through rows and evaluates condition
+     * 4. 🗑️ Removes matching rows from table.rowList
+     * 5. 📊 Reports deletion results to user
+     *
+     * @param table     The target table object from which rows will be deleted
+     * @param condition The WHERE condition to filter which rows to delete (null = delete all)
+     * @throws RuntimeException if:
+     * ❌ Data type mismatch in WHERE condition
+     * ❌ Unsupported comparison operator for given data type
+     * ❌ Column referenced in condition doesn't exist
+     * 🎭 Supported operators:
+     *  - EQUALS (=)  → Works with INT and VARCHAR
+     *  - GREATER_THAN (>) → Works with INT only
+     *  - GREATER_THAN_EQUAL (>=) → Works with INT only
+     *  - LESS_THAN (<) → Works with INT only
+     *  - LESS_THAN_EQUAL (<=) → Works with INT only
+     *   - NOT_EQUALS (!=) → Works with INT only
+     *   ⚠️ CRITICAL WARNING:
+     *   - Modifies list while iterating (potential ConcurrentModificationException risk)
+     *   - Consider using Iterator.remove() or collecting indices first
+     *   💡 Example usage:
+     *    DELETE FROM users;  → Removes all users
+     *    DELETE FROM users WHERE age < 18; → Removes underage users
+     */
 
     public void validateDeleteCommand(Table table, Condition condition) {
+        // 💀 [RAGNARÖK MODE] - Delete all rows if no condition specified
         if (condition == null) {
+            System.out.println("☠️ [APOCALYPSE UNLEASHED] Kratos roars: 'All shall fall! Every record... DELETED!'");
             table.rowList.clear();
-            System.out.println("Deleted all rows rows count" + rowList.size());
+            System.out.println("🌋 [DESTRUCTION COMPLETE] " + rowList.size() + " souls remain in the void.");
         } else {
-//             do here the where condition
+            System.out.println("⚔️ [SELECTIVE PURGE] The Blades of Chaos seek their targets...");
+
+            // 🎯 Extract WHERE condition components for evaluation
             TokenType conditionType = condition.condition;
-            String columnName = condition.columnName;//
+            String columnName = condition.columnName;
             ValueDefinition conditionValue = condition.conditionValue;
+
+            // ⚖️ [EXACT JUSTICE] - Delete rows with exact match (EQUALS operator)
             if (conditionType == TokenType.EQUALS) {
+                // 🔍 Loop through all columns to find the target column by name
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
+                        // 🔄 Convert the condition value to match column's data type
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
+                        // 🔢 Handle INTEGER type comparison
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🔨 [MJOLNIR'S WRATH] Striking down rows where " + columnName + " = " + intValue + "...");
+                            // ⚖️ [SCALES OF JUSTICE] - Does this integer match our target?
+                            // Iterate through all rows and check if column value equals target
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 if (row.getValue(i) == convertedValue) {
                                     table.rowList.remove(row);
+                                    System.out.println("💀 [MORTAL SLAIN] Row vanquished: " + row);
                                 }
                             }
-                        } else if (table.columnList.get(i).getType() == TokenType.VARCHAR && convertedValue instanceof String strValue) {
+                        }
+                        // 📝 Handle VARCHAR (String) type comparison
+                        else if (table.columnList.get(i).getType() == TokenType.VARCHAR && convertedValue instanceof String strValue) {
+                            System.out.println("📜 [RUNE JUDGMENT] Erasing rows where " + columnName + " = '" + strValue + "'...");
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 if (row.getValue(i).equals(convertedValue)) {
                                     table.rowList.remove(row);
+                                    System.out.println("💀 [SOUL BANISHED] Row erased: " + row);
                                 }
                             }
-                        } else {
-                            throw new RuntimeException("No other datatype is currently available");
+                        }
+                        // ❌ Unsupported data type for EQUALS operator
+                        else {
+                            throw new RuntimeException("⚠️ [UNKNOWN POWER] The Norns gasp: 'This datatype is forbidden in deletion rituals!'");
                         }
                     }
                 }
-            } else if (conditionType == TokenType.GREATER_THAN) {
+            }
+            // 🗡️ [PURGE THE MIGHTY] - Delete rows greater than value (GREATER_THAN operator)
+            else if (conditionType == TokenType.GREATER_THAN) {
+                // 🔍 Locate the target column in the table schema
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
+                        // 🔄 Convert condition value to appropriate type
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
+                        // 🔢 Only INTEGER types support comparison operators
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("⚡ [CULLING THE STRONG] Eliminating rows where " + columnName + " > " + intValue + "...");
+                            // ⚖️ [SCALES OF JUSTICE] - Does this value exceed our threshold?
+                            // Compare each row's value against the target integer
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal > intValue) {
                                         table.rowList.remove(row);
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query deleted row."+row);
+                                        System.out.println("☢️ [TITAN FALLS] Row deleted: " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query deleted 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] None exceeded the limit. Zero rows deleted.");
                                     }
                                 }
                             }
-                        } else {
-                            throw new RuntimeException("For only INT it is possible");
+                        }
+                        // ❌ VARCHAR and other types don't support GREATER_THAN
+                        else {
+                            throw new RuntimeException("⚠️ [INVALID RITUAL] Baldur screams: 'Only numbers can be compared for deletion!'");
                         }
                     }
                 }
-            } else if (conditionType == TokenType.GREATER_THAN_EQUAL) {
+            }
+            // 🛡️ [REMOVE THE WORTHY] - Delete rows >= value (GREATER_THAN_EQUAL operator)
+            else if (conditionType == TokenType.GREATER_THAN_EQUAL) {
+                // 🔍 Find the column index by matching column name
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
+                        // 🔄 Type conversion for safe comparison
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
+                        // 🔢 Validate column is INT type for comparison
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("⚔️ [EQUAL OR GREATER DOOM] Purging rows where " + columnName + " >= " + intValue + "...");
+                            // ⚖️ [SCALES OF JUSTICE] - Does this value meet or exceed the threshold?
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal >= intValue) {
                                         table.rowList.remove(row);
+                                        System.out.println("💀 [WARRIOR DEFEATED] Row eliminated: " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] None met Valhalla's threshold. Zero rows deleted.");
                                     }
                                 }
                             }
-                        } else {
-                            throw new RuntimeException("For only INT it is possible");
+                        }
+                        // ❌ Only integers support >= comparison
+                        else {
+                            throw new RuntimeException("⚠️ [FORBIDDEN MAGIC] Freya warns: 'Only integers may be judged for deletion!'");
                         }
                     }
                 }
-            } else if (conditionType == TokenType.LESS_THAN_EQUAL) {
+            }
+            // ⬇️ [SMITE THE WEAK] - Delete rows <= value (LESS_THAN_EQUAL operator)
+            else if (conditionType == TokenType.LESS_THAN_EQUAL) {
+                // 🔍 Scan column list to find matching column name
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
+                        // 🔄 Convert string/token value to actual data type
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
+                        // 🔢 Ensure we're working with integer data
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🌊 [DROWNING THE LESSER] Removing rows where " + columnName + " <= " + intValue + "...");
+                            // ⚖️ [SCALES OF JUSTICE] - Does this value fall at or below our limit?
+                            // Check each row value against the upper bound
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal <= intValue) {
                                         table.rowList.remove(row);
+                                        System.out.println("💀 [WEAK ONE PERISHES] Row deleted: " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] All survived the cut. Zero rows deleted.");
                                     }
                                 }
                             }
-
-                        } else {
-                            throw new RuntimeException("For only INT it is possible");
+                        }
+                        // ❌ Text cannot be compared with <= operator
+                        else {
+                            throw new RuntimeException("⚠️ [TYPE ERROR] Brok yells: 'Ya can't delete based on text comparisons, ya daft!'");
                         }
                     }
                 }
-            } else if (conditionType == TokenType.LESS_THAN) {
+            }
+            // ⬇️ [PURGE THE INFERIOR] - Delete rows < value (LESS_THAN operator)
+            else if (conditionType == TokenType.LESS_THAN) {
+                // 🔍 Locate column by iterating through table schema
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
+                        // 🔄 Transform condition value into column's native type
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
+                        // 🔢 Validate integer type for numeric comparison
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🌑 [CASTING INTO HEL] Banishing rows where " + columnName + " < " + intValue + "...");
+                            // ⚖️ [SCALES OF JUSTICE] - Does this value fall short of our minimum?
+                            // Evaluate each row to see if it's below threshold
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (rowVal < intValue) {
                                         table.rowList.remove(row);
+                                        System.out.println("💀 [SOUL CLAIMED BY HEL] Row deleted: " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] None fell below Niflheim's depths. Zero rows deleted.");
                                     }
                                 }
                             }
-                        } else {
-                            throw new RuntimeException("For only INT it is possible");
+                        }
+                        // ❌ Strings and other types can't use < operator
+                        else {
+                            throw new RuntimeException("⚠️ [TYPE ERROR] Sindri mutters: 'Numerical deletion only, please!'");
                         }
                     }
                 }
-            } else if (conditionType == TokenType.NOT_EQUALS) {
+            }
+            // ≠ [EXILE THE DIFFERENT] - Delete rows != value (NOT_EQUALS operator)
+            else if (conditionType == TokenType.NOT_EQUALS) {
+                // 🔍 Search for target column in table's column list
                 for (int i = 0; i < table.columnList.size(); i++) {
                     if (table.columnList.get(i).columnName.equals(columnName)) {
+                        // 🔄 Convert value to match column data type
                         Object convertedValue = convertValue(conditionValue, table.columnList.get(i).getType());
+
+                        // 🔢 Integer type required for inequality check
                         if (table.columnList.get(i).getType() == TokenType.INT && convertedValue instanceof Integer intValue) {
-                            // ⚖️ [SCALES OF JUSTICE] - Does this string exceed its ordained bounds?
-                            // get the column index then get all row where the row values are =2;
+                            System.out.println("🚫 [BANISHING THE OUTCASTS] Erasing rows where " + columnName + " != " + intValue + "...");
+                            // ⚖️ [SCALES OF JUSTICE] - Does this value differ from our target?
+                            // Remove all rows that don't match the specified value
                             for (int j = 0; j < table.rowList.size(); j++) {
                                 Row row = table.rowList.get(j);
                                 Object val = row.getValue(i);
                                 if (val instanceof Integer rowVal) {
                                     if (!rowVal.equals(intValue)) {
                                         table.rowList.remove(row);
+                                        System.out.println("💀 [OUTCAST REMOVED] Row deleted: " + row);
                                     } else {
-                                        System.out.println("☢️ [NO MORTALS FOUND] Query returned 0 rows.");
+                                        System.out.println("☢️ [NO MORTALS FOUND] All matched Ragnarok's number. Zero rows deleted.");
                                     }
                                 }
                             }
-
-                        } else {
-                            throw new RuntimeException("For only INT it is possible");
+                        }
+                        // ❌ Only integers support != operator currently
+                        else {
+                            throw new RuntimeException("⚠️ [TYPE ERROR] Kratos growls: 'Inequality requires integer power!'");
                         }
                     }
                 }
             }
+
+            // 🏆 Report final status after deletion operation completes
+            System.out.println("🏆 [PURGE COMPLETE] The battlefield is cleared. Rows remaining: " + table.rowList.size());
         }
     }
 
+//    public void validateUpdateCommand(Table table, HashMap<String, ValueDefinition> map, Condition condition) {
+//        if (condition == null) {
+//            System.out.println("It will modify all the column values!" + " " + "Are you sure please press y or n to continue?");
+//            Scanner sc = new Scanner(System.in);
+//            String input = sc.nextLine();
+//
+//            if (input.equalsIgnoreCase("Y")) {
+//                List<String> columns = new ArrayList<>();
+//                List<ValueDefinition> values = new ArrayList<>();
+//                //add logic here.
+//                //get all the columns and the values
+//
+//                for (String columnName : map.keySet()) {
+//                    if (table.columnList.stream().noneMatch(columnDefinition -> columnDefinition.columnName.equals(columnName))) {
+//                        throw new RuntimeException("column not exists" + columnName);
+//                    } else {
+//                        columns.add(columnName);
+//                        values.add(map.get(columnName));
+//                    }
+//                }
+//                List<Integer> getIndexes = getIntegers(columns, table); //get the indexes to change
+//
+//                //compare the values with the columns datatype
+//            } else {
+//                sc.close();
+//            }
+//        }
+//    }
     // Method: getColumnIndexByName(String name)
 }

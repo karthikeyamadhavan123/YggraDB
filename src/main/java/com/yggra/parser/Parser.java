@@ -1886,7 +1886,6 @@ public class Parser {
         return new DropDefaultValueColumn(tableName, columnName);
     }
 
-
     /**
      * 🌌 [SEER’S DIVINATION] 🌌
      * Parses a `SELECT` SQL command from the token stream.
@@ -1912,28 +1911,32 @@ public class Parser {
      */
 
     private SelectCommand parseSelectCommand() {
-        // 🔮 STEP I: Ensure SELECT targets are valid (either * or identifiers)
+// ⚡ [REALM: MIDGARD] The journey begins — the SELECT incantation must summon valid runes.
         if (peek().type != TokenType.ASTERISK && peek().type != TokenType.IDENTIFIER) {
             throw new RuntimeException(
                     "❌ [THREADS CUT] The Norns decree — SELECT may summon only * or named runes, not '" + peek().value + "'!"
             );
         }
 
-        List<String> columns = new ArrayList<>(); // for select statement columns
-        // 🟊 STEP II: Handle `SELECT *`
+        List<String> columns = new ArrayList<>();
+
+// 🟊 [PATH OF ALL] If Kratos demands all columns, he wields the Asterisk — symbol of total recall.
         if (peek().type == TokenType.ASTERISK) {
             consume(TokenType.ASTERISK);
             columns.add("ALL");
-            // 📜 STEP III: Handle `SELECT col1, col2, ...`
-        } else if (peek().type == TokenType.IDENTIFIER) {
+        }
+// 🛠️ [PATH OF CHOICE] The mortal instead lists runes — col1, col2, ...
+        else if (peek().type == TokenType.IDENTIFIER) {
             columns = parseColumnInsertStatements();
-        } else {
+        }
+// 🕳️ [FATE DENIED] No path aligns — SELECT cannot channel what it does not name.
+        else {
             throw new RuntimeException(
                     "❌ [RUNE SHATTERED] The seer finds no path — SELECT cannot bind '" + peek().value + "'."
             );
         }
 
-        // 🏛️ STEP IV: Expect `FROM`
+// 🏛️ [LAW OF REALMS] All queries must bind themselves to a realm — expect the sacred word ‘FROM’.
         if (peek().type != TokenType.FROM) {
             throw new RuntimeException(
                     "⚔️ [REALM UNBOUND] The roots of Yggdrasil demand 'FROM', yet '" + peek().value + "' was found."
@@ -1941,7 +1944,7 @@ public class Parser {
         }
         consume(TokenType.FROM);
 
-        // 🏷️ STEP V: Expect table name
+// 🏷️ [REALM NAMED] The table stands as the realm where data dwells — its name must be spoken true.
         String tableName = peek().value;
         if (peek().type != TokenType.IDENTIFIER) {
             throw new RuntimeException(
@@ -1950,14 +1953,14 @@ public class Parser {
         }
         consume(TokenType.IDENTIFIER);
 
-        // 🌀 STEP VI: Handle optional WHERE
+// 🌀 [FATE'S CHAINS] A WHERE clause binds destiny — if it exists, the parser must heed it.
         List<Condition> conditions = null;
         if (peek().type == TokenType.WHERE) {
             consume(TokenType.WHERE);
             conditions = parseConditions();
         }
 
-        // 🪓 STEP VII: Expect semicolon
+// 🪓 [END OF TALE] Every saga must close — the semicolon seals its fate.
         if (position >= tokens.size()) {
             throw new RuntimeException(
                     "🔥 [RAGNARÖK AWAKENS] The saga ends too soon — a semicolon seals the fate of queries!"
@@ -1970,19 +1973,37 @@ public class Parser {
         }
         consume(TokenType.SEMICOLON);
 
-        // 👁️ STEP VIII: Ensure no trailing tokens
+// 👁️ [RAVENS’ WARNING] Nothing must remain beyond the saga — no stray rune after the seal.
         if (position < tokens.size()) {
             throw new RuntimeException(
                     "👁️ [HUGINN & MUNINN WARN] Ravens whisper of stray runes beyond the end — '" + peek().value + "'."
             );
         }
 
-        // 🎇 STEP IX: Return parsed command
+// 🌌 [RETURN TO REALITY] The saga is complete — yield the forged SELECT command.
         if (conditions == null)
             return new SelectCommand(tableName, columns);
         else
             return new SelectCommand(tableName, columns, conditions);
     }
+
+    /**
+     * 🗑️ Parses a DELETE SQL command from the token stream.
+     * 📝 Expected syntax: DELETE FROM table_name [WHERE column_name operator value];
+     * ⚙️ This method processes tokens sequentially to construct a DeleteCommand object:
+     * 1. ✅ Validates and extracts the table name after FROM keyword
+     * 2. 🔍 Optionally parses a WHERE clause with a single condition
+     * 3. ✔️ Ensures proper statement termination with a semicolon
+     * 4. 🚫 Verifies no extraneous tokens exist after the statement
+     * @return DeleteCommand object containing the table name and optional WHERE condition
+     * @throws RuntimeException if the DELETE syntax is invalid, including:
+     *         ❌ Missing or invalid table name
+     *         ❌ Malformed WHERE clause
+     *         ❌ Missing semicolon terminator
+     *         ❌ Unexpected tokens after semicolon
+     *
+     * 💡 Example valid input: DELETE FROM users WHERE id = 5;
+     */
 
     private DeleteCommand parseDeleteCommand() {
         // Ensure table name exists
@@ -2038,7 +2059,107 @@ public class Parser {
         return new DeleteCommand(tableName, condition);
     }
 
-    // ⛓️ STEP VI: Ensure semicolon terminates the query
+    //    UPDATE table_name
+    //    SET column1 = value1, column2 = value2, ...
+    //    WHERE condition;
+    //Unsafe query: 'Update' statement without 'where' updates all table rows at once.
+
+//    private UpdateCommand parseUpdateRowCommand() {
+//        String tableName = peek().value;
+//        consume(TokenType.IDENTIFIER);
+//        if (peek().type != TokenType.SET) {
+//            throw new RuntimeException(
+//                    "❌ [UPDATE ERROR] Expected SET, but found '" + peek().value + "'"
+//            );
+//        }
+//
+//        consume(TokenType.SET);
+//
+//        // here add the hashmap logic
+//        HashMap<String, ValueDefinition> columnsMap = parseUpdateStatements();
+//
+//        Condition condition = null;
+//
+//        // Optional WHERE clause
+//        if (peek().type == TokenType.WHERE) {
+//            consume(TokenType.WHERE);
+//
+//            if (peek().type != TokenType.IDENTIFIER) {
+//                throw new RuntimeException(
+//                        "❌ [DELETE ERROR] Expected column name after WHERE, but found '" + peek().value + "'"
+//                );
+//            }
+//
+//            String columnName = peek().value;
+//            consume(TokenType.IDENTIFIER);
+//
+//            TokenType operator = peek().type;
+//            consume(operator);
+//
+//            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
+//            consume(peek().type);
+//
+//            condition = new Condition(columnName, operator, value);
+//        }
+//
+//        // ✅ Check for semicolon
+//        if (peek().type != TokenType.SEMICOLON) {
+//            throw new RuntimeException(
+//                    "❌ [DELETE ERROR] Expected ';' at the end of DELETE statement, but found '" + peek().value + "'"
+//            );
+//        }
+//        consume(TokenType.SEMICOLON);
+//
+//        // ✅ Ensure nothing remains after the semicolon
+//        if (position < tokens.size()) {
+//            throw new RuntimeException(
+//                    "❌ [DELETE ERROR] Unexpected tokens after ';'. DELETE statement must end here."
+//            );
+//        }
+//
+//        return new UpdateCommand(tableName,columnsMap,condition);
+//    }
+//
+//    private HashMap<String, ValueDefinition> parseUpdateStatements() {
+//        HashMap<String, ValueDefinition> map = new HashMap<>();
+//        if (peek().type != TokenType.IDENTIFIER) throw new RuntimeException("columnName is required");
+//        String columnName = peek().value;
+//        consume(TokenType.IDENTIFIER);
+//        if (peek().type != TokenType.EQUALS) throw new RuntimeException("equals is required");
+//        consume(TokenType.EQUALS);
+//        ValueDefinition value;
+//        if (peek().type == TokenType.NUMBER_LITERAL) {
+//            value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+//            consume(TokenType.NUMBER_LITERAL);
+//        } else if (peek().type == TokenType.STRING_LITERAL) {
+//            value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+//            consume(TokenType.STRING_LITERAL);
+//        } else {
+//            throw new RuntimeException("Non existing datatype");
+//        }
+//        map.put(columnName, value);
+//        while (peek().type == TokenType.COMMA) {
+//            consume(TokenType.COMMA);
+//            if (peek().type != TokenType.IDENTIFIER) throw new RuntimeException("columnName is required");
+//            columnName = peek().value;
+//            if(map.containsKey(columnName)) throw new RuntimeException("already same column name present");
+//            consume(TokenType.IDENTIFIER);
+//            if (peek().type != TokenType.EQUALS) throw new RuntimeException("equals is required");
+//            consume(TokenType.EQUALS);
+//            if (peek().type == TokenType.NUMBER_LITERAL) {
+//                value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+//                consume(TokenType.NUMBER_LITERAL);
+//            } else if (peek().type == TokenType.STRING_LITERAL) {
+//                value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+//                consume(TokenType.STRING_LITERAL);
+//            } else {
+//                throw new RuntimeException("Non existing datatype");
+//            }
+//            map.put(columnName, value);
+//        }
+//        return map;
+//    }
+
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -2270,7 +2391,27 @@ public class Parser {
                             "📜 Correct syntax: DELETE FROM <table_name> [WHERE <condition>];");
                 }
                 return parseDeleteCommand();
-            } else {
+            }
+//            else if (peek().type == TokenType.UPDATE) {
+//                advance();
+//                if (position >= tokens.size()) {
+//                    throw new RuntimeException("""
+//                            ⚡ [BROKEN RUNE] The UPDATE ritual is incomplete!
+//                            🛡️ You must speak the full incantation:
+//                            UPDATE <table_name> SET col=<colValue> [WHERE <condition>];
+//                            🌌 Examples: UPDATE user SET id=10 WHERE id=5;
+//                            """);
+//                }
+//                Token second = peek();
+//                if (second.type != TokenType.IDENTIFIER) {
+//                    throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
+//                            "yet you brandish '" + second.value + "'! " +
+//                            "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
+//                            "📜 Correct syntax: UPDATE <table_name> SET col <colValue> [WHERE <condition>];");
+//                }
+//                return parseUpdateRowCommand();
+//            }
+            else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" + "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT,SELECT.\n" + "❌ But instead received: " + first.type + " ('" + first.value + "').\n" + "⚔️ Only these divine runes may command the realms of Yggra!");
             }
 
