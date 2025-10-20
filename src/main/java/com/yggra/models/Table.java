@@ -5,9 +5,7 @@ import com.yggra.commands.ValueDefinition;
 import com.yggra.common_models.Condition;
 import com.yggra.parser.TokenType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -1032,22 +1030,22 @@ public class Table {
      * @param table     The target table object from which rows will be deleted
      * @param condition The WHERE condition to filter which rows to delete (null = delete all)
      * @throws RuntimeException if:
-     * ❌ Data type mismatch in WHERE condition
-     * ❌ Unsupported comparison operator for given data type
-     * ❌ Column referenced in condition doesn't exist
-     * 🎭 Supported operators:
-     *  - EQUALS (=)  → Works with INT and VARCHAR
-     *  - GREATER_THAN (>) → Works with INT only
-     *  - GREATER_THAN_EQUAL (>=) → Works with INT only
-     *  - LESS_THAN (<) → Works with INT only
-     *  - LESS_THAN_EQUAL (<=) → Works with INT only
-     *   - NOT_EQUALS (!=) → Works with INT only
-     *   ⚠️ CRITICAL WARNING:
-     *   - Modifies list while iterating (potential ConcurrentModificationException risk)
-     *   - Consider using Iterator.remove() or collecting indices first
-     *   💡 Example usage:
-     *    DELETE FROM users;  → Removes all users
-     *    DELETE FROM users WHERE age < 18; → Removes underage users
+     *                          ❌ Data type mismatch in WHERE condition
+     *                          ❌ Unsupported comparison operator for given data type
+     *                          ❌ Column referenced in condition doesn't exist
+     *                          🎭 Supported operators:
+     *                          - EQUALS (=)  → Works with INT and VARCHAR
+     *                          - GREATER_THAN (>) → Works with INT only
+     *                          - GREATER_THAN_EQUAL (>=) → Works with INT only
+     *                          - LESS_THAN (<) → Works with INT only
+     *                          - LESS_THAN_EQUAL (<=) → Works with INT only
+     *                          - NOT_EQUALS (!=) → Works with INT only
+     *                          ⚠️ CRITICAL WARNING:
+     *                          - Modifies list while iterating (potential ConcurrentModificationException risk)
+     *                          - Consider using Iterator.remove() or collecting indices first
+     *                          💡 Example usage:
+     *                          DELETE FROM users;  → Removes all users
+     *                          DELETE FROM users WHERE age < 18; → Removes underage users
      */
 
     public void validateDeleteCommand(Table table, Condition condition) {
@@ -1273,33 +1271,103 @@ public class Table {
         }
     }
 
-//    public void validateUpdateCommand(Table table, HashMap<String, ValueDefinition> map, Condition condition) {
-//        if (condition == null) {
-//            System.out.println("It will modify all the column values!" + " " + "Are you sure please press y or n to continue?");
-//            Scanner sc = new Scanner(System.in);
-//            String input = sc.nextLine();
-//
-//            if (input.equalsIgnoreCase("Y")) {
-//                List<String> columns = new ArrayList<>();
-//                List<ValueDefinition> values = new ArrayList<>();
-//                //add logic here.
-//                //get all the columns and the values
-//
-//                for (String columnName : map.keySet()) {
-//                    if (table.columnList.stream().noneMatch(columnDefinition -> columnDefinition.columnName.equals(columnName))) {
-//                        throw new RuntimeException("column not exists" + columnName);
-//                    } else {
-//                        columns.add(columnName);
-//                        values.add(map.get(columnName));
-//                    }
-//                }
-//                List<Integer> getIndexes = getIntegers(columns, table); //get the indexes to change
-//
-//                //compare the values with the columns datatype
-//            } else {
-//                sc.close();
-//            }
-//        }
-//    }
-    // Method: getColumnIndexByName(String name)
+    /**
+     * ⚡ Validates and executes an UPDATE command on the specified table.
+     * 📝 Supported syntax patterns:
+     *    - UPDATE table SET col1=val1, col2=val2;                    → Updates ALL rows (requires confirmation)
+     *    - UPDATE table SET col1=val1, col2=val2 WHERE condition;   → Updates rows matching condition
+     * ⚙️ Execution flow:
+     * 1. 🎯 Checks if condition is null (update all rows - dangerous operation)
+     * 2. ⚠️ Prompts user for confirmation if updating all rows
+     * 3. ✅ Validates all column names exist in table schema
+     * 4. 🔄 Validates data types match between values and columns
+     * 5. 🔍 Resolves column names to indices for efficient access
+     * 6. 🔨 Applies updates to all matching rows
+     * @param table The target table object where rows will be updated
+     * @param map HashMap containing column names as keys and new values as ValueDefinition objects
+     * @param condition The WHERE condition to filter which rows to update (null = update all with confirmation)
+     *
+     * @throws RuntimeException if:
+     *         ❌ Column name in SET clause doesn't exist in table
+     *         ❌ Value data type doesn't match column data type
+     *         ❌ Type conversion fails
+     * 🎭 Update behavior:
+     *    - Without WHERE: Updates ALL rows (asks for Y/N confirmation)
+     *    - With WHERE: Updates only rows matching condition (planned feature)
+     * ⚠️ Current limitations:
+     *    - WHERE clause support is not yet implemented
+     *    - User must confirm mass updates with 'Y' or 'y'
+     *    - Scanner remains open if user declines (potential resource leak)
+     * 💡 Example usage:
+     *    UPDATE users SET age=30, status='active';           → Updates all users (with confirmation)
+     *    UPDATE users SET age=30 WHERE id=5;                 → Updates specific user (planned)
+     */
+
+    public void validateUpdateCommand(Table table, HashMap<String, ValueDefinition> map, Condition condition) {
+        // ⚠️ [DANGEROUS TERRITORY] - No WHERE clause means ALL rows will be modified
+        if (condition == null) {
+            System.out.println("🔥 [POINT OF NO RETURN] This will modify EVERY row in the table '" + table.tableName + "'!");
+            System.out.println("⚡ Kratos asks: 'Are you certain, boy?' Press Y to proceed, N to retreat:");
+            Scanner sc = new Scanner(System.in);
+            String input = sc.nextLine();
+
+            // ✅ [COURAGE CONFIRMED] - User accepts the consequences
+            if (input.equalsIgnoreCase("Y")) {
+                System.out.println("💪 [DETERMINATION ACKNOWLEDGED] Kratos nods: 'Then let us reshape destiny itself!'");
+
+                // 📋 Prepare lists to store column names and their new values
+                List<String> columns = new ArrayList<>();
+                List<ValueDefinition> values = new ArrayList<>();
+
+                for (String columnName : map.keySet()) {
+                    // ❌ Throw error if column doesn't exist in table
+                    if (table.columnList.stream().noneMatch(columnDefinition -> columnDefinition.columnName.equals(columnName))) {
+                        throw new RuntimeException("💥 [COLUMN VANISHED] The Norns cry out: 'Column '" + columnName +
+                                "' does not exist in table '" + table.tableName + "'! Check your runes!'");
+                    } else {
+                        // ✅ Column found - add to processing lists
+                        columns.add(columnName);
+                        values.add(map.get(columnName));
+                    }
+                }
+
+                for (int i = 0; i < columns.size(); i++) {
+                    ColumnDefinition colDef = getColumn(columns.get(i));
+                    ValueDefinition valDef = values.get(i);
+
+                    // 🔄 Attempt type conversion - will throw exception if types incompatible
+                    Object convertedValue = convertValue(valDef, colDef.type);
+                }
+
+                // 📍 [INDEX RESOLUTION] - Convert column names to their integer indices.
+                // Indices allow direct access to row values without name lookups
+                List<Integer> getIndexes = getIntegers(columns, table);
+
+                for (int i = 0; i < getIndexes.size(); i++) {
+                    int currIndex = getIndexes.get(i);
+                    String val = values.get(i).value;
+
+                    // 🔄 Iterate through every single row and update the column value
+                    for (int j = 0; j < table.rowList.size(); j++) {
+                        Row row = table.rowList.get(j);
+                        row.setNewValue(currIndex, val);
+                    }
+                }
+                System.out.println("⚡ Kratos grunts: 'It is done. The table bends to your will.'");
+            }
+            // 🛡️ [WISDOM PREVAILS] - User chooses not to proceed with mass update
+            else {
+                System.out.println("💭 The table '" + table.tableName + "' remains untouched, like Jötunheim's frozen wastes.");
+                sc.close();
+            }
+        }
+        // 🎯 [CONDITIONAL UPDATE] - WHERE clause provided (not yet implemented)
+        else {
+            System.out.println("🔮 [COMING SOON] The Norns are still weaving this feature into the tapestry of fate...");
+            throw new RuntimeException("🚧 [FEATURE LOCKED] Conditional UPDATE with WHERE clause is not yet implemented. " +
+                    "Brok shouts: 'We're workin' on it! Come back later!'");
+        }
+    }
+
+//     Method: getColumnIndexByName(String name)
 }

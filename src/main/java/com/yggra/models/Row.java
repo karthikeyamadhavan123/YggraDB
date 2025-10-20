@@ -1,5 +1,7 @@
 package com.yggra.models;
 
+import com.yggra.commands.ValueDefinition;
+
 import java.util.List;
 
 /**
@@ -80,4 +82,7 @@ public class Row {
         return values.get(index);
     }
 
+    public void setNewValue(int currIndex, String val) {
+        this.values.set(currIndex,val);
+    }
 }

@@ -163,8 +163,8 @@ public class SQLExecutor {
             case DeleteCommand deleteCommand ->
                     DatabaseManager.getInstance().deleteCommand(deleteCommand.tableName, deleteCommand.condition);
 
-//            case UpdateCommand updateCommand ->
-//                    DatabaseManager.getInstance().updateRowCommand(updateCommand.tableName, updateCommand.map, updateCommand.condition);
+            case UpdateCommand updateCommand ->
+                    DatabaseManager.getInstance().updateRowCommand(updateCommand.tableName, updateCommand.map, updateCommand.condition);
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

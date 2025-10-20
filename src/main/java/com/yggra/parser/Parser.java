@@ -4,6 +4,7 @@ import com.yggra.commands.*;
 import com.yggra.common_models.Condition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
@@ -1995,14 +1996,15 @@ public class Parser {
      * 2. 🔍 Optionally parses a WHERE clause with a single condition
      * 3. ✔️ Ensures proper statement termination with a semicolon
      * 4. 🚫 Verifies no extraneous tokens exist after the statement
+     *
      * @return DeleteCommand object containing the table name and optional WHERE condition
      * @throws RuntimeException if the DELETE syntax is invalid, including:
-     *         ❌ Missing or invalid table name
-     *         ❌ Malformed WHERE clause
-     *         ❌ Missing semicolon terminator
-     *         ❌ Unexpected tokens after semicolon
-     *
-     * 💡 Example valid input: DELETE FROM users WHERE id = 5;
+     *                          ❌ Missing or invalid table name
+     *                          ❌ Malformed WHERE clause
+     *                          ❌ Missing semicolon terminator
+     *                          ❌ Unexpected tokens after semicolon
+     *                          <p>
+     *                          💡 Example valid input: DELETE FROM users WHERE id = 5;
      */
 
     private DeleteCommand parseDeleteCommand() {
@@ -2059,107 +2061,216 @@ public class Parser {
         return new DeleteCommand(tableName, condition);
     }
 
-    //    UPDATE table_name
-    //    SET column1 = value1, column2 = value2, ...
-    //    WHERE condition;
-    //Unsafe query: 'Update' statement without 'where' updates all table rows at once.
+    /**
+     * ⚡ Parses an UPDATE SQL command from the token stream.
+     * 📝 Expected syntax: UPDATE table_name SET col1=val1, col2=val2 [WHERE condition];
+     * ⚙️ This method processes tokens sequentially to construct an UpdateCommand object:
+     * 1. ✅ Validates and extracts the table name
+     * 2. 🔍 Ensures SET keyword is present
+     * 3. 📋 Parses column-value pairs into a HashMap
+     * 4. 🎯 Optionally parses a WHERE clause with a single condition
+     * 5. ✔️ Ensures proper statement termination with a semicolon
+     * 6. 🚫 Verifies no extraneous tokens exist after the statement
+     *
+     * @return UpdateCommand object containing table name, column-value mappings, and optional WHERE condition
+     * @throws RuntimeException if the UPDATE syntax is invalid, including:
+     *         ❌ Missing or invalid table name
+     *         ❌ Missing SET keyword
+     *         ❌ Malformed column=value assignments
+     *         ❌ Malformed WHERE clause
+     *         ❌ Missing semicolon terminator
+     *         ❌ Unexpected tokens after semicolon
+     * 💡 Example valid input:
+     *    - UPDATE users SET age=30, status='active';
+     *    - UPDATE users SET age=30 WHERE id=5;
+     */
 
-//    private UpdateCommand parseUpdateRowCommand() {
-//        String tableName = peek().value;
-//        consume(TokenType.IDENTIFIER);
-//        if (peek().type != TokenType.SET) {
-//            throw new RuntimeException(
-//                    "❌ [UPDATE ERROR] Expected SET, but found '" + peek().value + "'"
-//            );
-//        }
-//
-//        consume(TokenType.SET);
-//
-//        // here add the hashmap logic
-//        HashMap<String, ValueDefinition> columnsMap = parseUpdateStatements();
-//
-//        Condition condition = null;
-//
-//        // Optional WHERE clause
-//        if (peek().type == TokenType.WHERE) {
-//            consume(TokenType.WHERE);
-//
-//            if (peek().type != TokenType.IDENTIFIER) {
-//                throw new RuntimeException(
-//                        "❌ [DELETE ERROR] Expected column name after WHERE, but found '" + peek().value + "'"
-//                );
-//            }
-//
-//            String columnName = peek().value;
-//            consume(TokenType.IDENTIFIER);
-//
-//            TokenType operator = peek().type;
-//            consume(operator);
-//
-//            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
-//            consume(peek().type);
-//
-//            condition = new Condition(columnName, operator, value);
-//        }
-//
-//        // ✅ Check for semicolon
-//        if (peek().type != TokenType.SEMICOLON) {
-//            throw new RuntimeException(
-//                    "❌ [DELETE ERROR] Expected ';' at the end of DELETE statement, but found '" + peek().value + "'"
-//            );
-//        }
-//        consume(TokenType.SEMICOLON);
-//
-//        // ✅ Ensure nothing remains after the semicolon
-//        if (position < tokens.size()) {
-//            throw new RuntimeException(
-//                    "❌ [DELETE ERROR] Unexpected tokens after ';'. DELETE statement must end here."
-//            );
-//        }
-//
-//        return new UpdateCommand(tableName,columnsMap,condition);
-//    }
-//
-//    private HashMap<String, ValueDefinition> parseUpdateStatements() {
-//        HashMap<String, ValueDefinition> map = new HashMap<>();
-//        if (peek().type != TokenType.IDENTIFIER) throw new RuntimeException("columnName is required");
-//        String columnName = peek().value;
-//        consume(TokenType.IDENTIFIER);
-//        if (peek().type != TokenType.EQUALS) throw new RuntimeException("equals is required");
-//        consume(TokenType.EQUALS);
-//        ValueDefinition value;
-//        if (peek().type == TokenType.NUMBER_LITERAL) {
-//            value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
-//            consume(TokenType.NUMBER_LITERAL);
-//        } else if (peek().type == TokenType.STRING_LITERAL) {
-//            value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
-//            consume(TokenType.STRING_LITERAL);
-//        } else {
-//            throw new RuntimeException("Non existing datatype");
-//        }
-//        map.put(columnName, value);
-//        while (peek().type == TokenType.COMMA) {
-//            consume(TokenType.COMMA);
-//            if (peek().type != TokenType.IDENTIFIER) throw new RuntimeException("columnName is required");
-//            columnName = peek().value;
-//            if(map.containsKey(columnName)) throw new RuntimeException("already same column name present");
-//            consume(TokenType.IDENTIFIER);
-//            if (peek().type != TokenType.EQUALS) throw new RuntimeException("equals is required");
-//            consume(TokenType.EQUALS);
-//            if (peek().type == TokenType.NUMBER_LITERAL) {
-//                value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
-//                consume(TokenType.NUMBER_LITERAL);
-//            } else if (peek().type == TokenType.STRING_LITERAL) {
-//                value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
-//                consume(TokenType.STRING_LITERAL);
-//            } else {
-//                throw new RuntimeException("Non existing datatype");
-//            }
-//            map.put(columnName, value);
-//        }
-//        return map;
-//    }
+    private UpdateCommand parseUpdateRowCommand() {
+        // 🏛️ [IDENTIFY THE REALM] - Extract the table name to be updated
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
 
+        // ✅ [SET KEYWORD REQUIRED] - Validate UPDATE syntax includes SET
+        if (peek().type != TokenType.SET) {
+            throw new RuntimeException(
+                    "❌ [UPDATE ERROR] Kratos growls: 'Expected SET keyword, but found '" + peek().value + "'! " +
+                            "The syntax is: UPDATE table SET column=value;'"
+            );
+        }
+
+        consume(TokenType.SET);
+
+        // 📋 [PARSE ASSIGNMENTS] - Extract all column=value pairs into a HashMap
+        // This allows multiple columns to be updated in a single statement
+        HashMap<String, ValueDefinition> columnsMap = parseUpdateStatements();
+
+        Condition condition = null;
+
+        // 🔍 [OPTIONAL WHERE CLAUSE] - Check if update should be conditional
+        if (peek().type == TokenType.WHERE) {
+            consume(TokenType.WHERE);
+
+            // ✅ Validate column name follows WHERE keyword
+            if (peek().type != TokenType.IDENTIFIER) {
+                throw new RuntimeException(
+                        "❌ [WHERE ERROR] The Norns whisper: 'Expected column name after WHERE, but found '" + peek().value + "'! " +
+                                "Guide us with proper syntax!'"
+                );
+            }
+
+            String columnName = peek().value;
+            consume(TokenType.IDENTIFIER);
+
+            // 🔄 Extract comparison operator (=, >, <, etc.)
+            TokenType operator = peek().type;
+            consume(operator);
+
+            // 📊 Extract the comparison value
+            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
+            consume(peek().type);
+
+            // 🎯 Construct condition object for filtering rows
+            condition = new Condition(columnName, operator, value);
+        }
+
+        // ✅ [SEMICOLON CHECK] - Ensure statement properly terminated
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "❌ [SYNTAX ERROR] Sindri insists: 'Every UPDATE statement must end with a semicolon (;), " +
+                            "but found '" + peek().value + "' instead! Standards matter!'"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // ✅ [TAIL CHECK] - Verify nothing follows the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "❌ [PARSING ERROR] Brok shouts: 'What's this extra junk after the semicolon?! " +
+                            "UPDATE statement must END at the semicolon!'"
+            );
+        }
+
+        return new UpdateCommand(tableName, columnsMap, condition);
+    }
+
+    /**
+     * 📋 Parses the SET clause of an UPDATE statement into a HashMap.
+     * 📝 Expected syntax: col1=val1, col2=val2, col3=val3
+     * ⚙️ This method processes column-value assignments:
+     * 1. 🔍 Parses first column=value pair
+     * 2. 🔄 Continues parsing additional pairs separated by commas
+     * 3. ✅ Validates each assignment has proper syntax
+     * 4. 🚫 Prevents duplicate column names in same UPDATE
+     * 5. 📊 Supports NUMBER_LITERAL and STRING_LITERAL value type.
+     * @return HashMap<String, ValueDefinition> mapping column names to their new values
+     * @throws RuntimeException if:
+     *         ❌ Column name missing or invalid
+     *         ❌ Equals sign (=) missing between column and value
+     *         ❌ Value is not a valid literal (number or string)
+     *         ❌ Duplicate column name appears in same SET clause
+     *         ❌ Unsupported data type provided
+     *
+     * 💡 Example valid input: name='Kratos', age=150, realm='Midgard'
+     */
+
+    private HashMap<String, ValueDefinition> parseUpdateStatements() {
+        HashMap<String, ValueDefinition> map = new HashMap<>();
+
+        // 🔍 [FIRST ASSIGNMENT] - Parse initial column=value pair
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "💥 [PARSING ERROR] Freya warns: 'Column name required after SET, but found '" + peek().value + "'! " +
+                            "Proper form is: SET column_name = value'"
+            );
+        }
+
+        String columnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // ✅ [EQUALS OPERATOR] - Validate assignment uses '='
+        if (peek().type != TokenType.EQUALS) {
+            throw new RuntimeException(
+                    "💥 [SYNTAX ERROR] Mimir explains: 'Column '" + columnName + "' needs an equals sign (=), " +
+                            "but found '" + peek().value + "' instead! Format: column = value'"
+            );
+        }
+        consume(TokenType.EQUALS);
+
+        // 📊 [VALUE EXTRACTION] - Parse the value being assigned
+        ValueDefinition value;
+        if (peek().type == TokenType.NUMBER_LITERAL) {
+            value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+            consume(TokenType.NUMBER_LITERAL);
+            System.out.println("   ⚡ " + columnName + " = " + peek().value + " (number)");
+        } else if (peek().type == TokenType.STRING_LITERAL) {
+            value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+            consume(TokenType.STRING_LITERAL);
+            System.out.println("   ⚡ " + columnName + " = '" + peek().value + "' (text)");
+        } else {
+            throw new RuntimeException(
+                    "💥 [TYPE ERROR] The World Serpent hisses: 'Unknown data type for column '" + columnName + "'! " +
+                            "Only numbers and strings (in quotes) are supported!'"
+            );
+        }
+
+        // 📝 Store first column-value pair in map
+        map.put(columnName, value);
+
+        // 🔄 [ADDITIONAL ASSIGNMENTS] - Parse remaining comma-separated pairs
+        while (peek().type == TokenType.COMMA) {
+            System.out.println("🔗 [ANOTHER BINDING] Comma detected - parsing next column assignment...");
+            consume(TokenType.COMMA);
+
+            // 🔍 Validate next column name
+            if (peek().type != TokenType.IDENTIFIER) {
+                throw new RuntimeException(
+                        "💥 [PARSING ERROR] Baldur roars: 'Expected column name after comma, but found '" + peek().value + "'! " +
+                                "Check your syntax!'"
+                );
+            }
+
+            columnName = peek().value;
+
+            // 🚫 [DUPLICATE CHECK] - Prevent updating same column twice in one statement
+            if (map.containsKey(columnName)) {
+                throw new RuntimeException(
+                        "💥 [DUPLICATE ERROR] Týr raises his hand: 'Column '" + columnName + "' already appears in this UPDATE! " +
+                                "You cannot set the same column twice in one statement. Choose wisely!'"
+                );
+            }
+
+            consume(TokenType.IDENTIFIER);
+
+            // ✅ Validate equals operator
+            if (peek().type != TokenType.EQUALS) {
+                throw new RuntimeException(
+                        "💥 [SYNTAX ERROR] Sindri sighs: 'Column '" + columnName + "' requires an equals sign (=), " +
+                                "but you gave me '" + peek().value + "' instead! Standards, please!'"
+                );
+            }
+            consume(TokenType.EQUALS);
+
+            // 📊 Parse value for this column
+            if (peek().type == TokenType.NUMBER_LITERAL) {
+                value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+                consume(TokenType.NUMBER_LITERAL);
+            } else if (peek().type == TokenType.STRING_LITERAL) {
+                value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+                consume(TokenType.STRING_LITERAL);
+            } else {
+                throw new RuntimeException(
+                        "💥 [TYPE ERROR] Atreus questions: 'What kind of value is that for '" + columnName + "'? " +
+                                "I only understand numbers and text in quotes!'"
+                );
+            }
+
+            // 📝 Add this column-value pair to the map
+            map.put(columnName, value);
+        }
+
+        System.out.println("✅ [ASSIGNMENTS COMPLETE] Successfully parsed " + map.size() + " column assignment(s).");
+        return map;
+    }
 
     /**
      * Parse - Main entry point for parsing SQL commands
@@ -2391,27 +2502,25 @@ public class Parser {
                             "📜 Correct syntax: DELETE FROM <table_name> [WHERE <condition>];");
                 }
                 return parseDeleteCommand();
-            }
-//            else if (peek().type == TokenType.UPDATE) {
-//                advance();
-//                if (position >= tokens.size()) {
-//                    throw new RuntimeException("""
-//                            ⚡ [BROKEN RUNE] The UPDATE ritual is incomplete!
-//                            🛡️ You must speak the full incantation:
-//                            UPDATE <table_name> SET col=<colValue> [WHERE <condition>];
-//                            🌌 Examples: UPDATE user SET id=10 WHERE id=5;
-//                            """);
-//                }
-//                Token second = peek();
-//                if (second.type != TokenType.IDENTIFIER) {
-//                    throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
-//                            "yet you brandish '" + second.value + "'! " +
-//                            "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
-//                            "📜 Correct syntax: UPDATE <table_name> SET col <colValue> [WHERE <condition>];");
-//                }
-//                return parseUpdateRowCommand();
-//            }
-            else {
+            } else if (peek().type == TokenType.UPDATE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] The UPDATE ritual is incomplete!
+                            🛡️ You must speak the full incantation:
+                            UPDATE <table_name> SET col=<colValue> [WHERE <condition>];
+                            🌌 Examples: UPDATE user SET id=10 WHERE id=5;
+                            """);
+                }
+                Token second = peek();
+                if (second.type != TokenType.IDENTIFIER) {
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
+                            "yet you brandish '" + second.value + "'! " +
+                            "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
+                            "📜 Correct syntax: UPDATE <table_name> SET col <colValue> [WHERE <condition>];");
+                }
+                return parseUpdateRowCommand();
+            } else {
                 throw new RuntimeException("⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" + "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT,SELECT.\n" + "❌ But instead received: " + first.type + " ('" + first.value + "').\n" + "⚔️ Only these divine runes may command the realms of Yggra!");
             }
 

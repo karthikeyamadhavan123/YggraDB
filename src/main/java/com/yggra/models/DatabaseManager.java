@@ -858,21 +858,21 @@ public class DatabaseManager {
         table.validateDeleteCommand(table, condition);
     }
 
-//    public void updateRowCommand(String tableName, HashMap<String, ValueDefinition> map, Condition condition) {
-//        if (!hasCurrentDatabase()) {
-//            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
-//                    "👉 Use `USE <database>` first!");
-//        }
-//
-//        // 🏛️ Step 2: Retrieve the target table object
-//        // If the table name is invalid or does not exist, the SELECT cannot proceed.
-//        Table table = getTable(tableName);
-//
-//        if (table == null) {
-//            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
-//        }
-//
-//        table.validateUpdateCommand(table, map, condition);
-//    }
+    public void updateRowCommand(String tableName, HashMap<String, ValueDefinition> map, Condition condition) {
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
+                    "👉 Use `USE <database>` first!");
+        }
+
+        // 🏛️ Step 2: Retrieve the target table object
+        // If the table name is invalid or does not exist, the SELECT cannot proceed.
+        Table table = getTable(tableName);
+
+        if (table == null) {
+            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
+        }
+
+        table.validateUpdateCommand(table, map, condition);
+    }
 }
 
