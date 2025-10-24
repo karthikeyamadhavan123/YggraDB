@@ -421,7 +421,7 @@ skalds.
 
 ```bash
 # Fork and clone the sacred repository
-git clone https://github.com/yourusername/yggra-db.git
+git clone https://github.com/karthikeyamadhavan123/yggra-db.git
 
 # Create your feature branch (name it after a Norse god!)
 git checkout -b feature/loki-mischief-queries
@@ -440,27 +440,6 @@ git push origin feature/loki-mischief-queries
 
 # Create a Pull Request worthy of Valhalla
 ```
-
-#### **📜 Documentation Skalds**
-
-- Write epic tutorials and guides
-- Improve README sections
-- Add code examples
-- Translate to other languages (Speak in many tongues!)
-
-#### **🧪 Test Shamans**
-
-- Write comprehensive test cases
-- Performance benchmarking
-- Security penetration testing
-- Bug hunting and reporting
-
-#### **🎨 Design Völvas**
-
-- ASCII art improvements
-- UI/UX enhancements
-- Theme design
-- Logo and branding
 
 ### **📋 Contribution Guidelines**
 
@@ -676,4 +655,5 @@ the mundane act of data management into an epic adventure."*
 Edda."*
 
 **⚔️ Happy Coding, Digital Vikings! ⚔️**
+
 
