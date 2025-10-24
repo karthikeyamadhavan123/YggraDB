@@ -537,8 +537,8 @@ git push origin feature/loki-mischief-queries
 - ✅ **Data Insertion**: 100% (INSERT INTO with validation)
 - ✅ **Security Layer**: 100% (SQL injection protection)
 - ✅ **Mythical Theming**: 100% (Epic output formatting)
-- 🔄 **SELECT Queries**: 0% (Next major saga)
-- ⏳ **UPDATE/DELETE**: 0% (Future quest)
+- 🔄 **SELECT Queries**: 60% (Next major saga)
+- ⏳ **UPDATE/DELETE**: 60% (Future quest)
 - ⏳ **JOIN Operations**: 0% (Distant realm)
 
 ---
@@ -647,6 +647,15 @@ VOICE: "Show me all gods with thunder domain"
 
 ---
 
+🌟 v2.0 – Advanced AI & Natural Language Queries
+TELL ME ABOUT warriors from Norway with more than 50 battles;
+-- 🧠 [MIMIR'S WISDOM] Interpreting mortal tongue...
+-- 👁️ [DIVINE TRANSLATION] SELECT * FROM Warriors WHERE homeland='Norway' AND battles_won > 50;
+
+PREDICT warrior_strength FROM battles_won USING linear_regression;
+-- 🔮 [NORN'S PROPHECY] The threads of fate reveal future strength!
+
+
 ## 🌊 **Final Words - The Skald's Ending**
 
 *"In the beginning was the void, and from the void came data. From data came tables, and from tables came the need for a
@@ -667,3 +676,4 @@ the mundane act of data management into an epic adventure."*
 Edda."*
 
 **⚔️ Happy Coding, Digital Vikings! ⚔️**
+
