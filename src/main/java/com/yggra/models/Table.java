@@ -97,54 +97,6 @@ public class Table {
     }
 
     /**
-     * 🔮 [TABLE VISUALIZATION] 🔮
-     * Returns a beautifully formatted string representation of the table,
-     * showing its structure and all contained rows.
-     *
-     * @return Formatted table display with divine decorations
-     */
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-
-        // Divine Table Header
-        builder.append("\n⚔️ ").append(tableName.toUpperCase()).append(" ⚔️\n");
-
-        // Column Names
-        builder.append("🛡️ ");
-        for (ColumnDefinition col : columnList) {
-            builder.append(String.format("| %-15s ", col.columnName));
-        }
-        builder.append("|\n");
-
-        // Runic Separator
-        builder.append("📜").append("+-----------------".repeat(columnList.size()));
-        builder.append("+\n");
-
-        // Display Rows with values
-        if (rowList.isEmpty()) {
-            builder.append("| ").append("🕳️  The void consumes this table...".repeat(columnList.size() / 2)).append(" |\n");
-        } else {
-            for (Row row : rowList) {
-                builder.append("| ");
-                for (Object value : row.values) {
-                    String displayValue = (value == null || (value instanceof String && ((String) value).isEmpty())) ? "NULL" : value.toString();
-                    builder.append(String.format("%-15s | ", displayValue));
-                }
-                builder.append("\n");
-            }
-        }
-
-        // Footer
-        builder.append("🌊").append("+-----------------".repeat(columnList.size()));
-        builder.append("+\n");
-        builder.append("Rows: ").append(rowList.size()).append(" | Forged in the fires of Yggdrasil ");
-
-        return builder.toString();
-    }
-
-    /**
      * Resolves a list of requested column names into their index positions
      * within the given table's schema.
      * Example:
@@ -181,6 +133,55 @@ public class Table {
             }
         }
         return columnIndices;
+    }
+
+    /**
+     * 🔮 [TABLE VISUALIZATION] 🔮
+     * Returns a beautifully formatted string representation of the table,
+     * showing its structure and all contained rows.
+     *
+     * @return Formatted table display with divine decorations
+     */
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        // Divine Table Header
+        builder.append("\n⚔️ ").append(tableName.toUpperCase()).append(" ⚔️\n");
+
+        // Column Names
+        builder.append("🛡️ ");
+        for (ColumnDefinition col : columnList) {
+            builder.append(String.format("| %-15s ", col.columnName));
+        }
+        builder.append("|\n");
+
+        // Runic Separator
+        builder.append("📜").append("+-----------------".repeat(columnList.size()));
+        builder.append("+\n");
+
+        // Display Rows with values
+        if (rowList.isEmpty()) {
+            builder.append("| ").append("🕳️  The void consumes this table...".repeat(columnList.size() / 2))
+                    .append(" |\n");
+        } else {
+            for (Row row : rowList) {
+                builder.append("| ");
+                for (Object value : row.values) {
+                    String displayValue = (value == null || (value instanceof String && ((String) value).isEmpty())) ? "NULL" : value.toString();
+                    builder.append(String.format("%-15s | ", displayValue));
+                }
+                builder.append("\n");
+            }
+        }
+
+        // Footer
+        builder.append("🌊").append("+-----------------".repeat(columnList.size()));
+        builder.append("+\n");
+        builder.append("Rows: ").append(rowList.size()).append(" | Forged in the fires of Yggdrasil ");
+
+        return builder.toString();
     }
 
     /**
@@ -1274,8 +1275,8 @@ public class Table {
     /**
      * ⚡ Validates and executes an UPDATE command on the specified table.
      * 📝 Supported syntax patterns:
-     *    - UPDATE table SET col1=val1, col2=val2;                    → Updates ALL rows (requires confirmation)
-     *    - UPDATE table SET col1=val1, col2=val2 WHERE condition;   → Updates rows matching condition
+     * - UPDATE table SET col1=val1, col2=val2;                    → Updates ALL rows (requires confirmation)
+     * - UPDATE table SET col1=val1, col2=val2 WHERE condition;   → Updates rows matching condition
      * ⚙️ Execution flow:
      * 1. 🎯 Checks if condition is null (update all rows - dangerous operation)
      * 2. ⚠️ Prompts user for confirmation if updating all rows
@@ -1283,29 +1284,31 @@ public class Table {
      * 4. 🔄 Validates data types match between values and columns
      * 5. 🔍 Resolves column names to indices for efficient access
      * 6. 🔨 Applies updates to all matching rows
-     * @param table The target table object where rows will be updated
-     * @param map HashMap containing column names as keys and new values as ValueDefinition objects
-     * @param condition The WHERE condition to filter which rows to update (null = update all with confirmation)
      *
+     * @param table      The target table object where rows will be updated
+     * @param map        HashMap containing column names as keys and new values as ValueDefinition objects
+     * @param conditions The WHERE condition to filter which rows to update (null = update all with confirmation)
      * @throws RuntimeException if:
-     *         ❌ Column name in SET clause doesn't exist in table
-     *         ❌ Value data type doesn't match column data type
-     *         ❌ Type conversion fails
-     * 🎭 Update behavior:
-     *    - Without WHERE: Updates ALL rows (asks for Y/N confirmation)
-     *    - With WHERE: Updates only rows matching condition (planned feature)
-     * ⚠️ Current limitations:
-     *    - WHERE clause support is not yet implemented
-     *    - User must confirm mass updates with 'Y' or 'y'
-     *    - Scanner remains open if user declines (potential resource leak)
-     * 💡 Example usage:
-     *    UPDATE users SET age=30, status='active';           → Updates all users (with confirmation)
-     *    UPDATE users SET age=30 WHERE id=5;                 → Updates specific user (planned)
+     *                          ❌ Column name in SET clause doesn't exist in table
+     *                          ❌ Value data type doesn't match column data type
+     *                          ❌ Type conversion fails
+     *                          🎭 Update behavior:
+     *                          - Without WHERE: Updates ALL rows (asks for Y/N confirmation)
+     *                          - With WHERE: Updates only rows matching condition (planned feature)
+     *                          ⚠️ Current limitations:
+     *                          - WHERE clause support is not yet implemented
+     *                          - User must confirm mass updates with 'Y' or 'y'
+     *                          - Scanner remains open if user declines (potential resource leak)
+     *                          💡 Example usage:
+     *                          UPDATE users SET age=30, status='active';           → Updates all users (with confirmation)
+     *                          UPDATE users SET age=30 WHERE id=5;                 → Updates specific user (planned)
      */
 
-    public void validateUpdateCommand(Table table, HashMap<String, ValueDefinition> map, Condition condition) {
+    public void validateUpdateCommand(Table table, HashMap<String, ValueDefinition> map, Condition conditions) {
+        List<String> columns = new ArrayList<>();
+        List<ValueDefinition> values = new ArrayList<>();
         // ⚠️ [DANGEROUS TERRITORY] - No WHERE clause means ALL rows will be modified
-        if (condition == null) {
+        if (conditions == null) {
             System.out.println("🔥 [POINT OF NO RETURN] This will modify EVERY row in the table '" + table.tableName + "'!");
             System.out.println("⚡ Kratos asks: 'Are you certain, boy?' Press Y to proceed, N to retreat:");
             Scanner sc = new Scanner(System.in);
@@ -1316,9 +1319,6 @@ public class Table {
                 System.out.println("💪 [DETERMINATION ACKNOWLEDGED] Kratos nods: 'Then let us reshape destiny itself!'");
 
                 // 📋 Prepare lists to store column names and their new values
-                List<String> columns = new ArrayList<>();
-                List<ValueDefinition> values = new ArrayList<>();
-
                 for (String columnName : map.keySet()) {
                     // ❌ Throw error if column doesn't exist in table
                     if (table.columnList.stream().noneMatch(columnDefinition -> columnDefinition.columnName.equals(columnName))) {
@@ -1363,11 +1363,85 @@ public class Table {
         }
         // 🎯 [CONDITIONAL UPDATE] - WHERE clause provided (not yet implemented)
         else {
-            System.out.println("🔮 [COMING SOON] The Norns are still weaving this feature into the tapestry of fate...");
-            throw new RuntimeException("🚧 [FEATURE LOCKED] Conditional UPDATE with WHERE clause is not yet implemented. " +
-                    "Brok shouts: 'We're workin' on it! Come back later!'");
-        }
-    }
+// 🎯 [CONDITIONAL UPDATE] - WHERE clause provided
+            System.out.println("🏹 [AIMED STRIKE] Kratos narrows his eyes — only select rows shall be changed...");
 
+// Validate and collect columns and their new values
+            for (String columnName : map.keySet()) {
+                boolean exists = table.columnList.stream()
+                        .anyMatch(col -> col.columnName.equals(columnName));
+
+                if (!exists) {
+                    throw new RuntimeException("💥 [COLUMN VANISHED] The Norns cry out: 'Column '" + columnName +
+                            "' does not exist in table '" + table.tableName + "'!'");
+                }
+                columns.add(columnName);
+                values.add(map.get(columnName));
+            }
+
+// Extract condition details
+            TokenType condition = conditions.condition;
+            String condColumn = conditions.columnName;
+            ValueDefinition condValue = conditions.conditionValue;
+
+// Get index of the column used in WHERE condition
+            int condColumnIndex = -1;
+            for (int i = 0; i < table.columnList.size(); i++) {
+                if (table.columnList.get(i).columnName.equals(condColumn)) {
+                    condColumnIndex = i;
+                    break;
+                }
+            }
+            if (condColumnIndex == -1)
+                throw new RuntimeException("❌ [CONDITION ERROR] The column '" + condColumn + "' doesn't exist in table '" + table.tableName + "'!");
+
+// Prepare update column indices
+            List<Integer> updateIndexes = getIntegers(columns, table);
+
+// Convert condition value to proper type
+            Object convertedCondValue = null;
+            try { convertedCondValue = convertValue(condValue, table.columnList.get(condColumnIndex).type);
+            }
+            catch (Exception e) { System.out.println("⚠️ [VALUE CONVERSION FAILED] The fates refuse: " + e.getMessage());
+            }
+
+            int updatedCount = 0;
+
+            // Iterate through rows to apply condition
+            for (Row row : table.rowList) {
+                Object currentVal = row.getValue(condColumnIndex);
+
+                boolean conditionMatched = switch (condition) {
+                    case EQUALS -> currentVal.equals(convertedCondValue);
+                    case NOT_EQUALS -> !currentVal.equals(convertedCondValue);
+                    case GREATER_THAN -> (currentVal instanceof Integer cv && cv > (Integer) convertedCondValue);
+                    case GREATER_THAN_EQUAL -> (currentVal instanceof Integer cv && cv >= (Integer) convertedCondValue);
+                    case LESS_THAN -> (currentVal instanceof Integer cv && cv < (Integer) convertedCondValue);
+                    case LESS_THAN_EQUAL -> (currentVal instanceof Integer cv && cv <= (Integer) convertedCondValue);
+                    default ->
+                            throw new RuntimeException("⚠️ [UNKNOWN CONDITION] Freya cannot decipher this rune: " + condition);
+                };
+
+                // Apply update if condition matches
+                if (conditionMatched) {
+                    for (int i = 0; i < updateIndexes.size(); i++) {
+                        int colIndex = updateIndexes.get(i);
+                        String newVal = values.get(i).value;
+                        row.setNewValue(colIndex, newVal);
+                    }
+                    updatedCount++;
+                }
+            }
+
+// 🏁 Final outcome
+            if (updatedCount > 0) {
+                System.out.println("⚡ [DESTINY REWRITTEN] " + updatedCount + " row(s) reshaped under Kratos' command.");
+            } else {
+                System.out.println("☢️ [NO FATE CHANGED] No rows matched the condition — the Norns remain silent.");
+            }
+
+        }
+
+    }
 //     Method: getColumnIndexByName(String name)
 }
