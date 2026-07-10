@@ -421,7 +421,7 @@ skalds.
 
 ```bash
 # Fork and clone the sacred repository
-git clone https://github.com/yourusername/yggra-db.git
+git clone https://github.com/karthikeyamadhavan123/yggra-db.git
 
 # Create your feature branch (name it after a Norse god!)
 git checkout -b feature/loki-mischief-queries
@@ -440,27 +440,6 @@ git push origin feature/loki-mischief-queries
 
 # Create a Pull Request worthy of Valhalla
 ```
-
-#### **📜 Documentation Skalds**
-
-- Write epic tutorials and guides
-- Improve README sections
-- Add code examples
-- Translate to other languages (Speak in many tongues!)
-
-#### **🧪 Test Shamans**
-
-- Write comprehensive test cases
-- Performance benchmarking
-- Security penetration testing
-- Bug hunting and reporting
-
-#### **🎨 Design Völvas**
-
-- ASCII art improvements
-- UI/UX enhancements
-- Theme design
-- Logo and branding
 
 ### **📋 Contribution Guidelines**
 
@@ -537,8 +516,8 @@ git push origin feature/loki-mischief-queries
 - ✅ **Data Insertion**: 100% (INSERT INTO with validation)
 - ✅ **Security Layer**: 100% (SQL injection protection)
 - ✅ **Mythical Theming**: 100% (Epic output formatting)
-- 🔄 **SELECT Queries**: 0% (Next major saga)
-- ⏳ **UPDATE/DELETE**: 0% (Future quest)
+- 🔄 **SELECT Queries**: 60% (Next major saga)
+- ⏳ **UPDATE/DELETE**: 60% (Future quest)
 - ⏳ **JOIN Operations**: 0% (Distant realm)
 
 ---
@@ -647,6 +626,15 @@ VOICE: "Show me all gods with thunder domain"
 
 ---
 
+🌟 v2.0 – Advanced AI & Natural Language Queries
+TELL ME ABOUT warriors from Norway with more than 50 battles;
+-- 🧠 [MIMIR'S WISDOM] Interpreting mortal tongue...
+-- 👁️ [DIVINE TRANSLATION] SELECT * FROM Warriors WHERE homeland='Norway' AND battles_won > 50;
+
+PREDICT warrior_strength FROM battles_won USING linear_regression;
+-- 🔮 [NORN'S PROPHECY] The threads of fate reveal future strength!
+
+
 ## 🌊 **Final Words - The Skald's Ending**
 
 *"In the beginning was the void, and from the void came data. From data came tables, and from tables came the need for a
@@ -667,3 +655,5 @@ the mundane act of data management into an epic adventure."*
 Edda."*
 
 **⚔️ Happy Coding, Digital Vikings! ⚔️**
+
+

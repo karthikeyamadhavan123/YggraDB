@@ -2,6 +2,7 @@ package com.yggra.models;
 
 import com.yggra.commands.ColumnDefinition;
 import com.yggra.commands.ValueDefinition;
+import com.yggra.common_models.Condition;
 import com.yggra.parser.TokenType;
 
 import java.util.*;
@@ -47,109 +48,6 @@ public class DatabaseManager {
             }
         }
         return instance;
-    }
-
-    /**
-     * Resolves a list of requested column names into their index positions
-     * within the given table's schema.
-     * Example:
-     *   Table schema: [id, name, age]
-     *   Request: SELECT name,id
-     *   Output: [1, 0]  (name is column 1, id is column 0)
-     * Order is preserved so the user’s SELECT statement is honored exactly.
-     * @param columns list of requested column names
-     * @param table   table containing the schema (columnList)
-     * @return list of indices corresponding to the requested columns
-     *
-     * @throws RuntimeException if a requested column is missing (defensive check).
-     */
-
-
-    public static List<Integer> getIntegers(List<String> columns, Table table) {
-        List<Integer> columnIndices = new ArrayList<>();
-        for (String column : columns) {
-            boolean found = false;
-
-            // Linear scan over table schema (O(n) per lookup).
-            // For large schemas, this could be optimized with a hashmap
-            // mapping columnName -> index.
-            for (int j = 0; j < table.columnList.size(); j++) {
-                if (column.equals(table.columnList.get(j).columnName)) {
-                    columnIndices.add(j); // capture index
-                    found = true;
-                    break; // stop once match is found
-                }
-            }
-
-            // Defensive guard: if column not found, raise descriptive error.
-            if (!found) {
-                throw new RuntimeException("❌ [COLUMN CURSED] The Fates declare: 'No such column: " + column + "'");
-            }
-        }
-        return columnIndices;
-    }
-
-    /**
-     * Prints the result set of a SELECT query in ASCII table format.
-     * Each column is left-aligned, and column widths are adjusted
-     * based on the longest value in that column (including header).
-     * Example output for SELECT id, name:
-     *   | id | name    |
-     *   +----+---------+
-     *   | 3  | nitish  |
-     *   | 1  | karthik |
-     *   | 2  | veeru   |
-     * Null values are printed as the literal string "NULL".
-     *
-     * @param columns       the column names requested in the SELECT
-     * @param table         the table object containing schema + rows
-     * @param columnIndices resolved indices for each requested column
-     */
-
-    private void printTable(List<String> columns, Table table, List<Integer> columnIndices) {
-        // 🔍 Step 1: Compute column widths
-        // Each column must be wide enough for both the header and the longest value.
-        List<Integer> colWidths = new ArrayList<>();
-        for (int idx : columnIndices) {
-            int maxWidth = table.columnList.get(idx).columnName.length();
-
-            for (Row row : table.rowList) {
-                Object val = row.getValue(idx);
-                if (val != null) {
-                    maxWidth = Math.max(maxWidth, val.toString().length());
-                }
-            }
-
-            colWidths.add(maxWidth);
-        }
-
-        // 📝 Step 2: Print header row with column names
-        StringBuilder header = new StringBuilder("|");
-        for (int i = 0; i < columns.size(); i++) {
-            header.append(" ")
-                    .append(String.format("%-" + colWidths.get(i) + "s", columns.get(i)))
-                    .append(" |");
-        }
-        System.out.println(header);
-
-        // 🪓 Step 3: Print separator line for readability
-        StringBuilder sep = new StringBuilder("+");
-        for (int w : colWidths) {
-            sep.append("-".repeat(w + 2)).append("+");
-        }
-        System.out.println(sep);
-
-        // 📊 Step 4: Print each row’s values, aligned by column widths
-        for (Row row : table.rowList) {
-            StringBuilder rowStr = new StringBuilder("|");
-            for (int i = 0; i < columnIndices.size(); i++) {
-                Object val = row.getValue(columnIndices.get(i));
-                rowStr.append(" ")
-                        .append(String.format("%-" + colWidths.get(i) + "s", val != null ? val : "NULL"))
-                        .append(" |");
-            }
-            System.out.println(rowStr);
-        }
     }
 
 
@@ -891,16 +789,17 @@ public class DatabaseManager {
     /**
      * Executes a SELECT query on a given table inside the currently active database.
      * Supports:
-     *   - Selecting all columns (via SELECT ALL).
-     *   - Selecting a subset of columns in any order.
-     *   - Proper error handling with saga-inspired error messages.
-     *   - Printing results in a tabular ASCII format.
+     * - Selecting all columns (via SELECT ALL).
+     * - Selecting a subset of columns in any order.
+     * - Proper error handling with saga-inspired error messages.
+     * - Printing results in a tabular ASCII format.
+     *
      * @param tableName the name of the table to fetch rows from
      * @param columns   list of columns requested in the SELECT statement
      * @throws RuntimeException if no database is selected, the table does not exist,or any requested column is missing from the schema.
      */
 
-    public void selectCommand(String tableName, List<String> columns) {
+    public void selectCommand(String tableName, List<String> columns, List<Condition> conditions) {
         // 🛡️ Step 1: Ensure a database is currently active
         // Without a selected database (via USE <dbname>), a SELECT has no context.
         if (!hasCurrentDatabase()) {
@@ -918,30 +817,62 @@ public class DatabaseManager {
         // 🌐 Step 3: Handle SELECT ALL
         // If the user writes `SELECT ALL`, we bypass column-specific handling
         // and just print the table directly with its full schema.
-        if (columns.size() == 1 && columns.getFirst().equalsIgnoreCase("ALL")) {
-            System.out.println(table); // delegate to Table.toString()
-            return;
-        }
+        table.validateSelectCommand(table, columns, conditions);
 
-        // ⚔️ Step 4: Validate requested columns against table schema
-        // Ensure that every requested column exists in table.columnList.
-        // If even one column is invalid, the query is aborted.
-        for (String column : columns) {
-            if (table.columnList.stream().noneMatch(c -> c.columnName.equals(column))) {
-                throw new RuntimeException("💥 [COLUMN LOST] Mimir mutters: 'The column '" + column + "' does not exist in table '" + tableName + "'!'");
-            }
-        }
-
-        // 📜 Step 5: Resolve requested column names into indices
-        // Column indices are used internally for quick access into row values.
-        // The returned list preserves the order of the requested columns,
-        // so SELECT name,id behaves differently from SELECT id,name.
-        List<Integer> columnIndices = getIntegers(columns, table);
-
-        // 🖼️ Step 6: Render results in ASCII tabular format
-        // Dynamically sizes each column so values and headers align neatly.
-        printTable(columns, table, columnIndices);
     }
 
+    /**
+     * 🗑️ Executes a DELETE command on the specified table with an optional condition.
+     * 📝 Syntax: DELETE FROM table_name [WHERE condition];
+     * ⚙️ Execution flow:
+     * 1. 🗄️ Verifies a database is currently selected
+     * 2. 🔍 Locates the target table in the current database
+     * 3. ✅ Validates the DELETE operation and condition
+     * 4. 🗑️ Delegates actual deletion to the table's validation method
+     * @param tableName The name of the table from which records will be deleted
+     * @param condition Optional WHERE clause condition to filter which rows to delete.
+     * If null, all rows in the table would be affected (depending on implementation)
+     * @throws RuntimeException if:
+     *         ❌ No database is currently selected (USE command required first)
+     *         ❌ The specified table does not exist in the current database
+     *         ❌ The DELETE operation validation fails (invalid condition, missing columns, etc.)
+     * 💡 Example usage:
+     *    - DELETE FROM users WHERE id = 5;  → Deletes specific row(s)
+     *    - DELETE FROM logs;                → Deletes all rows (if supported)
+     * ⚠️ Note: This method performs validation and delegates to table.validateDeleteCommand()
+     *          for the actual deletion logic.
+     */
+
+    public void deleteCommand(String tableName, Condition condition) {
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
+                    "👉 Use `USE <database>` first!");
+        }
+
+        // 🏛️ Step 2: Retrieve the target table object
+        // If the table name is invalid or does not exist, the DELETE cannot proceed.
+        Table table = getTable(tableName);
+        if (table == null) {
+            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
+        }
+        table.validateDeleteCommand(table, condition);
+    }
+
+    public void updateRowCommand(String tableName, HashMap<String, ValueDefinition> map, Condition condition) {
+        if (!hasCurrentDatabase()) {
+            throw new RuntimeException("🌌 [ABYSS OF NOTHINGNESS] Kratos growls: 'You dare strike defaults when no realm is chosen?!' " +
+                    "👉 Use `USE <database>` first!");
+        }
+
+        // 🏛️ Step 2: Retrieve the target table object
+        // If the table name is invalid or does not exist, the SELECT cannot proceed.
+        Table table = getTable(tableName);
+
+        if (table == null) {
+            throw new RuntimeException("🌀 [TABLE VANISHED] The Norns whisper: 'No table named " + tableName + " dwells here!'");
+        }
+
+        table.validateUpdateCommand(table, map, condition);
+    }
 }
 

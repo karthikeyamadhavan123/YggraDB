@@ -21,7 +21,6 @@ public class SQLExecutor {
 
     public void execute(SQLCommand command) {
         switch (command) {
-
             // 🌍 [CREATE DATABASE] – Forges a new realm in the tree of Yggra
 
             case CreateDatabaseCommand createDatabaseCommand ->
@@ -146,19 +145,26 @@ public class SQLExecutor {
                             setDefaultValueColumn.defaultValue // 🎁 The new default value to bind to this column
                     );
 
-                // ⚔️ DROP DEFAULT VALUE Command Execution
-                // Function: Removes the default value constraint from a specific column in a table.
-                // Flow:
-                //   1. Get the singleton DatabaseManager instance
-                //   2. Call dropDefaultValue(tableName, columnName)
-                //   3. Database schema is updated — the column no longer carries a default
+            // ⚔️ DROP DEFAULT VALUE Command Execution
+            // Function: Removes the default value constraint from a specific column in a table.
+            // Flow:
+            //   1. Get the singleton DatabaseManager instance
+            //   2. Call dropDefaultValue(tableName, columnName)
+            //   3. Database schema is updated — the column no longer carries a default
 
-            case DropDefaultValueColumn dropDefaultValueColumn ->
-                    DatabaseManager.getInstance().dropDefaultValue(
-                            dropDefaultValueColumn.tableName,
-                            dropDefaultValueColumn.columnName
-                    );
-            case SelectCommand selectCommand -> DatabaseManager.getInstance().selectCommand(selectCommand.tableName,selectCommand.columns);
+            case DropDefaultValueColumn dropDefaultValueColumn -> DatabaseManager.getInstance().dropDefaultValue(
+                    dropDefaultValueColumn.tableName,
+                    dropDefaultValueColumn.columnName
+            );
+
+            case SelectCommand selectCommand ->
+                    DatabaseManager.getInstance().selectCommand(selectCommand.tableName, selectCommand.columns, selectCommand.conditions);
+
+            case DeleteCommand deleteCommand ->
+                    DatabaseManager.getInstance().deleteCommand(deleteCommand.tableName, deleteCommand.condition);
+
+            case UpdateCommand updateCommand ->
+                    DatabaseManager.getInstance().updateRowCommand(updateCommand.tableName, updateCommand.map, updateCommand.condition);
 
             // ❌ [UNKNOWN COMMAND] – All invalid or null invocations are smitten
             case null, default ->

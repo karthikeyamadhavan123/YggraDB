@@ -43,17 +43,17 @@ public class ColumnDefinition {
         validateColumn();
     }
 
-//    /**
-//     * 🪶 [LIGHTWEIGHT VARIANT] 🪶
-//     * For INSERT commands, only the column name need be invoked.
-//     * The type and length are not inscribed in this instance.
-//     *
-//     * @param columnName The name of the column to accept new data
-//     */
-//
-//    public ColumnDefinition(String columnName) {
-//        this.columnName = columnName;
-//    }
+    //    /**
+    //     * 🪶 [LIGHTWEIGHT VARIANT] 🪶
+    //     * For INSERT commands, only the column name need be invoked.
+    //     * The type and length are not inscribed in this instance.
+    //     *
+    //     * @param columnName The name of the column to accept new data
+    //     */
+    //
+    //    public ColumnDefinition(String columnName) {
+    //        this.columnName = columnName;
+    //    }
 
     /**
      * Constructs a ColumnDefinition with full metadata, including optional default value.
@@ -217,6 +217,5 @@ public class ColumnDefinition {
     public TokenType getType() {
         return this.type;
     }
-
 
 }

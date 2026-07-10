@@ -11,7 +11,7 @@ import com.yggra.parser.TokenType;
 
 public class ValueDefinition {
 
-    // 🔮 The type rune — INT, VARCHAR, etc. — revealing the nature of this value
+    // 🔮 The type rune — INT, VARCHAR,NUMBER_LITERAL,STRING_LITERAL etc. — revealing the nature of this value
     public TokenType type;
 
     // 📦 The actual value, as spoken by the mortal issuing the SQL command

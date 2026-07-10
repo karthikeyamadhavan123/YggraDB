@@ -33,24 +33,20 @@ public class Lexer {
     public ArrayList<Token> tokenize(String input) {
         ArrayList<Token> tokens = new ArrayList<>();
         int current = 0;
-
         try {
             while (current < input.length()) {
                 char ch = input.charAt(current);
-
                 // Skip whitespace like a stealthy Spartan
                 if (Character.isWhitespace(ch)) {
                     current++;
                     continue;
                 }
-
                 // Delegate character processing to a helper method
                 current = processCharacter(input, current, tokens, ch);
             }
         } catch (Exception e) {
             throw new RuntimeException("🔥 [FURY OF THE GODS] Something broke within the parser: " + e.getMessage());
         }
-
         return tokens;
     }
 
@@ -84,8 +80,41 @@ public class Lexer {
                 current++;
                 break;
             case '*':
-                tokens.add(new Token(TokenType.ASTERISK,"*"));
+                tokens.add(new Token(TokenType.ASTERISK, "*"));
                 current++;
+                break;
+            case '=':
+                tokens.add(new Token(TokenType.EQUALS, "="));
+                current++;
+                break;
+            case '<':
+                if (input.charAt(current + 1) == '=') {
+                    tokens.add(new Token(TokenType.LESS_THAN_EQUAL, "<="));
+                    current += 2;
+                } else if (input.charAt(current + 1) == '>') {
+                    tokens.add(new Token(TokenType.NOT_EQUALS, "<>"));
+                    current += 2;
+                } else {
+                    tokens.add(new Token(TokenType.LESS_THAN, "<"));
+                    current++;
+                }
+                break;
+            case '>':
+                if (input.charAt(current + 1) == '=') {
+                    tokens.add(new Token(TokenType.GREATER_THAN_EQUAL, ">="));
+                    current += 2;
+                } else {
+                    tokens.add(new Token(TokenType.GREATER_THAN, ">"));
+                    current++;
+                }
+                break;
+            case '!':
+                if (input.charAt(current + 1) == '=') {
+                    tokens.add(new Token(TokenType.NOT_EQUALS, "!="));
+                    current += 2;
+                } else {
+                    throw new RuntimeException("⚡ [YggraDB RAGE] The rune '!' was carved wrongly — no such path exists!");
+                }
                 break;
             // String literals enclosed in single quotes
             case '\'':
@@ -93,7 +122,7 @@ public class Lexer {
                 StringBuilder stringLiteral = new StringBuilder();
                 while (current < input.length()) {
                     if (input.charAt(current) == '\'') {
-                        if (input.charAt(current + 1) == '\'') {
+                        if (current + 1 < input.length() && input.charAt(current + 1) == '\'') {
                             stringLiteral.append(input.charAt(current + 1));
                             current += 2;
                         } else {
@@ -103,9 +132,7 @@ public class Lexer {
                         stringLiteral.append(input.charAt(current));
                         current++;
                     }
-
                 }
-
                 // Check for closing quote
                 if (current < input.length() && input.charAt(current) == '\'') {
                     current++; // Skip closing quote
@@ -139,7 +166,6 @@ public class Lexer {
 
                     String rawKeyword = alphaToken.toString();
                     String keyword = rawKeyword.toUpperCase(); // SQL is case-insensitive for keywords
-
                     // Match against known keywords
                     switch (keyword) {
                         case "CREATE":
@@ -230,10 +256,25 @@ public class Lexer {
                             tokens.add(new Token(TokenType.NULL, rawKeyword));
                             break;
                         case "SELECT":
-                            tokens.add(new Token(TokenType.SELECT,rawKeyword));
+                            tokens.add(new Token(TokenType.SELECT, rawKeyword));
                             break;
                         case "WHERE":
-                            tokens.add(new Token(TokenType.WHERE,rawKeyword));
+                            tokens.add(new Token(TokenType.WHERE, rawKeyword));
+                            break;
+                        case "AND":
+                            tokens.add(new Token(TokenType.AND, rawKeyword));
+                            break;
+                        case "OR":
+                            tokens.add(new Token(TokenType.OR, rawKeyword));
+                            break;
+                        case "NOT":
+                            tokens.add(new Token(TokenType.NOT, rawKeyword));
+                            break;
+                        case "DELETE":
+                            tokens.add(new Token(TokenType.DELETE, rawKeyword));
+                            break;
+                        case "UPDATE":
+                            tokens.add(new Token(TokenType.UPDATE, rawKeyword));
                             break;
                         default:
                             tokens.add(new Token(TokenType.IDENTIFIER, rawKeyword));

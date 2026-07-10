@@ -1,8 +1,10 @@
 package com.yggra.parser;
 
 import com.yggra.commands.*;
+import com.yggra.common_models.Condition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
@@ -341,9 +343,7 @@ public class Parser {
         }
 
         if (peek().value.contains("--") || peek().value.contains(";") || peek().value.matches(".*\\W&&[^_].*")) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS STORM] Forbidden runes detected (`;` or `--`) — such chaos cannot be inscribed into Yggra’s memory!"
-            );
+            throw new RuntimeException("🌪️ [CHAOS STORM] Forbidden runes detected (`;` or `--`) — such chaos cannot be inscribed into Yggra’s memory!");
         }
 
         // Accept valid INSERT values
@@ -629,18 +629,12 @@ public class Parser {
     private String parseDropColumnDefinition() {
         // [STEP 1] Ensure we haven't run out of tokens
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [HERMES' VANISHING] Expected column name but reached the end of the scroll — " +
-                            "the messenger god has fled before delivering the name!"
-            );
+            throw new RuntimeException("🌪️ [HERMES' VANISHING] Expected column name but reached the end of the scroll — " + "the messenger god has fled before delivering the name!");
         }
 
         // [STEP 2] Ensure the next token is a valid identifier (column name)
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "⚔️ [NAMELESS ALTAR] A column name was demanded — yet none was offered to the gods! " +
-                            "🛡️ Only pure identifiers (no quotes, no chaos) are accepted."
-            );
+            throw new RuntimeException("⚔️ [NAMELESS ALTAR] A column name was demanded — yet none was offered to the gods! " + "🛡️ Only pure identifiers (no quotes, no chaos) are accepted.");
         }
 
         // [STEP 3] Claim the column name for removal
@@ -669,26 +663,17 @@ public class Parser {
 
             // ❌ Guard against trailing commas without a following name
             if (position >= tokens.size()) {
-                throw new RuntimeException(
-                        "🌊 [TIDE'S END] Comma found but no following column — " +
-                                "the sea of definitions ends abruptly, leaving the gods displeased!"
-                );
+                throw new RuntimeException("🌊 [TIDE'S END] Comma found but no following column — " + "the sea of definitions ends abruptly, leaving the gods displeased!");
             }
 
             // ❌ Guard against consecutive commas (,,)
             if (peek().type == TokenType.COMMA) {
-                throw new RuntimeException(
-                        "⚡ [DOUBLE LIGHTNING] Two commas in succession — " +
-                                "even Zeus strikes only once before the thunder fades!"
-                );
+                throw new RuntimeException("⚡ [DOUBLE LIGHTNING] Two commas in succession — " + "even Zeus strikes only once before the thunder fades!");
             }
 
             // ❌ Guard against comma directly before closing parenthesis
             if (peek().type == TokenType.RIGHT_PAREN) {
-                throw new RuntimeException(
-                        "🪓 [BROKEN CHAIN] A comma was found where no column follows — " +
-                                "the chain of names is shattered and incomplete!"
-                );
+                throw new RuntimeException("🪓 [BROKEN CHAIN] A comma was found where no column follows — " + "the chain of names is shattered and incomplete!");
             }
 
             // ✅ Add the next valid column
@@ -698,6 +683,41 @@ public class Parser {
         return columns;
     }
 
+    private Condition parseCondition() {
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException("🏛️ [NAMELESS PILLAR] No column name stands where destiny decrees — found " + peek().type);
+        }
+        String columnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+        TokenType currentType = peek().type;
+        ValueDefinition conditionValue;
+        if (currentType == TokenType.EQUALS || currentType == TokenType.NOT_EQUALS || currentType == TokenType.LESS_THAN || currentType == TokenType.LESS_THAN_EQUAL || currentType == TokenType.GREATER_THAN || currentType == TokenType.GREATER_THAN_EQUAL) {
+            consume(currentType);
+        }
+        if (peek().type == TokenType.NUMBER_LITERAL) {
+            conditionValue = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+            consume(TokenType.NUMBER_LITERAL);
+        } else if (peek().type == TokenType.STRING_LITERAL) {
+            conditionValue = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+            consume(TokenType.STRING_LITERAL);
+        } else {
+            throw new RuntimeException("not found datatype");
+        }
+        if (currentType == null) {
+            throw new RuntimeException("unexpected condition provided");
+        }
+        return new Condition(columnName, currentType, conditionValue);
+    }
+
+    private List<Condition> parseConditions() {
+        List<Condition> conditions = new ArrayList<>();
+        conditions.add(parseCondition());
+//        TokenType currentType = peek().type;
+//        while (currentType==TokenType.AND || currentType == TokenType.OR){
+//
+//        }
+        return conditions;
+    }
 
     /**
      * Parses a CREATE DATABASE command.
@@ -808,17 +828,15 @@ public class Parser {
             throw new RuntimeException("⚡ [BLADE OF CHAOS] The path is broken! You must name what you seek after 'CURRENT'.");
         }
         if (peek().type != TokenType.DATABASE) {
-            throw new RuntimeException(
-                    "⚔️ [BLADE OF THE GODS] " +
-                            "You dare speak half-formed incantations?! The sacred word 'DATABASE' must be carved into your command!"
-            );
+            throw new RuntimeException("⚔️ [BLADE OF THE GODS] " + "You dare speak half-formed incantations?! The sacred word 'DATABASE' must be carved into your command!");
         }
         consume(TokenType.DATABASE);
 
         if (position >= tokens.size()) {
             throw new RuntimeException("🏺 [GREEK FIRE] The Oracle demands closure! A semicolon (;) must seal your command.");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
-
         consume(TokenType.SEMICOLON);
 
         if (position < tokens.size()) {
@@ -841,7 +859,9 @@ public class Parser {
         String dbName = peek().value;
         consume(TokenType.IDENTIFIER);
         if (position >= tokens.size()) {
-            throw new RuntimeException("⚔️ **ENOUGH!** The Bifrost obeys only those who *name their destination*. (Missing database after `USE`, boy.)");
+            throw new RuntimeException("⚔️ [WRATH OF KRATOS] The gods demand a semicolon to seal your fate! Your query remains unfinished like Kratos' vengeance - add ';' to complete the ritual!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
         consume(TokenType.SEMICOLON);
 
@@ -871,64 +891,43 @@ public class Parser {
 
         // 2. Verify old database name exists in command
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "🌌 [VOID WHISPER] The old realm name is missing!\n" +
-                            "⚔️ Usage: ALTER DATABASE <old_name> RENAME TO <new_name>;"
-            );
+            throw new RuntimeException("🌌 [VOID WHISPER] The old realm name is missing!\n" + "⚔️ Usage: ALTER DATABASE <old_name> RENAME TO <new_name>;");
         }
 
         // 3. Validate old name is a proper identifier
         String oldName = peek().value;
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "🔥 [FLAMES OF KRATOS] '" + oldName + "' is not a valid realm name!\n" +
-                            "🛡️ Names must be unquoted and free of dark runes (; -- ' etc.)"
-            );
+            throw new RuntimeException("🔥 [FLAMES OF KRATOS] '" + oldName + "' is not a valid realm name!\n" + "🛡️ Names must be unquoted and free of dark runes (; -- ' etc.)");
         }
         consume(TokenType.IDENTIFIER);
 
         // 4. Ensure RENAME keyword follows
         if (peek().type != TokenType.RENAME) {
-            throw new RuntimeException(
-                    "⚡ [THOR'S JUDGMENT] Expected 'RENAME' but found '" + peek().value + "'!\n" +
-                            "🌠 The Allfather demands: ALTER DATABASE <name> RENAME TO <new_name>;"
-            );
+            throw new RuntimeException("⚡ [THOR'S JUDGMENT] Expected 'RENAME' but found '" + peek().value + "'!\n" + "🌠 The Allfather demands: ALTER DATABASE <name> RENAME TO <new_name>;");
         }
         consume(TokenType.RENAME);
 
         // 5. Validate new name is a proper identifier
         String newName = peek().value;
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "🗡️ [MIST OF NIFLHEIM] '" + newName + "' is an unworthy new name!\n" +
-                            "⚒️ Example: ALTER DATABASE Valhalla RENAME TO Asgard;"
-            );
+            throw new RuntimeException("🗡️ [MIST OF NIFLHEIM] '" + newName + "' is an unworthy new name!\n" + "⚒️ Example: ALTER DATABASE Valhalla RENAME TO Asgard;");
         }
         consume(TokenType.IDENTIFIER);
 
         // 6. Verify command termination
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "🌉 [BIFROST UNSEALED] Your command lacks the sacred semicolon (;)!\n" +
-                            "📜 Complete your saga properly: ...TO <name>;"
-            );
+            throw new RuntimeException("🌉 [BIFROST UNSEALED] Your command lacks the sacred semicolon (;)!\n" + "📜 Complete your saga properly: ...TO <name>;");
         }
 
         // 7. Consume semicolon
         if (peek().type != TokenType.SEMICOLON) {
-            throw new RuntimeException(
-                    "💀 [HELHEIM'S GAZE] Expected ';' but found '" + peek().value + "'!\n" +
-                            "🛡️ All commands must end with the mark of closure!"
-            );
+            throw new RuntimeException("💀 [HELHEIM'S GAZE] Expected ';' but found '" + peek().value + "'!\n" + "🛡️ All commands must end with the mark of closure!");
         }
         consume(TokenType.SEMICOLON);
 
         // 8. Reject any trailing junk tokens
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS STORM] Junk symbols after command!\n" +
-                            "⚔️ Only one sacred incantation per line is permitted."
-            );
+            throw new RuntimeException("🌪️ [CHAOS STORM] Junk symbols after command!\n" + "⚔️ Only one sacred incantation per line is permitted.");
         }
         // 9. Return the executable command
         return new AlterDatabaseNameCommand(oldName, newName);
@@ -952,21 +951,16 @@ public class Parser {
 
         // 🛑 Missing semicolon at the end of the command
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "🪓 [BLADE OF OLYMPUS MISPLACED] The exit ritual lacks its final mark — ';' — " +
-                            "without it, the Bifrost cannot close!"
-            );
+            throw new RuntimeException("🪓 [BLADE OF OLYMPUS MISPLACED] The exit ritual lacks its final mark — ';' — " + "without it, the Bifrost cannot close!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
-
         // Consume the mandatory semicolon
         consume(TokenType.SEMICOLON);
 
         // 🛑 Extra symbols or tokens after the semicolon
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS STORM] Kratos roars: 'Your words spill beyond the sacred end!'\n" +
-                            "⚔️ Only one sacred incantation per line is permitted."
-            );
+            throw new RuntimeException("🌪️ [CHAOS STORM] Kratos roars: 'Your words spill beyond the sacred end!'\n" + "⚔️ Only one sacred incantation per line is permitted.");
         }
 
         // Return the parsed command
@@ -1037,8 +1031,9 @@ public class Parser {
         // Check for semicolon termination
         if (position >= tokens.size()) {
             throw new RuntimeException("⚡ [ZEUS' INCOMPLETE DECREE] Statement structure complete but missing final ';' — even gods must end their proclamations!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
-
         consume(TokenType.SEMICOLON);
         // Ensure no trailing tokens exist
         if (position < tokens.size()) {
@@ -1072,6 +1067,8 @@ public class Parser {
         // Expect a semicolon to properly terminate the statement
         if (position >= tokens.size()) {
             throw new RuntimeException("⚔️ [SAGA UNFINISHED] The command lingers in limbo — seal its fate with ';'!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
         consume(TokenType.SEMICOLON);
 
@@ -1104,6 +1101,8 @@ public class Parser {
 
         if (position >= tokens.size()) {
             throw new RuntimeException("🌑 [VISION INTERRUPTED] 'SHOW TABLES' spoken, yet the command ends in chaos — the saga demands a closing ';'!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
         consume(TokenType.SEMICOLON);// 📜 [SAGA SEALED] A semicolon marks the end of the sacred chant.
 
@@ -1215,6 +1214,9 @@ public class Parser {
         if (position >= tokens.size()) {
             throw new RuntimeException("📜 [UNFINISHED SCROLL] Insert statement complete but missing final ';' — even divine commands need their sacred seal!");
         }
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [WRATH OF KRATOS] The gods demand a semicolon to seal your fate! Found " + peek().value + " instead of the sacred ';' - your query remains unfinished like Kratos' vengeance!");
+        }
         consume(TokenType.SEMICOLON);
 
         // Ensure no extraneous tokens remain after the complete statement
@@ -1227,7 +1229,6 @@ public class Parser {
         }
         return new InsertCommand(tableName, columns, values);
     }
-
 
     /**
      * ⚔️ [RITUAL OF ALTER TABLE] Interprets the sacred words of the ALTER TABLE RENAME command
@@ -1286,6 +1287,8 @@ public class Parser {
         // 5. 🔒 Expect the SEMICOLON rune
         if (position >= tokens.size()) {
             throw new RuntimeException("❌ [UNSEALED RITUAL] No semicolon was provided to seal the statement.");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
         consume(TokenType.SEMICOLON);
 
@@ -1297,7 +1300,6 @@ public class Parser {
         // Return the forged command
         return new AlterTableNameCommand(oldTableName, newTableName);
     }
-
 
     /**
      * ⚔️ [SUMMON ALTER COMMAND]
@@ -1381,6 +1383,8 @@ public class Parser {
         // Step 9: Expect the semicolon rune to seal the scroll.
         if (position >= tokens.size()) {
             throw new RuntimeException("📜 [UNCLOSED SCROLL] Missing the ‘;’ to seal this sacred command.");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
         consume(TokenType.SEMICOLON);
 
@@ -1409,23 +1413,15 @@ public class Parser {
 
         // [STEP 2] VERIFY TABLE NAME EXISTS - No empty purges allowed
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The TRUNCATE spell lacks a target!
-                            ⚔️ Syntax: TRUNCATE TABLE <realm_name>;
-                            🌌 Example: TRUNCATE TABLE Fallen_Gods;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The TRUNCATE spell lacks a target!
+                    ⚔️ Syntax: TRUNCATE TABLE <realm_name>;
+                    🌌 Example: TRUNCATE TABLE Fallen_Gods;""");
         }
 
         // [STEP 3] VALIDATE TABLE NAME - Must be a pure identifier (no chaos runes)
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "⚡ [ODIN'S WRATH] '" + peek().value + "' is an unworthy name for purification!\n" +
-                            "🛡️ Names must be:\n" +
-                            "   - Unquoted\n" +
-                            "   - Free of ; -- ' \\\n" +
-                            "📜 Example: TRUNCATE TABLE Valkyries;"
-            );
+            throw new RuntimeException("⚡ [ODIN'S WRATH] '" + peek().value + "' is an unworthy name for purification!\n" + "🛡️ Names must be:\n" + "   - Unquoted\n" + "   - Free of ; -- ' \\\n" + "📜 Example: TRUNCATE TABLE Valkyries;");
         }
 
         // [STEP 4] CLAIM THE TABLE NAME - Worthy name confirmed
@@ -1434,19 +1430,15 @@ public class Parser {
 
         // [STEP 5] ENFORCE COMMAND TERMINATION - All spells must end with ;
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "💀 [HELL'S JUDGMENT] Your TRUNCATE spell lacks the closing ';'!\n" +
-                            "🌪️ Complete the ritual properly: TRUNCATE TABLE " + tableName + ";"
-            );
+            throw new RuntimeException("💀 [HELL'S JUDGMENT] Your TRUNCATE spell lacks the closing ';'!\n" + "🌪️ Complete the ritual properly: TRUNCATE TABLE " + tableName + ";");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
         consume(TokenType.SEMICOLON);
 
         // [STEP 6] REJECT TRAILING CHAOS - No extra symbols after ;
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS ECHOES] Junk symbols linger after the sacred ';'!\n" +
-                            "⚔️ The TRUNCATE spell must stand alone in its purity."
-            );
+            throw new RuntimeException("🌪️ [CHAOS ECHOES] Junk symbols linger after the sacred ';'!\n" + "⚔️ The TRUNCATE spell must stand alone in its purity.");
         }
 
         // [STEP 7] FORGE THE COMMAND - Ready to execute Kratos-style cleansing
@@ -1474,22 +1466,15 @@ public class Parser {
 
         // Step 2: Ensure there is a table name after FROM (no empty target allowed)
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The DROP spell lacks a target!
-                            ⚔️ Syntax: REMOVE FROM TABLE <realm_name> (<columns...>);
-                            🌌 Example: REMOVE FROM TABLE Fallen_Gods (wings, armor);"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The DROP spell lacks a target!
+                    ⚔️ Syntax: REMOVE FROM TABLE <realm_name> (<columns...>);
+                    🌌 Example: REMOVE FROM TABLE Fallen_Gods (wings, armor);""");
         }
 
         // Step 3: Validate the TABLE keyword presence
         if (peek().type != TokenType.TABLE) {
-            throw new RuntimeException(
-                    "⚡ [ODIN'S WRATH] '" + peek().value + "' is an unworthy table reference!\n" +
-                            "🛡️ Proper format:\n" +
-                            "   REMOVE FROM TABLE <name> (...);\n" +
-                            "📜 Example: REMOVE FROM TABLE Valkyries (sword, shield);"
-            );
+            throw new RuntimeException("⚡ [ODIN'S WRATH] '" + peek().value + "' is an unworthy table reference!\n" + "🛡️ Proper format:\n" + "   REMOVE FROM TABLE <name> (...);\n" + "📜 Example: REMOVE FROM TABLE Valkyries (sword, shield);");
         }
         consume(TokenType.TABLE);
 
@@ -1514,14 +1499,18 @@ public class Parser {
         consume(TokenType.RIGHT_PAREN);
 
         // Step 8: Expect terminating semicolon ';'
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🪓 [BLADE OF OLYMPUS MISPLACED] The exit ritual lacks its final mark — ';' — " + "without it, the Bifrost cannot close!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
+        }
+
+        // Consume the mandatory semicolon
         consume(TokenType.SEMICOLON);
 
         // Step 9: Reject any extra tokens after the semicolon
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS ECHOES] Extra symbols after the sacred ';'!\n" +
-                            "⚔️ The DROP command must end cleanly."
-            );
+            throw new RuntimeException("🌪️ [CHAOS ECHOES] Extra symbols after the sacred ';'!\n" + "⚔️ The DROP command must end cleanly.");
         }
 
         // Step 10: Return a forged DropColumnsCommand with parsed table name and columns
@@ -1560,147 +1549,97 @@ public class Parser {
 
         // 🔥 [BLADE OF OLYMPUS] Ensure we have tokens remaining for the old column name
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The RENAME spell lacks a target column!
-                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
-                            🌌 Example: RENAME COLUMN cursed_blade TO blessed_sword IN TABLE Weapons;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The RENAME spell lacks a target column!
+                    ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                    🌌 Example: RENAME COLUMN cursed_blade TO blessed_sword IN TABLE Weapons;""");
         }
 
         // ⚡ [SPARTAN RAGE] Capture the name of the column to be reforged
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "⚡ [ODIN'S WRATH] '" + peek().value + "' is not a worthy column name to rename!\n" +
-                            "🛡️ Proper format: RENAME COLUMN <old_name> TO <new_name> IN TABLE <table_name>;\n" +
-                            "📜 Example: RENAME COLUMN ancient_power TO divine_strength IN TABLE Gods;"
-            );
+            throw new RuntimeException("⚡ [ODIN'S WRATH] '" + peek().value + "' is not a worthy column name to rename!\n" + "🛡️ Proper format: RENAME COLUMN <old_name> TO <new_name> IN TABLE <table_name>;\n" + "📜 Example: RENAME COLUMN ancient_power TO divine_strength IN TABLE Gods;");
         }
         String oldColumnName = peek().value;
         consume(TokenType.IDENTIFIER);
 
         // 🌪️ [WINDS OF CHANGE] Expect the sacred TO keyword for transformation
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The RENAME spell requires the sacred 'TO' for transformation!
-                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
-                            🌌 Example: RENAME COLUMN mortal_strength TO godly_might IN TABLE Heroes;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The RENAME spell requires the sacred 'TO' for transformation!
+                    ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                    🌌 Example: RENAME COLUMN mortal_strength TO godly_might IN TABLE Heroes;""");
         }
 
         if (peek().type != TokenType.TO) {
-            throw new RuntimeException(
-                    "⚡ [ZEUS'S THUNDER] Missing the sacred 'TO' in your renaming ritual!\n" +
-                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO <new_name> IN TABLE <table_name>;\n" +
-                            "📜 The gods demand proper transformation syntax!"
-            );
+            throw new RuntimeException("⚡ [ZEUS'S THUNDER] Missing the sacred 'TO' in your renaming ritual!\n" + "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO <new_name> IN TABLE <table_name>;\n" + "📜 The gods demand proper transformation syntax!");
         }
         consume(TokenType.TO);
 
         // 🏛️ [TEMPLE OF WISDOM] Capture the new name that shall replace the old
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The RENAME spell lacks the new column name!
-                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
-                            🌌 Example: RENAME COLUMN weak_shield TO aegis_protection IN TABLE Equipment;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The RENAME spell lacks the new column name!
+                    ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                    🌌 Example: RENAME COLUMN weak_shield TO aegis_protection IN TABLE Equipment;""");
         }
 
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "⚡ [ARES'S FURY] '" + peek().value + "' is not a worthy new name for the column!\n" +
-                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO <new_name> IN TABLE <table_name>;\n" +
-                            "📜 Choose a name fit for the gods!"
-            );
+            throw new RuntimeException("⚡ [ARES'S FURY] '" + peek().value + "' is not a worthy new name for the column!\n" + "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO <new_name> IN TABLE <table_name>;\n" + "📜 Choose a name fit for the gods!");
         }
         String newColumnName = peek().value;
         consume(TokenType.IDENTIFIER);
 
         // 🌊 [POSEIDON'S DECREE] Expect the IN keyword to specify the realm (table)
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The RENAME spell requires 'IN TABLE' to specify the realm!
-                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
-                            🌌 Example: RENAME COLUMN old_power TO new_power IN TABLE Artifacts;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The RENAME spell requires 'IN TABLE' to specify the realm!
+                    ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                    🌌 Example: RENAME COLUMN old_power TO new_power IN TABLE Artifacts;""");
         }
 
         if (peek().type != TokenType.IN) {
-            throw new RuntimeException(
-                    "⚡ [ATHENA'S WISDOM] Missing the sacred 'IN' to specify the table realm!\n" +
-                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" +
-                            "📜 The gods must know which realm to transform!"
-            );
+            throw new RuntimeException("⚡ [ATHENA'S WISDOM] Missing the sacred 'IN' to specify the table realm!\n" + "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" + "📜 The gods must know which realm to transform!");
         }
         consume(TokenType.IN);
 
         // 🏺 [PANDORA'S VESSEL] Expect the TABLE keyword before the realm name
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The RENAME spell requires 'TABLE' after 'IN'!
-                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
-                            🌌 Example: RENAME COLUMN old_relic TO sacred_relic IN TABLE Treasures;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The RENAME spell requires 'TABLE' after 'IN'!
+                    ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                    🌌 Example: RENAME COLUMN old_relic TO sacred_relic IN TABLE Treasures;""");
         }
 
         if (peek().type != TokenType.TABLE) {
-            throw new RuntimeException(
-                    "⚡ [HADES'S JUDGMENT] Missing the sacred 'TABLE' keyword!\n" +
-                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" +
-                            "📜 The underworld demands proper table reference!"
-            );
+            throw new RuntimeException("⚡ [HADES'S JUDGMENT] Missing the sacred 'TABLE' keyword!\n" + "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" + "📜 The underworld demands proper table reference!");
         }
         consume(TokenType.TABLE);
 
         // 🏛️ [MOUNT OLYMPUS] Capture the name of the table realm to be transformed
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    """
-                            🔥 [FLAMES OF THE FORGE] The RENAME spell lacks the table name!
-                            ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
-                            🌌 Example: RENAME COLUMN mortal_name TO heroic_title IN TABLE Champions;"""
-            );
+            throw new RuntimeException("""
+                    🔥 [FLAMES OF THE FORGE] The RENAME spell lacks the table name!
+                    ⚔️ Syntax: RENAME COLUMN <old_name> TO <new_name> IN TABLE <realm_name>;
+                    🌌 Example: RENAME COLUMN mortal_name TO heroic_title IN TABLE Champions;""");
         }
 
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "⚡ [OLYMPIAN RAGE] '" + peek().value + "' is not a worthy table name!\n" +
-                            "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" +
-                            "📜 Name a realm worthy of the gods!"
-            );
+            throw new RuntimeException("⚡ [OLYMPIAN RAGE] '" + peek().value + "' is not a worthy table name!\n" + "🛡️ Expected: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE <table_name>;\n" + "📜 Name a realm worthy of the gods!");
         }
         String tableName = peek().value;
         consume(TokenType.IDENTIFIER);
 
         // ⚰️ [FINAL JUDGMENT] Seal the command with the sacred semicolon
         if (position >= tokens.size()) {
-            throw new RuntimeException(
-                    "🔥 [FLAMES OF THE FORGE] The RENAME ritual requires the sacred ';' to complete!\n" +
-                            "⚔️ Your command: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE " + tableName + ";\n" +
-                            "📜 The gods demand proper closure!"
-            );
-        }
-
-        if (peek().type != TokenType.SEMICOLON) {
-            throw new RuntimeException(
-                    "⚡ [FINAL WRATH] Missing the sacred semicolon ';' to seal the renaming ritual!\n" +
-                            "🛡️ Complete command: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE " + tableName + ";\n" +
-                            "📜 Without it, the transformation cannot be bound!"
-            );
+            throw new RuntimeException("🔥 [FLAMES OF THE FORGE] The RENAME ritual requires the sacred ';' to complete!\n" + "⚔️ Your command: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE " + tableName + ";\n" + "📜 The gods demand proper closure!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚡ [FINAL WRATH] Missing the sacred semicolon ';' to seal the renaming ritual!\n" + "🛡️ Complete command: RENAME COLUMN " + oldColumnName + " TO " + newColumnName + " IN TABLE " + tableName + ";\n" + "📜 Without it, the transformation cannot be bound!");
         }
         consume(TokenType.SEMICOLON);
 
         // 🌪️ [CHAOS PREVENTION] Reject any forbidden tokens after the sacred seal
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS ECHOES] Extra symbols detected after the sacred ';'!\n" +
-                            "⚔️ The RENAME command must end cleanly with the semicolon.\n" +
-                            "📜 Remove these chaotic remnants: " + tokens.get(position).value
-            );
+            throw new RuntimeException("🌪️ [CHAOS ECHOES] Extra symbols detected after the sacred ';'!\n" + "⚔️ The RENAME command must end cleanly with the semicolon.\n" + "📜 Remove these chaotic remnants: " + tokens.get(position).value);
         }
 
         // 🎯 [Kratos's TRIUMPH] Forge the command with the captured elements
@@ -1726,10 +1665,7 @@ public class Parser {
 
         // Step 2: Expect and consume the LEFT_PAREN to start the modification list
         if (peek().type != TokenType.LEFT_PAREN) {
-            throw new RuntimeException(
-                    "⚡ [BROKEN RUNE] The Allfather demands a '(' to open the column transformation ritual!\n" +
-                            "🛡️ Example: MODIFY COLUMN (name VARCHAR(50)) IN TABLE Valhalla;"
-            );
+            throw new RuntimeException("⚡ [BROKEN RUNE] The Allfather demands a '(' to open the column transformation ritual!\n" + "🛡️ Example: MODIFY COLUMN (name VARCHAR(50)) IN TABLE Valhalla;");
         }
         consume(TokenType.LEFT_PAREN);
 
@@ -1737,50 +1673,41 @@ public class Parser {
 
         // Step 4: Expect and consume the RIGHT_PAREN to close the modification list
         if (peek().type != TokenType.RIGHT_PAREN) {
-            throw new RuntimeException(
-                    "⚡ [BROKEN RUNE] The ritual circle remains open!\n" +
-                            "🌌 Close it with ')' before invoking the table name."
-            );
+            throw new RuntimeException("⚡ [BROKEN RUNE] The ritual circle remains open!\n" + "🌌 Close it with ')' before invoking the table name.");
         }
         consume(TokenType.RIGHT_PAREN);
 
         // Step 5: Expect and consume the IN keyword
         if (peek().type != TokenType.IN) {
-            throw new RuntimeException(
-                    "⚡ [MISSING RUNE] The path to the table realm is blocked!\n" +
-                            "🛡️ Speak the IN rune before naming the table."
-            );
+            throw new RuntimeException("⚡ [MISSING RUNE] The path to the table realm is blocked!\n" + "🛡️ Speak the IN rune before naming the table.");
         }
         consume(TokenType.IN);
 
         // Step 6: Expect and consume the TABLE keyword
         if (peek().type != TokenType.TABLE) {
-            throw new RuntimeException(
-                    "⚡ [BROKEN RUNE] The prophecy demands the TABLE rune!\n" +
-                            "🌌 Without TABLE, the realm cannot be summoned."
-            );
+            throw new RuntimeException("⚡ [BROKEN RUNE] The prophecy demands the TABLE rune!\n" + "🌌 Without TABLE, the realm cannot be summoned.");
         }
         consume(TokenType.TABLE);
 
         // Step 7: Expect and consume the table name (IDENTIFIER)
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException(
-                    "⚡ [NAMELESS REALM] The table has no name!\n" +
-                            "🛡️ Speak the table's true name to bind the spell."
-            );
+            throw new RuntimeException("⚡ [NAMELESS REALM] The table has no name!\n" + "🛡️ Speak the table's true name to bind the spell.");
         }
         String tableName = peek().value;
         consume(TokenType.IDENTIFIER);
 
         // Step 8: Expect and consume the SEMICOLON to mark command end
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🪓 [BLADE OF OLYMPUS MISPLACED] The exit ritual lacks its final mark — ';' — " + "without it, the Bifrost cannot close!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
+        }
+        // Consume the mandatory semicolon
         consume(TokenType.SEMICOLON);
 
         // Step 9: Ensure there are no extra tokens after the command
         if (position < tokens.size()) {
-            throw new RuntimeException(
-                    "🌪️ [CHAOS ECHOES] Extra symbols linger beyond the sacred ';'!\n" +
-                            "⚔️ The MODIFY COLUMN command must end cleanly."
-            );
+            throw new RuntimeException("🌪️ [CHAOS ECHOES] Extra symbols linger beyond the sacred ';'!\n" + "⚔️ The MODIFY COLUMN command must end cleanly.");
         }
 
         return new ModifyDatatypeColumn(tableName, parsedColumns);
@@ -1848,9 +1775,12 @@ public class Parser {
         }
 
         // 🛡️ Ensure the final SEMICOLON is present
-        if (peek().type != TokenType.SEMICOLON) {
-            throw new RuntimeException("⚡ The Bifröst shatters — a semicolon was the final seal, yet instead came " + peek().value);
+        if (position >= tokens.size()) {
+            throw new RuntimeException("🪓 [BLADE OF OLYMPUS MISPLACED] The exit ritual lacks its final mark — ';' — " + "without it, the Bifrost cannot close!");
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException("⚔️ [FURY OF THE GODS] The ritual demands a semicolon, not '" + peek().value + "'! Even the Blades of Chaos cannot cut through syntax without proper closure!");
         }
+        // Consume the mandatory semicolon
         consume(TokenType.SEMICOLON);
 
         // 👁️ Ensure no extra tokens lurk after the semicolon
@@ -1944,8 +1874,7 @@ public class Parser {
         // 🔒 STEP VIII: Expect semicolon to end statement
         if (position >= tokens.size()) {
             throw new RuntimeException("⚡ [BIFRÖST SUNDERED] The saga ends without its final seal ';'.");
-        }
-        if (peek().type != TokenType.SEMICOLON) {
+        } else if (peek().type != TokenType.SEMICOLON) {
             throw new RuntimeException("⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value);
         }
         consume(TokenType.SEMICOLON);
@@ -1958,83 +1887,389 @@ public class Parser {
         return new DropDefaultValueColumn(tableName, columnName);
     }
 
-
     /**
      * 🌌 [SEER’S DIVINATION] 🌌
      * Parses a `SELECT` SQL command from the token stream.
      * The SELECT command in YggraDB follows this structure:
-     *   SELECT <columns> FROM <tableName>;
+     * SELECT <columns> FROM <tableName>;
      * Columns can be either:
-     *   - `*` (represented internally as ["ALL"])
-     *   - A list of identifiers (e.g., ["id", "name"])
+     * - `*` (represented internally as ["ALL"])
+     * - A list of identifiers (e.g., ["id", "name"])
      * This method consumes tokens from the input and constructs a {@link SelectCommand}.
      * Any violation of the expected grammar results in a God of War–style runtime error.
      * ⚡ Responsibilities:
-     *  - Validate that columns are properly specified (`*` or identifiers).
-     *  - Ensure the `FROM` keyword appears after the column list.
-     *  - Validate that a table name follows `FROM`.
-     *  - Ensure the query is terminated by a semicolon.
-     *  - Guard against stray tokens beyond the query.
+     * - Validate that columns are properly specified (`*` or identifiers).
+     * - Ensure the `FROM` keyword appears after the column list.
+     * - Validate that a table name follows `FROM`.
+     * - Ensure the query is terminated by a semicolon.
+     * - Guard against stray tokens beyond the query.
      * 🛡️ Error Handling:
-     *  - If no `*` or identifiers found → raise: "❌ [FATE TWISTED] A SELECT must choose runes (* or identifiers), not this shadow."
-     *  - If `FROM` is missing → raise: "⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value
-     *  - If table name missing → raise: "🏛️ [NAMELESS REALM] No table name stands where destiny decrees — found " + peek().value
-     *  - If semicolon missing → raise: "⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value
-     *  - If extra tokens linger → raise: "👁️ [WHISPERS BEYOND] Shadows remain past the end... " + peek().value
+     * - If no `*` or identifiers found → raise: "❌ [FATE TWISTED] A SELECT must choose runes (* or identifiers), not this shadow."
+     * - If `FROM` is missing → raise: "⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value
+     * - If table name missing → raise: "🏛️ [NAMELESS REALM] No table name stands where destiny decrees — found " + peek().value
+     * - If semicolon missing → raise: "⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value
+     * - If extra tokens linger → raise: "👁️ [WHISPERS BEYOND] Shadows remain past the end... " + peek().value
      */
 
     private SelectCommand parseSelectCommand() {
-
-        // 🔮 STEP I: Ensure SELECT targets are valid (either * or identifiers)
+// ⚡ [REALM: MIDGARD] The journey begins — the SELECT incantation must summon valid runes.
         if (peek().type != TokenType.ASTERISK && peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException("❌ [FATE TWISTED] A SELECT must choose runes (* or identifiers), not " + peek().value);
+            throw new RuntimeException(
+                    "❌ [THREADS CUT] The Norns decree — SELECT may summon only * or named runes, not '" + peek().value + "'!"
+            );
         }
 
-        List<String> columns;
+        List<String> columns = new ArrayList<>();
 
-        // 🟊 STEP II: Handle `SELECT *`
+// 🟊 [PATH OF ALL] If Kratos demands all columns, he wields the Asterisk — symbol of total recall.
         if (peek().type == TokenType.ASTERISK) {
-            columns = new ArrayList<>();
             consume(TokenType.ASTERISK);
             columns.add("ALL");
-
-            if (peek().type != TokenType.FROM) {
-                throw new RuntimeException("⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value);
-            }
-
-            // 📜 STEP III: Handle `SELECT col1, col2, ...`
-        } else if (peek().type == TokenType.IDENTIFIER) {
+        }
+// 🛠️ [PATH OF CHOICE] The mortal instead lists runes — col1, col2, ...
+        else if (peek().type == TokenType.IDENTIFIER) {
             columns = parseColumnInsertStatements();
-        } else {
-            throw new RuntimeException("❌ [FATE CORRUPTED] Unexpected token in SELECT — " + peek().value);
+        }
+// 🕳️ [FATE DENIED] No path aligns — SELECT cannot channel what it does not name.
+        else {
+            throw new RuntimeException(
+                    "❌ [RUNE SHATTERED] The seer finds no path — SELECT cannot bind '" + peek().value + "'."
+            );
         }
 
-        // 🏛️ STEP IV: Expect `FROM`
+// 🏛️ [LAW OF REALMS] All queries must bind themselves to a realm — expect the sacred word ‘FROM’.
         if (peek().type != TokenType.FROM) {
-            throw new RuntimeException("⚔️ [REALM UNCHOSEN] The path falters — 'FROM' is demanded by fate, not " + peek().value);
+            throw new RuntimeException(
+                    "⚔️ [REALM UNBOUND] The roots of Yggdrasil demand 'FROM', yet '" + peek().value + "' was found."
+            );
         }
         consume(TokenType.FROM);
 
-        // 🏷️ STEP V: Expect table name
+// 🏷️ [REALM NAMED] The table stands as the realm where data dwells — its name must be spoken true.
         String tableName = peek().value;
         if (peek().type != TokenType.IDENTIFIER) {
-            throw new RuntimeException("🏛️ [NAMELESS REALM] No table name stands where destiny decrees — found " + tableName);
+            throw new RuntimeException(
+                    "🏛️ [NAMELESS REALM] The World Tree sees no table — only a void where '" + tableName + "' stands."
+            );
         }
         consume(TokenType.IDENTIFIER);
 
-        // ⛓️ STEP VI: Ensure semicolon terminates the query
-        if (peek().type != TokenType.SEMICOLON) {
-            throw new RuntimeException("⚡ [BIFRÖST SUNDERED] A semicolon must close fate, not " + peek().value);
+// 🌀 [FATE'S CHAINS] A WHERE clause binds destiny — if it exists, the parser must heed it.
+        List<Condition> conditions = null;
+        if (peek().type == TokenType.WHERE) {
+            consume(TokenType.WHERE);
+            conditions = parseConditions();
+        }
+
+// 🪓 [END OF TALE] Every saga must close — the semicolon seals its fate.
+        if (position >= tokens.size()) {
+            throw new RuntimeException(
+                    "🔥 [RAGNARÖK AWAKENS] The saga ends too soon — a semicolon seals the fate of queries!"
+            );
+        } else if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "⚔️ [FATE SUNDERED] The ritual demands ';' — not '" + peek().value +
+                            "'. Even Mjölnir cannot strike true without closure!"
+            );
         }
         consume(TokenType.SEMICOLON);
 
-        // 👁️ STEP VII: Ensure no trailing tokens
+// 👁️ [RAVENS’ WARNING] Nothing must remain beyond the saga — no stray rune after the seal.
         if (position < tokens.size()) {
-            throw new RuntimeException("👁️ [WHISPERS BEYOND] Shadows remain past the end... " + peek().value);
+            throw new RuntimeException(
+                    "👁️ [HUGINN & MUNINN WARN] Ravens whisper of stray runes beyond the end — '" + peek().value + "'."
+            );
         }
 
-        // 🎇 STEP VIII: Return parsed command
-        return new SelectCommand(tableName, columns);
+// 🌌 [RETURN TO REALITY] The saga is complete — yield the forged SELECT command.
+        if (conditions == null)
+            return new SelectCommand(tableName, columns);
+        else
+            return new SelectCommand(tableName, columns, conditions);
+    }
+
+    /**
+     * 🗑️ Parses a DELETE SQL command from the token stream.
+     * 📝 Expected syntax: DELETE FROM table_name [WHERE column_name operator value];
+     * ⚙️ This method processes tokens sequentially to construct a DeleteCommand object:
+     * 1. ✅ Validates and extracts the table name after FROM keyword
+     * 2. 🔍 Optionally parses a WHERE clause with a single condition
+     * 3. ✔️ Ensures proper statement termination with a semicolon
+     * 4. 🚫 Verifies no extraneous tokens exist after the statement
+     *
+     * @return DeleteCommand object containing the table name and optional WHERE condition
+     * @throws RuntimeException if the DELETE syntax is invalid, including:
+     *                          ❌ Missing or invalid table name
+     *                          ❌ Malformed WHERE clause
+     *                          ❌ Missing semicolon terminator
+     *                          ❌ Unexpected tokens after semicolon
+     *                          <p>
+     *                          💡 Example valid input: DELETE FROM users WHERE id = 5;
+     */
+
+    private DeleteCommand parseDeleteCommand() {
+        // Ensure table name exists
+        consume(TokenType.FROM);
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "❌ [DELETE ERROR] Expected table name, but found '" + peek().value + "'"
+            );
+        }
+
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        Condition condition = null;
+
+        // Optional WHERE clause
+        if (peek().type == TokenType.WHERE) {
+            consume(TokenType.WHERE);
+
+            if (peek().type != TokenType.IDENTIFIER) {
+                throw new RuntimeException(
+                        "❌ [DELETE ERROR] Expected column name after WHERE, but found '" + peek().value + "'"
+                );
+            }
+
+            String columnName = peek().value;
+            consume(TokenType.IDENTIFIER);
+
+            TokenType operator = peek().type;
+            consume(operator);
+
+            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
+            consume(peek().type);
+
+            condition = new Condition(columnName, operator, value);
+        }
+
+        // ✅ Check for semicolon
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "❌ [DELETE ERROR] Expected ';' at the end of DELETE statement, but found '" + peek().value + "'"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // ✅ Ensure nothing remains after the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "❌ [DELETE ERROR] Unexpected tokens after ';'. DELETE statement must end here."
+            );
+        }
+
+        return new DeleteCommand(tableName, condition);
+    }
+
+    /**
+     * ⚡ Parses an UPDATE SQL command from the token stream.
+     * 📝 Expected syntax: UPDATE table_name SET col1=val1, col2=val2 [WHERE condition];
+     * ⚙️ This method processes tokens sequentially to construct an UpdateCommand object:
+     * 1. ✅ Validates and extracts the table name
+     * 2. 🔍 Ensures SET keyword is present
+     * 3. 📋 Parses column-value pairs into a HashMap
+     * 4. 🎯 Optionally parses a WHERE clause with a single condition
+     * 5. ✔️ Ensures proper statement termination with a semicolon
+     * 6. 🚫 Verifies no extraneous tokens exist after the statement
+     *
+     * @return UpdateCommand object containing table name, column-value mappings, and optional WHERE condition
+     * @throws RuntimeException if the UPDATE syntax is invalid, including:
+     *         ❌ Missing or invalid table name
+     *         ❌ Missing SET keyword
+     *         ❌ Malformed column=value assignments
+     *         ❌ Malformed WHERE clause
+     *         ❌ Missing semicolon terminator
+     *         ❌ Unexpected tokens after semicolon
+     * 💡 Example valid input:
+     *    - UPDATE users SET age=30, status='active';
+     *    - UPDATE users SET age=30 WHERE id=5;
+     */
+
+    private UpdateCommand parseUpdateRowCommand() {
+        // 🏛️ [IDENTIFY THE REALM] - Extract the table name to be updated
+        String tableName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // ✅ [SET KEYWORD REQUIRED] - Validate UPDATE syntax includes SET
+        if (peek().type != TokenType.SET) {
+            throw new RuntimeException(
+                    "❌ [UPDATE ERROR] Kratos growls: 'Expected SET keyword, but found '" + peek().value + "'! " +
+                            "The syntax is: UPDATE table SET column=value;'"
+            );
+        }
+
+        consume(TokenType.SET);
+
+        // 📋 [PARSE ASSIGNMENTS] - Extract all column=value pairs into a HashMap
+        // This allows multiple columns to be updated in a single statement
+        HashMap<String, ValueDefinition> columnsMap = parseUpdateStatements();
+
+        Condition condition = null;
+
+        // 🔍 [OPTIONAL WHERE CLAUSE] - Check if update should be conditional
+        if (peek().type == TokenType.WHERE) {
+            consume(TokenType.WHERE);
+
+            // ✅ Validate column name follows WHERE keyword
+            if (peek().type != TokenType.IDENTIFIER) {
+                throw new RuntimeException(
+                        "❌ [WHERE ERROR] The Norns whisper: 'Expected column name after WHERE, but found '" + peek().value + "'! " +
+                                "Guide us with proper syntax!'"
+                );
+            }
+
+            String columnName = peek().value;
+            consume(TokenType.IDENTIFIER);
+
+            // 🔄 Extract comparison operator (=, >, <, etc.)
+            TokenType operator = peek().type;
+            consume(operator);
+
+            // 📊 Extract the comparison value
+            ValueDefinition value = new ValueDefinition(peek().type, peek().value);
+            consume(peek().type);
+
+            // 🎯 Construct condition object for filtering rows
+            condition = new Condition(columnName, operator, value);
+        }
+
+        // ✅ [SEMICOLON CHECK] - Ensure statement properly terminated
+        if (peek().type != TokenType.SEMICOLON) {
+            throw new RuntimeException(
+                    "❌ [SYNTAX ERROR] Sindri insists: 'Every UPDATE statement must end with a semicolon (;), " +
+                            "but found '" + peek().value + "' instead! Standards matter!'"
+            );
+        }
+        consume(TokenType.SEMICOLON);
+
+        // ✅ [TAIL CHECK] - Verify nothing follows the semicolon
+        if (position < tokens.size()) {
+            throw new RuntimeException(
+                    "❌ [PARSING ERROR] Brok shouts: 'What's this extra junk after the semicolon?! " +
+                            "UPDATE statement must END at the semicolon!'"
+            );
+        }
+
+        return new UpdateCommand(tableName, columnsMap, condition);
+    }
+
+    /**
+     * 📋 Parses the SET clause of an UPDATE statement into a HashMap.
+     * 📝 Expected syntax: col1=val1, col2=val2, col3=val3
+     * ⚙️ This method processes column-value assignments:
+     * 1. 🔍 Parses first column=value pair
+     * 2. 🔄 Continues parsing additional pairs separated by commas
+     * 3. ✅ Validates each assignment has proper syntax
+     * 4. 🚫 Prevents duplicate column names in same UPDATE
+     * 5. 📊 Supports NUMBER_LITERAL and STRING_LITERAL value type.
+     * @return HashMap<String, ValueDefinition> mapping column names to their new values
+     * @throws RuntimeException if:
+     *         ❌ Column name missing or invalid
+     *         ❌ Equals sign (=) missing between column and value
+     *         ❌ Value is not a valid literal (number or string)
+     *         ❌ Duplicate column name appears in same SET clause
+     *         ❌ Unsupported data type provided
+     *
+     * 💡 Example valid input: name='Kratos', age=150, realm='Midgard'
+     */
+
+    private HashMap<String, ValueDefinition> parseUpdateStatements() {
+        HashMap<String, ValueDefinition> map = new HashMap<>();
+
+        // 🔍 [FIRST ASSIGNMENT] - Parse initial column=value pair
+        if (peek().type != TokenType.IDENTIFIER) {
+            throw new RuntimeException(
+                    "💥 [PARSING ERROR] Freya warns: 'Column name required after SET, but found '" + peek().value + "'! " +
+                            "Proper form is: SET column_name = value'"
+            );
+        }
+
+        String columnName = peek().value;
+        consume(TokenType.IDENTIFIER);
+
+        // ✅ [EQUALS OPERATOR] - Validate assignment uses '='
+        if (peek().type != TokenType.EQUALS) {
+            throw new RuntimeException(
+                    "💥 [SYNTAX ERROR] Mimir explains: 'Column '" + columnName + "' needs an equals sign (=), " +
+                            "but found '" + peek().value + "' instead! Format: column = value'"
+            );
+        }
+        consume(TokenType.EQUALS);
+
+        // 📊 [VALUE EXTRACTION] - Parse the value being assigned
+        ValueDefinition value;
+        if (peek().type == TokenType.NUMBER_LITERAL) {
+            value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+            consume(TokenType.NUMBER_LITERAL);
+            System.out.println("   ⚡ " + columnName + " = " + peek().value + " (number)");
+        } else if (peek().type == TokenType.STRING_LITERAL) {
+            value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+            consume(TokenType.STRING_LITERAL);
+            System.out.println("   ⚡ " + columnName + " = '" + peek().value + "' (text)");
+        } else {
+            throw new RuntimeException(
+                    "💥 [TYPE ERROR] The World Serpent hisses: 'Unknown data type for column '" + columnName + "'! " +
+                            "Only numbers and strings (in quotes) are supported!'"
+            );
+        }
+
+        // 📝 Store first column-value pair in map
+        map.put(columnName, value);
+
+        // 🔄 [ADDITIONAL ASSIGNMENTS] - Parse remaining comma-separated pairs
+        while (peek().type == TokenType.COMMA) {
+            System.out.println("🔗 [ANOTHER BINDING] Comma detected - parsing next column assignment...");
+            consume(TokenType.COMMA);
+
+            // 🔍 Validate next column name
+            if (peek().type != TokenType.IDENTIFIER) {
+                throw new RuntimeException(
+                        "💥 [PARSING ERROR] Baldur roars: 'Expected column name after comma, but found '" + peek().value + "'! " +
+                                "Check your syntax!'"
+                );
+            }
+
+            columnName = peek().value;
+
+            // 🚫 [DUPLICATE CHECK] - Prevent updating same column twice in one statement
+            if (map.containsKey(columnName)) {
+                throw new RuntimeException(
+                        "💥 [DUPLICATE ERROR] Týr raises his hand: 'Column '" + columnName + "' already appears in this UPDATE! " +
+                                "You cannot set the same column twice in one statement. Choose wisely!'"
+                );
+            }
+
+            consume(TokenType.IDENTIFIER);
+
+            // ✅ Validate equals operator
+            if (peek().type != TokenType.EQUALS) {
+                throw new RuntimeException(
+                        "💥 [SYNTAX ERROR] Sindri sighs: 'Column '" + columnName + "' requires an equals sign (=), " +
+                                "but you gave me '" + peek().value + "' instead! Standards, please!'"
+                );
+            }
+            consume(TokenType.EQUALS);
+
+            // 📊 Parse value for this column
+            if (peek().type == TokenType.NUMBER_LITERAL) {
+                value = new ValueDefinition(TokenType.NUMBER_LITERAL, peek().value);
+                consume(TokenType.NUMBER_LITERAL);
+            } else if (peek().type == TokenType.STRING_LITERAL) {
+                value = new ValueDefinition(TokenType.STRING_LITERAL, peek().value);
+                consume(TokenType.STRING_LITERAL);
+            } else {
+                throw new RuntimeException(
+                        "💥 [TYPE ERROR] Atreus questions: 'What kind of value is that for '" + columnName + "'? " +
+                                "I only understand numbers and text in quotes!'"
+                );
+            }
+
+            // 📝 Add this column-value pair to the map
+            map.put(columnName, value);
+        }
+
+        System.out.println("✅ [ASSIGNMENTS COMPLETE] Successfully parsed " + map.size() + " column assignment(s).");
+        return map;
     }
 
     /**
@@ -2132,12 +2367,10 @@ public class Parser {
             } else if (peek().type == TokenType.ALTER) {
                 advance();
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] ALTER command incomplete!
-                                    🛡️ You must specify: ALTER DATABASE <name> RENAME  <new_name>
-                                    🌌 Example: ALTER DATABASE Valhalla RENAME  Asgard or ALTER TABLE Valhalla RENAME  Asgard."""
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] ALTER command incomplete!
+                            🛡️ You must specify: ALTER DATABASE <name> RENAME  <new_name>
+                            🌌 Example: ALTER DATABASE Valhalla RENAME  Asgard or ALTER TABLE Valhalla RENAME  Asgard.""");
                 }
 
                 Token second = peek();
@@ -2158,68 +2391,47 @@ public class Parser {
                     }
                     return parseAlterTable();
                 } else {
-                    throw new RuntimeException(
-                            "⚔️ [WRATH OF THE ALLFATHER] Kratos bellows: 'Only the realms themselves (databases) " +
-                                    "and their great halls (tables) may be reshaped by my hand!'\n" +
-                                    "🪓 All other alterations are but whispers to the wind — unworthy of the forge!"
-                    );
+                    throw new RuntimeException("⚔️ [WRATH OF THE ALLFATHER] Kratos bellows: 'Only the realms themselves (databases) " + "and their great halls (tables) may be reshaped by my hand!'\n" + "🪓 All other alterations are but whispers to the wind — unworthy of the forge!");
 
                 }
             } else if (peek().type == TokenType.ADD) {
                 advance();
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] ALTER command incomplete!
-                                    🛡️ You must specify: ADD COLUMN (<column_name,datatype>)  TO TABLE <table_name>
-                                    🌌 Example: ADD COLUMN (Valhalla INT) TO TABLE Asgard."""
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] ALTER command incomplete!
+                            🛡️ You must specify: ADD COLUMN (<column_name,datatype>)  TO TABLE <table_name>
+                            🌌 Example: ADD COLUMN (Valhalla INT) TO TABLE Asgard.""");
                 }
                 Token second = peek();
                 if (second.type != TokenType.COLUMN) {
-                    throw new RuntimeException(
-                            "⚡ By Odin’s beard! The 'COLUMN' rune was foretold, yet you bring me '"
-                                    + second.value + "' instead!"
-                    );
+                    throw new RuntimeException("⚡ By Odin’s beard! The 'COLUMN' rune was foretold, yet you bring me '" + second.value + "' instead!");
                 }
 
                 return parseAlterColumnsofTable();
             } else if (peek().type == TokenType.TRUNCATE) {
                 advance();
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] TRUNCATE command incomplete!
-                                    🛡️ You must specify: TRUNCATE TABLE table_name
-                                    🌌 Example: TRUNCATE TABLE Valhalla"""
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] TRUNCATE command incomplete!
+                            🛡️ You must specify: TRUNCATE TABLE table_name
+                            🌌 Example: TRUNCATE TABLE Valhalla""");
                 }
                 Token second = peek();
                 if (second.type != TokenType.TABLE) {
-                    throw new RuntimeException(
-                            "⚡ [BROKEN RUNE] The prophecy called for the TABLE rune, " +
-                                    "yet you dare present '" + second.value + "'! " +
-                                    "Summon the TABLE rune to proceed through the Bifrost."
-                    );
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The prophecy called for the TABLE rune, " + "yet you dare present '" + second.value + "'! " + "Summon the TABLE rune to proceed through the Bifrost.");
                 }
                 return parseTruncateCommand();
             } else if (peek().type == TokenType.REMOVE) {
                 advance();
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] REMOVE command incomplete!
-                                    🛡️ You must specify: REMOVE FROM TABLE table_name (columns)
-                                    🌌 Example: REMOVE FROM TABLE Valhalla (id,name)."""
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] REMOVE command incomplete!
+                            🛡️ You must specify: REMOVE FROM TABLE table_name (columns)
+                            🌌 Example: REMOVE FROM TABLE Valhalla (id,name).""");
                 }
                 Token second = peek();
                 if (second.type != TokenType.FROM) {
-                    throw new RuntimeException(
-                            "⚡ [BROKEN RUNE] The prophecy called for the FROM rune, " +
-                                    "yet you dare present '" + second.value + "'! " +
-                                    "Summon the FROM rune to proceed through the Bifrost."
-                    );
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The prophecy called for the FROM rune, " + "yet you dare present '" + second.value + "'! " + "Summon the FROM rune to proceed through the Bifrost.");
                 }
                 return parseDropColumnsCommand();
 
@@ -2227,76 +2439,89 @@ public class Parser {
                 advance();
 
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] RENAME command incomplete!
-                                    🛡️ You must specify: RENAME COLUMN <OLD_COLUMN_NAME> TO <NEW_COLUMN_NAME> IN TABLE <TABLE_NAME>
-                                    🌌 Example: RENAME COLUMN age TO years IN TABLE warriors."""
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] RENAME command incomplete!
+                            🛡️ You must specify: RENAME COLUMN <OLD_COLUMN_NAME> TO <NEW_COLUMN_NAME> IN TABLE <TABLE_NAME>
+                            🌌 Example: RENAME COLUMN age TO years IN TABLE warriors.""");
                 }
 
                 Token second = peek();
                 if (second.type != TokenType.COLUMN) {
-                    throw new RuntimeException(
-                            "⚡ [BROKEN RUNE] The prophecy spoke of the COLUMN rune, " +
-                                    "yet you offer '" + second.value + "'! " +
-                                    "Summon the COLUMN rune to reshape destiny."
-                    );
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The prophecy spoke of the COLUMN rune, " + "yet you offer '" + second.value + "'! " + "Summon the COLUMN rune to reshape destiny.");
                 }
 
                 return parseRenameColumnCommand();
             } else if (peek().type == TokenType.MODIFY) {
                 advance();
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] The MODIFY ritual is incomplete!
-                                    🛡️ You must speak the full incantation:
-                                    MODIFY COLUMN <COLUMN_NAME> <NEW_DATATYPE> IN TABLE <TABLE_NAME>;
-                                    🌌 Example: MODIFY COLUMN age INT IN TABLE Midgardians;
-                                    """
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] The MODIFY ritual is incomplete!
+                            🛡️ You must speak the full incantation:
+                            MODIFY COLUMN <COLUMN_NAME> <NEW_DATATYPE> IN TABLE <TABLE_NAME>;
+                            🌌 Example: MODIFY COLUMN age INT IN TABLE Midgardians;
+                            """);
                 }
                 Token second = peek();
                 if (second.type != TokenType.COLUMN) {
-                    throw new RuntimeException(
-                            "⚡ [BROKEN RUNE] The prophecy demanded the COLUMN rune, " +
-                                    "yet you brandish '" + second.value + "'! " +
-                                    "Summon the COLUMN rune to channel the Allfather's will."
-                    );
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The prophecy demanded the COLUMN rune, " + "yet you brandish '" + second.value + "'! " + "Summon the COLUMN rune to channel the Allfather's will.");
                 }
                 return parseModifyDataTypeCommand();
             } else if (peek().type == TokenType.SET) {
                 advance();
                 if (position >= tokens.size()) {
-                    throw new RuntimeException(
-                            """
-                                    ⚡ [BROKEN RUNE] The MODIFY ritual is incomplete!
-                                    🛡️ You must speak the full incantation:
-                                    SET COLUMN <COLUMN_NAME>  IN TABLE <TABLE_NAME> TO <DEFAULT_VALUE>;
-                                    🌌 Example: MODIFY COLUMN age INT IN TABLE Midgardians;
-                                    """
-                    );
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] The MODIFY ritual is incomplete!
+                            🛡️ You must speak the full incantation:
+                            SET COLUMN <COLUMN_NAME>  IN TABLE <TABLE_NAME> TO <DEFAULT_VALUE>;
+                            🌌 Example: MODIFY COLUMN age INT IN TABLE Midgardians;
+                            """);
                 }
                 Token second = peek();
                 if (second.type != TokenType.COLUMN) {
-                    throw new RuntimeException(
-                            "⚡ [BROKEN RUNE] The prophecy demanded the COLUMN rune, " +
-                                    "yet you brandish '" + second.value + "'! " +
-                                    "Summon the COLUMN rune to channel the Allfather's will."
-                    );
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The prophecy demanded the COLUMN rune, " + "yet you brandish '" + second.value + "'! " + "Summon the COLUMN rune to channel the Allfather's will.");
                 }
                 return parseSetDefaultValueCommand();
             } else if (peek().type == TokenType.SELECT) {
                 advance();
                 return parseSelectCommand();
+            } else if (peek().type == TokenType.DELETE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] The DELETE ritual is incomplete!
+                            🛡️ You must speak the full incantation:
+                            DELETE FROM <table_name> [WHERE <condition>];
+                            🌌 Examples: DELETE FROM users WHERE age > 25;
+                            """);
+                }
+                Token second = peek();
+                if (second.type != TokenType.FROM) {
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
+                            "yet you brandish '" + second.value + "'! " +
+                            "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
+                            "📜 Correct syntax: DELETE FROM <table_name> [WHERE <condition>];");
+                }
+                return parseDeleteCommand();
+            } else if (peek().type == TokenType.UPDATE) {
+                advance();
+                if (position >= tokens.size()) {
+                    throw new RuntimeException("""
+                            ⚡ [BROKEN RUNE] The UPDATE ritual is incomplete!
+                            🛡️ You must speak the full incantation:
+                            UPDATE <table_name> SET col=<colValue> [WHERE <condition>];
+                            🌌 Examples: UPDATE user SET id=10 WHERE id=5;
+                            """);
+                }
+                Token second = peek();
+                if (second.type != TokenType.IDENTIFIER) {
+                    throw new RuntimeException("⚡ [BROKEN RUNE] The DELETE prophecy demands the FROM rune, " +
+                            "yet you brandish '" + second.value + "'! " +
+                            "Summon the FROM rune after DELETE to channel the Allfather's will.\n" +
+                            "📜 Correct syntax: UPDATE <table_name> SET col <colValue> [WHERE <condition>];");
+                }
+                return parseUpdateRowCommand();
             } else {
-                throw new RuntimeException(
-                        "⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" +
-                                "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT,SELECT.\n" +
-                                "❌ But instead received: " + first.type + " ('" + first.value + "').\n" +
-                                "⚔️ Only these divine runes may command the realms of Yggra!"
-                );
+                throw new RuntimeException("⛓️ [CHAINS OF FATE] The Oracle rejects your words! \n" + "👉 Expected one of: CREATE, INSERT, DROP, SHOW, USE, ALTER, ADD, TRUNCATE, REMOVE, RENAME, MODIFY, SET ,DEFAULT,SELECT.\n" + "❌ But instead received: " + first.type + " ('" + first.value + "').\n" + "⚔️ Only these divine runes may command the realms of Yggra!");
             }
 
         } catch (Exception e) {
@@ -2307,5 +2532,6 @@ public class Parser {
         }
     }
 
-
 }
+
+
